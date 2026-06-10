@@ -1,0 +1,52 @@
+USERFLOW.md
+  s_1a8de3279aa9fb::t_d0b45de64d9520 126,129,131,134,136-171,173-177,179-180,182,185-186,188-191,193,196-200,203
+  s_1a8de3279aa9fb::t_9c506e5745fc27 1-125,127-128,130,132-133,135,172,178,181,183-184,187,192,194-195,201-202,204-231
+README.md
+  h_7a2f4c8f0473b8 1-4,6-17,19-24,27-31,33,35-36,42,47-48,50,52-53,106,111,116,118-120,130-131,159-160,162-163,167-168,170-171,186-189,191-192,203-204,207-213,220,225-240
+  s_1a8de3279aa9fb::t_83f4ca0b318a9e 132-158
+  s_1a8de3279aa9fb::t_b72f40877fa049 164-165,169,172-184
+  s_1a8de3279aa9fb::t_07cb6828d47b1c 193-197,199-200
+  s_1a8de3279aa9fb::t_d8c7719a0f73ee 5,18,25-26,32,34,37-41,43-46,49,51,54-105,107-110,112-115,117,121-129,161,166,185,190,198,205-206,214-219,221-224
+  s_1a8de3279aa9fb::t_ef14fcb50d326a 201-202
+SECURITY.md
+  s_1a8de3279aa9fb::t_cdd6c79486fc47 1-26,31
+  s_1a8de3279aa9fb::t_f819810bdb818e 27-30,32-41
+CODE_OF_CONDUCT.md
+  s_1a8de3279aa9fb::t_8be545c87bda87 1-25
+CHANGELOG.md
+  s_1a8de3279aa9fb::t_628fe171bcd5fd 1-17
+.github/PULL_REQUEST_TEMPLATE.md
+  s_1a8de3279aa9fb::t_a2ccafd32fcbe1 1-26
+CONTRIBUTING.md
+  s_1a8de3279aa9fb::t_f9a9790553226c 1-12,20-29,33-41,43-44,52-57,59-65
+  s_1a8de3279aa9fb::t_d59a2fd29cd685 13-19,30-32,42,45-51,58
+.github/ISSUE_TEMPLATE/bug_report.md
+  s_1a8de3279aa9fb::t_399d562b3bc4bf 1-35
+LICENSE
+  s_1a8de3279aa9fb::t_75d2fec8f4aadc 1-21
+.github/ISSUE_TEMPLATE/feature_request.md
+  s_1a8de3279aa9fb::t_747085f53c4b01 1-32
+.gitignore
+  s_1a8de3279aa9fb::t_618a7b8c7c0a14 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "5f5cdf896fbbd7e20089321f67103596d01103de",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_1a8de3279aa9fb": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2c4a02e6-e0ed-4ae4-b4cb-347c0b6f6d52",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
