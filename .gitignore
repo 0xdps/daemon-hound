@@ -1,0 +1,25 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build output
+/target/
+/dist/
+/build/
+*.o
+*.a
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# DaemonHound vault (never commit the actual vault)
+.dh/
