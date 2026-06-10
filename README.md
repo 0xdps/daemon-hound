@@ -1,6 +1,10 @@
-# DaemonHound
+<p align="center">
+  <img src="images/logo.png" alt="DaemonHound" width="160" />
+</p>
 
-**Opinionated local config and secret management for developers.**
+<h1 align="center">DaemonHound</h1>
+
+<p align="center"><strong>Opinionated local config and secret management for developers.</strong></p>
 
 DaemonHound tracks, syncs, backs up, and manages important local developer files across machines — without any SaaS, dashboards, or accounts.
 
