@@ -68,9 +68,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate age identity: %w", err)
 	}
 
-	// Encrypt identity with password (simple XOR-based obfuscation for now; in production use scrypt+AES)
-	encryptedIdentity := encryptWithPassword([]byte(identity.String()), password)
-	if err := os.WriteFile(config.IdentityPath(), encryptedIdentity, 0600); err != nil {
+	// Encrypt identity with password using scrypt+AES-GCM
+	encryptedIdentity, err := utils.EncryptWithPassword([]byte(identity.String()), password)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt identity: %w", err)
+	}
+	if err := os.WriteFile(config.IdentityPath(), []byte(encryptedIdentity), 0600); err != nil {
 		return fmt.Errorf("failed to write identity file: %w", err)
 	}
 
@@ -96,19 +99,4 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Vault:      %s\n", vaultPath)
 	fmt.Printf("\n⚠️  Back up %s immediately. Without it, encrypted vault data cannot be recovered.\n", config.IdentityPath())
 	return nil
-}
-
-// encryptWithPassword applies a simple password-based encryption.
-// TODO: replace with scrypt + AES-GCM or similar in production.
-func encryptWithPassword(data []byte, password string) []byte {
-	out := make([]byte, len(data))
-	for i := range data {
-		out[i] = data[i] ^ password[i%len(password)]
-	}
-	return out
-}
-
-// decryptWithPassword decrypts data encrypted with encryptWithPassword.
-func decryptWithPassword(data []byte, password string) []byte {
-	return encryptWithPassword(data, password) // XOR is symmetric
 }
