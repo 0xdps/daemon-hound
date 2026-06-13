@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
+	"github.com/0xdps/daemon-hound/internal/keychain"
 	"github.com/0xdps/daemon-hound/internal/storage"
 	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
@@ -92,6 +93,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("failed to add remote: %w", err)
 			}
 		}
+	}
+
+	// Store password in keychain for future use
+	if err := keychain.Store(password); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to store password in keychain: %v\n", err)
 	}
 
 	fmt.Printf("DaemonHound initialized.\n")

@@ -6,6 +6,7 @@ import (
 
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
+	"github.com/0xdps/daemon-hound/internal/keychain"
 	"github.com/0xdps/daemon-hound/internal/models"
 	"github.com/0xdps/daemon-hound/internal/storage"
 	"github.com/0xdps/daemon-hound/internal/tracker"
@@ -63,26 +64,34 @@ func runTrack(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to save vault state: %w", err)
 	}
 
-	// Commit
+	// Commit and push
 	gitClient := git.NewClient(config.VaultPath())
 	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: track %s (%s)", file.RelPath, file.Namespace)); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
+	}
+	if err := gitClient.Push(); err != nil {
+		return fmt.Errorf("failed to push: %w", err)
 	}
 
 	fmt.Printf("Tracked: %s (%s, mode=%s)\n", args[0], file.Namespace, mode)
 	return nil
 }
 
-// loadContext loads config, vault, and tracker. It prompts for the master password.
+// loadContext loads config, vault, and tracker. It uses the keychain for the master password.
 func loadContext() (*config.Config, *storage.Vault, *tracker.Tracker, error) {
 	cfg := config.NewConfig()
 	if err := cfg.Load(); err != nil {
 		return nil, nil, nil, fmt.Errorf("not initialized: %w", err)
 	}
 
-	password, err := utils.PromptPassword("Master password:")
+	// Try keychain first
+	password, err := keychain.Retrieve()
 	if err != nil {
-		return nil, nil, nil, err
+		// Not in keychain — prompt and store
+		password, err = keychain.PromptAndStore(utils.PromptPassword)
+		if err != nil {
+			return nil, nil, nil, err
+		}
 	}
 
 	encIdentity, err := os.ReadFile(config.IdentityPath())

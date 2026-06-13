@@ -107,15 +107,18 @@ func runSecretSet(cmd *cobra.Command, args []string) error {
 		updatedCount++
 	}
 
-	// Commit
+	// Commit and push
 	gitClient := git.NewClient(config.VaultPath())
 	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: update secret %s", name)); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
 	}
+	if err := gitClient.Push(); err != nil {
+		return fmt.Errorf("failed to push: %w", err)
+	}
 
 	fmt.Printf("Stored secret: %s\n", name)
 	if updatedCount > 0 {
-		fmt.Printf("Updated %d file(s) — run `dh sync` to push changes.\n", updatedCount)
+		fmt.Printf("Updated %d file(s)\n", updatedCount)
 	}
 	return nil
 }
