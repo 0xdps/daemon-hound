@@ -1,0 +1,21 @@
+.goreleaser.yaml
+  s_887a438d94799f::t_74859e641ec6d8 76-77,96-97
+.github/workflows/release.yml
+  s_887a438d94799f::t_2756584dc87e40 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "1775beb65283ef372b21bfc37882f1f32bd5b6db",
+  "prompts": {},
+  "sessions": {
+    "s_887a438d94799f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "04b1d953-d225-4731-906f-64ed6951af28",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
