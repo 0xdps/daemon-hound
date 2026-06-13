@@ -1,0 +1,219 @@
+version: 2
+
+project_name: daemon-hound
+
+before:
+  hooks:
+    - go mod tidy
+    - go generate ./...
+
+builds:
+  - id: dh
+    main: ./cmd/dh
+    binary: dh
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X github.com/0xdps/daemon-hound/internal/cmd.version={{.Version}}
+      - -X github.com/0xdps/daemon-hound/internal/cmd.commit={{.Commit}}
+      - -X github.com/0xdps/daemon-hound/internal/cmd.date={{.Date}}
+
+archives:
+  - id: dh
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+    files:
+      - README.md
+      - LICENSE
+      - CHANGELOG.md
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+brews:
+  - name: daemon-hound
+    repository:
+      owner: 0xdps
+      name: homebrew-packages
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/0xdps/daemon-hound"
+    description: "Opinionated local config and secret management for developers"
+    license: "MIT"
+    test: |
+      system "#{bin}/dh", "--version"
+    install: |
+      bin.install "dh"
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+
+scoops:
+  - name: daemon-hound
+    repository:
+      owner: 0xdps
+      name: scoop-bucket
+      branch: main
+      token: "{{ .Env.GITHUB_TOKEN }}"
+    directory: bucket
+    homepage: "https://github.com/0xdps/daemon-hound"
+    description: "Opinionated local config and secret management for developers"
+    license: MIT
+    depends: ["git"]
+    persist:
+      - "data"
+    shortcuts:
+      - ["dh.exe", "DaemonHound"]
+
+nfpms:
+  - id: packages
+    package_name: daemon-hound
+    vendor: 0xdps
+    homepage: "https://github.com/0xdps/daemon-hound"
+    maintainer: "0xdps <0xdps@users.noreply.github.com>"
+    description: "Opinionated local config and secret management for developers"
+    license: "MIT"
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    dependencies:
+      - git
+    bindir: /usr/bin
+    section: utils
+    priority: optional
+
+aurs:
+  - name: daemon-hound-bin
+    package: daemon-hound
+    homepage: "https://github.com/0xdps/daemon-hound"
+    description: "Opinionated local config and secret management for developers"
+    maintainers:
+      - "0xdps <0xdps@users.noreply.github.com>"
+    license: MIT
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/daemon-hound-bin.git"
+    optdepends:
+      - "git: for vault repository operations"
+    prepare: |
+      install -Dm755 ./dh "$pkgdir/usr/bin/dh"
+      install -Dm644 ./LICENSE "$pkgdir/usr/share/licenses/daemon-hound/LICENSE"
+      install -Dm644 ./README.md "$pkgdir/usr/share/doc/daemon-hound/README.md"
+
+dockers:
+  - image_templates:
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-amd64"
+      - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}-amd64"
+      - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}.{{ .Minor }}-amd64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: amd64
+  - image_templates:
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-arm64"
+      - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}-arm64"
+      - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}.{{ .Minor }}-arm64"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/arm64"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+    goos: linux
+    goarch: arm64
+
+docker_manifests:
+  - name_template: "ghcr.io/0xdps/daemon-hound:{{ .Tag }}"
+    image_templates:
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-amd64"
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/0xdps/daemon-hound:latest"
+    image_templates:
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-amd64"
+      - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-arm64"
+
+release:
+  github:
+    owner: 0xdps
+    name: daemon-hound
+  draft: false
+  prerelease: auto
+  name_template: "{{ .ProjectName }} {{ .Tag }}"
+  header: |
+    ## Installation
+
+    ### macOS / Linux (Homebrew)
+    ```bash
+    brew tap 0xdps/packages
+    brew install daemon-hound
+    ```
+
+    ### Linux (deb/rpm)
+    Download the `.deb` or `.rpm` from the assets below.
+
+    ### Windows (Scoop)
+    ```powershell
+    scoop bucket add daemon-hound https://github.com/0xdps/scoop-bucket
+    scoop install daemon-hound
+    ```
+
+    ### Direct Download
+    Download the binary for your platform from the assets below.
+
+    ### Docker
+    ```bash
+    docker pull ghcr.io/0xdps/daemon-hound:{{ .Tag }}
+    ```
+  footer: |
+    ## Changelog
+
+    See [CHANGELOG.md](https://github.com/0xdps/daemon-hound/blob/main/CHANGELOG.md) for full details.
