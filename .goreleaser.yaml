@@ -73,8 +73,8 @@ brews:
     repository:
       owner: 0xdps
       name: homebrew-packages
-      branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      branch: trunk
+      token: "{{ .Env.GH_PAT }}"
     directory: Formula
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
@@ -93,8 +93,8 @@ scoops:
     repository:
       owner: 0xdps
       name: scoop-bucket
-      branch: main
-      token: "{{ .Env.GITHUB_TOKEN }}"
+      branch: trunk
+      token: "{{ .Env.GH_PAT }}"
     directory: bucket
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
