@@ -7,6 +7,78 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## v1.1.0
+
+### Added
+- **Background Daemon Service** — automatic, always-running synchronization
+  - `dh daemon run` — run daemon in foreground (for testing/debugging)
+  - `dh daemon status` — check if daemon is installed and running
+  - `dh daemon logs` — view recent sync activity logs
+    - `dh daemon logs -f` to follow logs in real-time
+    - `dh daemon logs -n 100` to view last N lines
+  - `dh daemon errors` — view daemon error logs for troubleshooting
+  - `dh daemon stop` — stop the daemon service
+  - `dh daemon restart` — restart the daemon service
+- **Automatic Daemon Installation** — installed during `dh init` with no manual setup required
+  - macOS: Registers with launchd (`~/Library/LaunchAgents/com.daemon-hound.plist`)
+  - Linux: Registers with systemd (`~/.config/systemd/user/daemon-hound.service`)
+  - Windows: Registers with Task Scheduler (`DaemonHound` task)
+  - Auto-starts on system boot
+  - Auto-restarts if crashed
+- **File Watching** — detects local vault changes in real-time
+  - Uses `fsnotify` for efficient OS-level file monitoring
+  - 2-second debounce to batch rapid changes
+  - Ignores `.git` directory and temporary files (ending with `~`)
+  - Automatically commits and pushes changes to remote
+- **Remote Polling** — checks for new commits from remote every 30 seconds
+  - Fetches from remote vault without blocking other operations
+  - Pulls new commits and applies them locally
+  - Detects and resolves merge conflicts automatically
+- **Automatic Conflict Resolution** — handles concurrent edits gracefully
+  - Detects merge conflicts from concurrent changes on multiple machines
+  - Resolves using "local" strategy (keeps local changes as default)
+  - Automatically commits conflict resolution with message `[daemon] Resolve merge conflicts`
+  - Logs conflicted files for audit trail
+  - Extensible to support "remote", "ask", and "merge" strategies in future releases
+- **Log Rotation & Cleanup** — keeps log files manageable
+  - Hourly log rotation checks
+  - Rotates `~/.dh/daemon.log` when exceeding 10MB
+  - Rotates `~/.dh/daemon.error.log` when exceeding 5MB
+  - Rotated files named `daemon.YYYY-MM-DD-HH-MM-SS.log`
+  - Automatically removes logs older than 30 days
+  - Configurable size and retention limits (via config in v1.2.0+)
+- **Comprehensive Logging** — detailed audit trail of all operations
+  - Sync logs with timestamps: "Pulled from remote", "Detected conflicts", etc.
+  - Error logs for troubleshooting: watcher errors, permission issues, etc.
+  - Both logs viewable via `dh daemon logs` and `dh daemon errors` commands
+
+### Changed
+- `dh init` now automatically installs the daemon service
+  - No separate `dh daemon install` command needed
+  - Daemon starts on next system boot automatically
+  - Manual `dh sync` is now optional (daemon syncs continuously)
+- Service registration abstracted to factory pattern
+  - Single `daemon.ServiceManager` interface handles all OS-specific details
+  - Easy to add support for additional service managers in future
+
+### Security
+- Daemon service runs with same user permissions as `dh` CLI (no escalation)
+- Log files stored in `~/.dh/` (user-private directory, mode 0700)
+- Global salt remains plaintext in config (correct design for multi-machine consistency)
+
+### Performance
+- **Local change latency**: ~2-4 seconds (file detection + debounce + commit + push)
+- **Remote change latency**: ~30 seconds (polling interval) + ~2 seconds (pull + apply)
+- **Resource usage**: ~20-30MB memory, minimal CPU when idle, active only during sync operations
+
+### Known Limitations
+- Conflict strategy fixed to "local" in v1.1.0 (configurable in v1.2.0+)
+- Daemon syncs entire vault (partial sync by namespace in v1.2.0+)
+- No real-time collaboration conflict detection (30-second polling is best-effort)
+- Conflict resolution runs silently; no user prompts yet (planned for v1.2.0+)
+
+---
+
 ## v1.0.2
 
 ### Added

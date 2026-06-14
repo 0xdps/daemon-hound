@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/0xdps/daemon-hound/internal/config"
+	"github.com/0xdps/daemon-hound/internal/daemon"
 	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/0xdps/daemon-hound/internal/keychain"
 	"github.com/0xdps/daemon-hound/internal/storage"
@@ -136,7 +137,18 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Warning: failed to store password in keychain: %v\n", err)
 	}
 
-	fmt.Printf("DaemonHound initialized.\n")
+	// Install daemon service for background syncing
+	sm := daemon.NewServiceManager()
+	if err := sm.Install(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to install daemon service: %v\n", err)
+		fmt.Fprintf(os.Stderr, "You can manually start syncing with: dh sync\n")
+	} else {
+		fmt.Println("✓ Background sync daemon installed")
+		fmt.Println("  Auto-starts on system boot")
+		fmt.Println("  Syncs every 30 seconds")
+	}
+
+	fmt.Printf("\nDaemonHound initialized.\n")
 	fmt.Printf("Machine ID: %s\n", cfg.MachineID())
 	fmt.Printf("Vault:      %s\n", vaultPath)
 	fmt.Printf("\n⚠️  Back up %s immediately. Without it, encrypted vault data cannot be recovered.\n", config.IdentityPath())

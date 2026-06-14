@@ -10,6 +10,16 @@ const (
 	ModeBackup FileMode = "backup"
 )
 
+// DaemonConfig holds daemon-specific settings.
+type DaemonConfig struct {
+	WatchInterval    int    `toml:"watch_interval"`     // file watch debounce in seconds (default 2)
+	PollInterval     int    `toml:"poll_interval"`      // remote poll interval in seconds (default 30)
+	ConflictStrategy string `toml:"conflict_strategy"`  // "local" or "ask" (default "ask")
+	MaxLogSize       int    `toml:"max_log_size"`       // max log file size in MB (default 10)
+	MaxErrorLogSize  int    `toml:"max_error_log_size"` // max error log file size in MB (default 5)
+	LogRetentionDays int    `toml:"log_retention_days"` // keep logs for N days (default 30)
+}
+
 // MachineConfig holds per-machine DaemonHound configuration.
 type MachineConfig struct {
 	MachineID    string            `toml:"machine_id"`
@@ -17,6 +27,7 @@ type MachineConfig struct {
 	IdentitySalt string            `toml:"identity_salt,omitempty"` // prefix@postfix salt for identity encryption (global across machines)
 	Bindings     map[string]string `toml:"bindings"`                // namespace -> local absolute path
 	PendingPush  bool              `toml:"pending_push,omitempty"`  // local vault commits not yet pushed to remote
+	Daemon       DaemonConfig      `toml:"daemon"`                  // daemon configuration
 }
 
 // TrackedFile represents a single file tracked by DaemonHound.

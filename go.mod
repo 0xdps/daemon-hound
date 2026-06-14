@@ -7,6 +7,7 @@ require (
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/danieljoos/wincred v1.2.3 // indirect
+	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
