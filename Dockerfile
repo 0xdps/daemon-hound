@@ -1,3 +1,6 @@
+# Multi-stage Dockerfile for local development and CI builds
+# For GoReleaser releases, see Dockerfile.goreleaser which uses pre-built binaries
+#
 # Build stage
 FROM golang:1.23-alpine AS builder
 

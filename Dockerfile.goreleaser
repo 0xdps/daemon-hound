@@ -1,0 +1,19 @@
+# GoReleaser Dockerfile - uses pre-built binary from GoReleaser build context
+FROM alpine:latest
+
+RUN apk add --no-cache git ca-certificates
+
+COPY dh /usr/local/bin/dh
+RUN chmod +x /usr/local/bin/dh
+
+# Create a non-root user for running dh
+RUN adduser -D -s /bin/sh dhuser
+
+# Set up volumes for config and working directory
+VOLUME ["/home/dhuser/.dh", "/work"]
+WORKDIR /work
+
+USER dhuser
+
+ENTRYPOINT ["dh"]
+CMD ["--help"]

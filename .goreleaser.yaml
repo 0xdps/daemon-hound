@@ -129,13 +129,10 @@ dockers:
       - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-amd64"
       - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}-amd64"
       - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}.{{ .Minor }}-amd64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.goreleaser
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
-      - "--build-arg=VERSION={{.Version}}"
-      - "--build-arg=COMMIT={{.FullCommit}}"
-      - "--build-arg=DATE={{.Date}}"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
@@ -146,13 +143,10 @@ dockers:
       - "ghcr.io/0xdps/daemon-hound:{{ .Tag }}-arm64"
       - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}-arm64"
       - "ghcr.io/0xdps/daemon-hound:v{{ .Major }}.{{ .Minor }}-arm64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.goreleaser
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
-      - "--build-arg=VERSION={{.Version}}"
-      - "--build-arg=COMMIT={{.FullCommit}}"
-      - "--build-arg=DATE={{.Date}}"
       - "--label=org.opencontainers.image.created={{.Date}}"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
