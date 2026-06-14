@@ -84,6 +84,17 @@ func (c *Config) VaultRemote() string {
 	return c.data.VaultRemote
 }
 
+// IdentitySalt returns the global identity salt in prefix@postfix format.
+func (c *Config) IdentitySalt() string {
+	return c.data.IdentitySalt
+}
+
+// SetIdentitySalt sets the global identity salt and saves the config.
+func (c *Config) SetIdentitySalt(salt string) error {
+	c.data.IdentitySalt = salt
+	return c.Save()
+}
+
 // PendingPush returns true if there are local vault commits not yet pushed to remote.
 func (c *Config) PendingPush() bool {
 	return c.data.PendingPush

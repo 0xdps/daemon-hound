@@ -126,7 +126,7 @@ func loadContext() (*config.Config, *storage.Vault, *tracker.Tracker, error) {
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to read identity: %w", err)
 	}
-	identityStr, err := utils.DecryptWithPassword(string(encIdentity), password)
+	identityStr, err := utils.DecryptWithPassword(string(encIdentity), password, cfg.IdentitySalt())
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to decrypt identity (wrong password?): %w", err)
 	}

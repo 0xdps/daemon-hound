@@ -72,6 +72,17 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
+	// Generate global identity salt (prefix@postfix) if not already set
+	if cfg.IdentitySalt() == "" {
+		identitySalt, err := utils.GenerateIdentitySalt()
+		if err != nil {
+			return fmt.Errorf("failed to generate identity salt: %w", err)
+		}
+		if err := cfg.SetIdentitySalt(identitySalt); err != nil {
+			return fmt.Errorf("failed to save identity salt: %w", err)
+		}
+	}
+
 	// Prompt for master password with confirmation
 	password, err := utils.PromptPassword("Enter master password (used to encrypt your identity key):")
 	if err != nil {
@@ -94,8 +105,8 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate age identity: %w", err)
 	}
 
-	// Encrypt identity with password using scrypt+AES-GCM
-	encryptedIdentity, err := utils.EncryptWithPassword([]byte(identity.String()), password)
+	// Encrypt identity with password using global salt (scrypt+AES-GCM)
+	encryptedIdentity, err := utils.EncryptWithPassword([]byte(identity.String()), password, cfg.IdentitySalt())
 	if err != nil {
 		return fmt.Errorf("failed to encrypt identity: %w", err)
 	}

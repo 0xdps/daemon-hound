@@ -7,6 +7,28 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## v1.0.2
+
+### Added
+- `dh cleanup` — completely remove DaemonHound from the local machine
+  - Removes `~/.dh/` directory (vault, config, identity, audit log, lock file)
+  - Removes master password from OS keychain
+  - `--force` flag to skip confirmation prompt
+  - Does NOT affect remote vault repository (safe to re-initialize later)
+- Global identity salt with `prefix@postfix` format for multi-machine encryption consistency
+  - New `identity_salt` field in `config.toml` (shared across all machines in vault)
+  - Salt format: `base64(16-byte-prefix)@base64(16-byte-postfix)` = 32-byte salt
+  - Ensures same password + same salt = same encryption key across all machines
+  - Enables proper identity synchronization in multi-machine setups
+  - Generated once during `dh init`, preserved during `dh rekey`
+
+### Changed
+- Identity encryption now requires global salt (removed legacy random-salt mode)
+  - Smaller encrypted identity file (no embedded salt, saves 32 bytes)
+  - All machines must share the same `identity_salt` from config
+
+---
+
 ## v1.0.1
 
 ### Changed

@@ -43,8 +43,8 @@ func runRekey(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Verify current password decrypts the identity.
-	identityBytes, err := utils.DecryptWithPassword(string(encIdentity), current)
+	// Verify current password decrypts the identity (using global salt if available).
+	identityBytes, err := utils.DecryptWithPassword(string(encIdentity), current, cfg.IdentitySalt())
 	if err != nil {
 		return fmt.Errorf("incorrect current password")
 	}
@@ -65,8 +65,8 @@ func runRekey(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("passwords do not match")
 	}
 
-	// Re-encrypt identity with new password.
-	newEncIdentity, err := utils.EncryptWithPassword(identityBytes, newPass)
+	// Re-encrypt identity with new password using existing global salt.
+	newEncIdentity, err := utils.EncryptWithPassword(identityBytes, newPass, cfg.IdentitySalt())
 	if err != nil {
 		return fmt.Errorf("failed to re-encrypt identity: %w", err)
 	}

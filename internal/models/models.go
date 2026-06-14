@@ -12,10 +12,11 @@ const (
 
 // MachineConfig holds per-machine DaemonHound configuration.
 type MachineConfig struct {
-	MachineID   string            `toml:"machine_id"`
-	VaultRemote string            `toml:"vault_remote,omitempty"`
-	Bindings    map[string]string `toml:"bindings"`               // namespace -> local absolute path
-	PendingPush bool              `toml:"pending_push,omitempty"` // local vault commits not yet pushed to remote
+	MachineID    string            `toml:"machine_id"`
+	VaultRemote  string            `toml:"vault_remote,omitempty"`
+	IdentitySalt string            `toml:"identity_salt,omitempty"` // prefix@postfix salt for identity encryption (global across machines)
+	Bindings     map[string]string `toml:"bindings"`                // namespace -> local absolute path
+	PendingPush  bool              `toml:"pending_push,omitempty"`  // local vault commits not yet pushed to remote
 }
 
 // TrackedFile represents a single file tracked by DaemonHound.
