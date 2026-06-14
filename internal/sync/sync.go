@@ -82,8 +82,13 @@ func (s *Syncer) Pull() ([]Result, error) {
 			continue
 		}
 
-		// Only restore if we have a binding for this namespace (or it's global)
-		if file.Namespace != "global" {
+		// For global files, only restore if this machine tracked them
+		if file.Namespace == "global" {
+			if file.MachineID != s.config.MachineID() {
+				continue
+			}
+		} else {
+			// For namespace files, only restore if we have a binding
 			if _, ok := s.config.GetBinding(file.Namespace); !ok {
 				continue
 			}

@@ -7,6 +7,26 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## v1.0.1
+
+### Changed
+- `dh doctor` now displays the configured git remote URL
+  - Updated health checks to explicitly show git remote configuration
+  - Improved clarity by separating "git remote configured" from "vault remote reachable" checks
+
+### Fixed
+- **CRITICAL**: Global files were being restored on all machines instead of only on the machine that tracked them
+  - This caused files like `.zshrc` to be overwritten with stale versions from the vault during `dh sync`
+  - Global files are now always machine-specific with a `MachineID` set during tracking
+  - Pull operation now checks `MachineID` for global files before restoring them
+- Docker build failures in GitHub Actions
+  - Created multi-stage `Dockerfile` that builds from source using `golang:1.23-alpine`
+  - Created `Dockerfile.goreleaser` for releases (uses pre-built binaries from GoReleaser)
+  - Added `GOTOOLCHAIN=auto` to enable automatic Go version downloading for Go 1.26.4
+- Code formatting issues detected by `gofmt` in CI/CD pipeline
+
+---
+
 ## v1.0.0
 
 ### Added

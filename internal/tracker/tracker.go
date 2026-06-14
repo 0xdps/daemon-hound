@@ -99,7 +99,8 @@ func (t *Tracker) Track(localPath string, mode models.FileMode) (*models.Tracked
 		Mode:      mode,
 		Checksum:  checksum,
 	}
-	if mode == models.ModeBackup {
+	// Set MachineID for backup mode OR global files (global files are always machine-specific)
+	if mode == models.ModeBackup || namespace == "global" {
 		file.MachineID = t.config.MachineID()
 	}
 

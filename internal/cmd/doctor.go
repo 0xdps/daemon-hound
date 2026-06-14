@@ -22,6 +22,7 @@ var doctorCmd = &cobra.Command{
   - Config file present and parseable
   - Age identity key present
   - Vault git repository present
+  - Git remote configured
   - Vault remote reachable (network)
   - Local namespace bindings pointing to existing directories
   - Pending push status
@@ -88,7 +89,24 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		fmt.Println(output.OK("Vault is a git repository"))
 	}
 
-	// 5. Remote connectivity
+	// 5. Git remote URL
+	getRemote := exec.Command("git", "-C", config.VaultPath(), "remote", "get-url", "origin")
+	if remoteURL, err := getRemote.Output(); err != nil {
+		fmt.Println(output.Warn("No git remote configured"))
+		if doctorFix {
+			if remote := cfg.VaultRemote(); remote != "" {
+				gc := git.NewClient(config.VaultPath())
+				if err := gc.AddRemote(remote); err == nil {
+					fmt.Println(output.OK(fmt.Sprintf("  → Added remote: %s", remote)))
+				}
+			}
+		}
+		issues++
+	} else {
+		fmt.Println(output.OK(fmt.Sprintf("Git remote: %s", string(remoteURL)[:len(remoteURL)-1]))) // trim newline
+	}
+
+	// 6. Remote connectivity
 	lsRemote := exec.Command("git", "-C", config.VaultPath(), "ls-remote", "--exit-code", "origin")
 	if err := lsRemote.Run(); err != nil {
 		fmt.Println(output.Warn("Cannot reach vault remote (offline or misconfigured?)"))
@@ -96,7 +114,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		fmt.Println(output.OK("Vault remote reachable"))
 	}
 
-	// 6. Namespace bindings
+	// 7. Namespace bindings
 	bindings := cfg.Bindings()
 	if len(bindings) == 0 {
 		fmt.Println(output.OK("No namespace bindings (normal on a fresh machine)"))
@@ -110,7 +128,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// 7. Pending push
+	// 8. Pending push
 	if cfg.PendingPush() {
 		fmt.Println(output.Warn("Pending push: local vault commits have not yet been pushed to remote"))
 		issues++
