@@ -1,0 +1,41 @@
+internal/cmd/rekey.go
+  s_6c2b61eb5496bc::t_d3646cf2df355c 46-47,68-69
+internal/models/models.go
+  s_6c2b61eb5496bc::t_d3646cf2df355c 15-19
+CHANGELOG.md
+  s_6c2b61eb5496bc::t_d0db96227fddc0 29-31
+  s_6c2b61eb5496bc::t_e21a69e9a42b46 10
+  s_6c2b61eb5496bc::t_1a6250be193d5c 12-28
+internal/utils/crypto.go
+  s_6c2b61eb5496bc::t_d3646cf2df355c 11,17-24,27-62
+  s_6c2b61eb5496bc::t_f26fa046f482e4 64-71,95,99-101,107,111-118,145-146
+internal/cmd/cleanup.go
+  s_6c2b61eb5496bc::t_282a71be9e3055 9,88,97-100
+  s_6c2b61eb5496bc::t_18980b39ea1975 1-8,10-87,89-96,101-103
+internal/cmd/init.go
+  s_6c2b61eb5496bc::t_d3646cf2df355c 75-85,108-109
+internal/utils/crypto_test.go
+  s_6c2b61eb5496bc::t_a93e73c2153a3c 42-44,46
+  s_6c2b61eb5496bc::t_58195d466940a9 89,112,114,119,123
+  s_6c2b61eb5496bc::t_5f2029ffcb05fe 12-19,27-28,37,41,45,47-71,77,79-80,84,91,95,99
+internal/cmd/track.go
+  s_6c2b61eb5496bc::t_69635ec812a725 129
+internal/config/config.go
+  s_6c2b61eb5496bc::t_d3646cf2df355c 87-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b4f832b51f360953b9a1d730bc89089e885cab8c",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
