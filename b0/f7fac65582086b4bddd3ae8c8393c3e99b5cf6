@@ -1,0 +1,27 @@
+internal/cmd/doctor.go
+  s_6c2b61eb5496bc::t_aa14bcbe2a41ea 25
+  s_6c2b61eb5496bc::t_a42aeb922442d0 117,131
+  s_6c2b61eb5496bc::t_3601118b733403 92-109
+internal/sync/sync.go
+  s_6c2b61eb5496bc::t_1c92a7835d8e5e 85-91
+internal/tracker/tracker.go
+  s_6c2b61eb5496bc::t_1c92a7835d8e5e 102-103
+CHANGELOG.md
+  s_6c2b61eb5496bc::t_00d20312d1cadc 10-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b0f7fac65582086b4bddd3ae8c8393c3e99b5cf6",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
