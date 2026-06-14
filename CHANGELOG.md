@@ -7,7 +7,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## v1.0.0
 
 ### Added
 - `dh init` — initialize vault, generate age identity, clone or create vault repo
