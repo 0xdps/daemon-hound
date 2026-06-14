@@ -178,3 +178,54 @@ func TestTrackerRestoreGlobal(t *testing.T) {
 		t.Errorf("Restored content mismatch: got %q, want %q", content, plaintext)
 	}
 }
+
+func TestTrackerStatusNew(t *testing.T) {
+	tmpDir := t.TempDir()
+	identity, _ := storage.GenerateIdentity()
+	vault := storage.NewVault(tmpDir, identity)
+	cfg := &mockConfig{
+		machineID: "test-machine",
+		bindings:  map[string]string{"github.com/test/repo": tmpDir},
+	}
+	tr := NewTracker(vault, cfg)
+
+	testFile := filepath.Join(tmpDir, ".env.new")
+	if err := os.WriteFile(testFile, []byte("NEW=1"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	file := models.TrackedFile{
+		Namespace: "github.com/test/repo",
+		RelPath:   ".env.new",
+		Mode:      models.ModeSync,
+		Checksum:  "",
+	}
+	status, err := tr.Status(file)
+	if err != nil {
+		t.Fatalf("Status failed: %v", err)
+	}
+	if status != models.StatusNew {
+		t.Errorf("Expected StatusNew for empty checksum, got %s", status)
+	}
+}
+
+func TestTrackerResolveKeyGlobal(t *testing.T) {
+	tmpDir := t.TempDir()
+	identity, _ := storage.GenerateIdentity()
+	vault := storage.NewVault(tmpDir, identity)
+	cfg := &mockConfig{machineID: "m", bindings: map[string]string{}}
+	tr := NewTracker(vault, cfg)
+
+	home, _ := os.UserHomeDir()
+	testFile := filepath.Join(home, ".zshrc")
+
+	ns, rel, err := tr.ResolveKey(testFile)
+	if err != nil {
+		t.Fatalf("ResolveKey failed: %v", err)
+	}
+	if ns != "global" {
+		t.Errorf("namespace = %q, want global", ns)
+	}
+	if rel != ".zshrc" {
+		t.Errorf("relPath = %q, want .zshrc", rel)
+	}
+}

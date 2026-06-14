@@ -46,12 +46,13 @@ func (c *Config) Load() error {
 	return nil
 }
 
-// Init creates a new config with a generated machine UUID.
-func (c *Config) Init() error {
+// Init creates a new config with a generated machine UUID and the given vault remote.
+func (c *Config) Init(vaultRemote string) error {
 	if err := os.MkdirAll(filepath.Dir(c.path), 0700); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 	c.data.MachineID = uuid.New().String()
+	c.data.VaultRemote = vaultRemote
 	c.data.Bindings = make(map[string]string)
 	c.loaded = true
 	return c.Save()
@@ -76,6 +77,22 @@ func (c *Config) Save() error {
 // MachineID returns the stable machine UUID.
 func (c *Config) MachineID() string {
 	return c.data.MachineID
+}
+
+// VaultRemote returns the configured vault repository remote URL.
+func (c *Config) VaultRemote() string {
+	return c.data.VaultRemote
+}
+
+// PendingPush returns true if there are local vault commits not yet pushed to remote.
+func (c *Config) PendingPush() bool {
+	return c.data.PendingPush
+}
+
+// SetPendingPush records whether there are local commits pending a push to remote.
+func (c *Config) SetPendingPush(pending bool) error {
+	c.data.PendingPush = pending
+	return c.Save()
 }
 
 // SetBinding records the local absolute path for a namespace.
@@ -115,7 +132,7 @@ func VaultPath() string {
 	return filepath.Join(AppDir(), "vault")
 }
 
-// StateFilePath returns the path to the vault state file.
+// StateFilePath returns the path to the encrypted vault state file.
 func StateFilePath() string {
-	return filepath.Join(VaultPath(), "state.toml")
+	return filepath.Join(VaultPath(), "state.toml.age")
 }

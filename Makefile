@@ -42,6 +42,17 @@ snapshot:
 release:
 	goreleaser release --clean
 
+.PHONY: tag
+tag:
+ifndef TAG
+	@echo "Error: TAG is required. Usage: make tag TAG=v1.0.0"
+	@exit 1
+endif
+	@echo "Creating and pushing tag $(TAG)..."
+	git tag -a $(TAG) -m "Release $(TAG)"
+	git push origin $(TAG)
+	@echo "✓ Tag $(TAG) created and pushed"
+
 .PHONY: docker-build
 docker-build:
 	docker build -t ghcr.io/0xdps/daemon-hound:latest .

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -149,4 +150,17 @@ func GetGitOrigin(repoPath string) (string, error) {
 		return "", fmt.Errorf("no origin remote found")
 	}
 	return matches[1], nil
+}
+
+// IsGitIgnored reports whether relPath is git-ignored in repoRoot.
+// Uses "git check-ignore" so it respects nested .gitignore files.
+func IsGitIgnored(repoRoot, relPath string) bool {
+	cmd := exec.Command("git", "-C", repoRoot, "check-ignore", "-q", relPath)
+	return cmd.Run() == nil
+}
+
+// IsTrackedInGit reports whether relPath is currently tracked by git in repoRoot.
+func IsTrackedInGit(repoRoot, relPath string) bool {
+	cmd := exec.Command("git", "-C", repoRoot, "ls-files", "--error-unmatch", relPath)
+	return cmd.Run() == nil
 }

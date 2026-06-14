@@ -74,23 +74,44 @@ func (v *Vault) Decrypt(ciphertext []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// VaultStatePath returns the path to the vault state file.
+// VaultStatePath returns the path to the encrypted vault state file.
 func (v *Vault) VaultStatePath() string {
+	return filepath.Join(v.path, "state.toml.age")
+}
+
+// legacyStatePath returns the old unencrypted state path (for migration).
+func (v *Vault) legacyStatePath() string {
 	return filepath.Join(v.path, "state.toml")
 }
 
-// LoadState reads the vault state from disk. Returns a fresh state if not found.
+// LoadState reads and decrypts the vault state from disk.
+// Falls back to the legacy unencrypted state.toml for seamless migration.
+// Returns a fresh state if neither file is found.
 func (v *Vault) LoadState() (*models.VaultState, error) {
 	state := &models.VaultState{
 		Version: "1",
 		Files:   make(map[string]models.TrackedFile),
 		Secrets: make(map[string]models.Secret),
 	}
-	path := v.VaultStatePath()
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+
+	var data []byte
+
+	if enc, err := os.ReadFile(v.VaultStatePath()); err == nil {
+		// Encrypted state file found — decrypt it.
+		plain, decErr := v.Decrypt(enc)
+		if decErr != nil {
+			return nil, fmt.Errorf("failed to decrypt vault state: %w", decErr)
+		}
+		data = plain
+	} else if plain, legacyErr := os.ReadFile(v.legacyStatePath()); legacyErr == nil {
+		// Legacy unencrypted state.toml — will be migrated on next SaveState.
+		data = plain
+	} else {
+		// No state file yet — return empty state.
 		return state, nil
 	}
-	if _, err := toml.DecodeFile(path, state); err != nil {
+
+	if _, err := toml.Decode(string(data), state); err != nil {
 		return nil, fmt.Errorf("failed to decode vault state: %w", err)
 	}
 	if state.Files == nil {
@@ -102,19 +123,37 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 	return state, nil
 }
 
-// SaveState writes the vault state to disk.
+// SaveState encrypts and writes the vault state to disk.
+// Any legacy plain state.toml is removed after a successful write.
 func (v *Vault) SaveState(state *models.VaultState) error {
 	if err := os.MkdirAll(v.path, 0755); err != nil {
 		return fmt.Errorf("failed to create vault directory: %w", err)
 	}
-	f, err := os.OpenFile(v.VaultStatePath(), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("failed to open vault state file: %w", err)
-	}
-	defer f.Close()
-	if err := toml.NewEncoder(f).Encode(state); err != nil {
+
+	// Encode to TOML in memory.
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(state); err != nil {
 		return fmt.Errorf("failed to encode vault state: %w", err)
 	}
+
+	// Encrypt the TOML bytes.
+	enc, err := v.Encrypt(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to encrypt vault state: %w", err)
+	}
+
+	// Write atomically via a temp file.
+	tmp := v.VaultStatePath() + ".tmp"
+	if err := os.WriteFile(tmp, enc, 0600); err != nil {
+		return fmt.Errorf("failed to write vault state: %w", err)
+	}
+	if err := os.Rename(tmp, v.VaultStatePath()); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("failed to commit vault state: %w", err)
+	}
+
+	// Remove legacy plain state.toml if it still exists.
+	_ = os.Remove(v.legacyStatePath())
 	return nil
 }
 

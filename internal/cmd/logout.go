@@ -22,7 +22,12 @@ func init() {
 
 func runLogout(cmd *cobra.Command, args []string) error {
 	if err := keychain.Delete(); err != nil {
-		return fmt.Errorf("failed to remove password from keychain: %w", err)
+		// Treat "not found" as already logged out rather than an error.
+		if keychain.IsSet() {
+			return fmt.Errorf("failed to remove password from keychain: %w", err)
+		}
+		fmt.Println("Already logged out (no password stored in keychain).")
+		return nil
 	}
 	fmt.Println("Master password removed from keychain.")
 	return nil

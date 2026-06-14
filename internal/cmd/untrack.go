@@ -2,11 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 
+	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
-	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -29,38 +28,16 @@ func init() {
 }
 
 func runUntrack(cmd *cobra.Command, args []string) error {
-	_, vault, _, err := loadContext()
+	defer mustLock()()
+	_, vault, tr, err := loadContext()
 	if err != nil {
 		return err
 	}
 
-	localPath, err := utils.NormalizePath(args[0])
+	// Resolve namespace and relative path via tracker (avoids duplicating logic)
+	namespace, relPath, err := tr.ResolveKey(args[0])
 	if err != nil {
-		return err
-	}
-
-	// Determine namespace and relative path
-	var namespace, relPath string
-	if utils.IsInsideGitRepo(filepath.Dir(localPath)) {
-		repoRoot, err := utils.FindGitRoot(filepath.Dir(localPath))
-		if err != nil {
-			return err
-		}
-		origin, err := utils.GetGitOrigin(repoRoot)
-		if err != nil {
-			return fmt.Errorf("failed to get git origin: %w", err)
-		}
-		namespace, err = utils.DeriveNamespace(origin)
-		if err != nil {
-			return fmt.Errorf("failed to derive namespace: %w", err)
-		}
-		relPath, err = utils.RelPath(repoRoot, localPath)
-		if err != nil {
-			return err
-		}
-	} else {
-		namespace = "global"
-		relPath = filepath.Base(localPath)
+		return fmt.Errorf("failed to resolve file key: %w", err)
 	}
 
 	// Load vault state
@@ -86,13 +63,17 @@ func runUntrack(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to save vault state: %w", err)
 	}
 
-	// Commit
+	// Commit and push
 	gitClient := git.NewClient(config.VaultPath())
 	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: untrack %s (%s)", relPath, namespace)); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
 	}
+	if err := gitClient.Push(); err != nil {
+		return fmt.Errorf("failed to push: %w", err)
+	}
 
 	fmt.Printf("Untracked: %s (%s)\n", args[0], namespace)
 	fmt.Println("Note: the local file was not deleted.")
+	audit.Log("untrack", fmt.Sprintf("%s:%s", namespace, relPath))
 	return nil
 }

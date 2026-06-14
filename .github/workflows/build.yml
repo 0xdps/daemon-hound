@@ -104,6 +104,10 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
           tags: ghcr.io/0xdps/daemon-hound:build-test
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ github.sha }}
+            DATE=${{ github.event.head_commit.timestamp }}
 
   goreleaser-check:
     name: GoReleaser Config Check

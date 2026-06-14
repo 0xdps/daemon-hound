@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/0xdps/daemon-hound/internal/keychain"
@@ -38,7 +39,9 @@ func init() {
 }
 
 func runTrack(cmd *cobra.Command, args []string) error {
-	_, vault, tr, err := loadContext()
+	defer mustLock()()
+
+	cfg, vault, tr, err := loadContext()
 	if err != nil {
 		return err
 	}
@@ -48,17 +51,29 @@ func runTrack(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid mode: %s (must be 'sync' or 'backup')", trackMode)
 	}
 
+	// Load state first so we can check for idempotency before encrypting.
+	state, err := vault.LoadState()
+	if err != nil {
+		return fmt.Errorf("failed to load vault state: %w", err)
+	}
+
+	ns, rel, err := tr.ResolveKey(args[0])
+	if err != nil {
+		return fmt.Errorf("failed to resolve file key: %w", err)
+	}
+	key := ns + ":" + rel
+
+	if existing, exists := state.Files[key]; exists {
+		fmt.Printf("Already tracked: %s (%s, mode=%s)\n", args[0], existing.Namespace, existing.Mode)
+		return nil
+	}
+
 	file, err := tr.Track(args[0], mode)
 	if err != nil {
 		return err
 	}
 
 	// Update vault state
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-	key := file.Namespace + ":" + file.RelPath
 	state.Files[key] = *file
 	if err := vault.SaveState(state); err != nil {
 		return fmt.Errorf("failed to save vault state: %w", err)
@@ -74,6 +89,19 @@ func runTrack(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Tracked: %s (%s, mode=%s)\n", args[0], file.Namespace, mode)
+
+	// Warn if the file is not gitignored — secrets should never be in git history.
+	if ns != "global" {
+		if repoRoot, ok := cfg.GetBinding(ns); ok {
+			if utils.IsTrackedInGit(repoRoot, rel) {
+				fmt.Fprintf(os.Stderr, "Warning: %s is tracked in git — its plaintext contents may be in git history\n", rel)
+			} else if !utils.IsGitIgnored(repoRoot, rel) {
+				fmt.Fprintf(os.Stderr, "Tip: consider adding %s to .gitignore\n", rel)
+			}
+		}
+	}
+
+	audit.Log("track", fmt.Sprintf("%s:%s (mode=%s)", ns, rel, mode))
 	return nil
 }
 

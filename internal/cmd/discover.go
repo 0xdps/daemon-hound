@@ -1,18 +1,22 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
+	"github.com/0xdps/daemon-hound/internal/output"
 	"github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
 )
 
 var discoverDepth int
+var discoverOutput string
 
 var discoverCmd = &cobra.Command{
 	Use:   "discover [path]",
@@ -29,10 +33,12 @@ Example:
 
 func init() {
 	discoverCmd.Flags().IntVar(&discoverDepth, "depth", 4, "Maximum directory depth to scan")
+	discoverCmd.Flags().StringVar(&discoverOutput, "output", "table", "Output format: table or json")
 	rootCmd.AddCommand(discoverCmd)
 }
 
 func runDiscover(cmd *cobra.Command, args []string) error {
+	defer mustLock()()
 	scanPath := "."
 	if len(args) > 0 {
 		scanPath = args[0]
@@ -123,21 +129,34 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 			return filepath.SkipDir
 		}
 
+		// Count tracked files for this namespace from vault state
+		fileCount := 0
+		for _, f := range state.Files {
+			if f.Namespace == ns {
+				fileCount++
+			}
+		}
+
 		gitClient := git.NewClient(config.VaultPath())
 		syncer := sync.NewSyncer(vault, tr, gitClient, cfg)
-		results, err := syncer.Sync()
-		if err != nil {
+		var syncErr error
+		_, syncErr = syncer.Sync()
+		if syncErr != nil {
 			found = append(found, struct {
 				ns     string
 				root   string
 				status string
-			}{ns, path, "sync error: " + err.Error()})
+			}{ns, path, "sync error: " + syncErr.Error()})
 		} else {
+			noun := "file"
+			if fileCount != 1 {
+				noun = "files"
+			}
 			found = append(found, struct {
 				ns     string
 				root   string
 				status string
-			}{ns, path, fmt.Sprintf("%d files synced", len(results))})
+			}{ns, path, fmt.Sprintf("%d tracked %s  ✓ synced", fileCount, noun)})
 		}
 
 		return filepath.SkipDir
@@ -146,8 +165,35 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	for _, f := range found {
-		fmt.Printf("%-40s  %s\n", f.ns, f.status)
+	if discoverOutput == "json" {
+		type jsonEntry struct {
+			Namespace string `json:"namespace"`
+			Root      string `json:"root"`
+			Status    string `json:"status"`
+		}
+		var entries []jsonEntry
+		for _, f := range found {
+			entries = append(entries, jsonEntry{f.ns, f.root, f.status})
+		}
+		data, _ := json.MarshalIndent(entries, "", "  ")
+		fmt.Println(string(data))
+		return nil
 	}
+	for _, f := range found {
+		statusStr := f.status
+		if f.status == "not in vault" {
+			statusStr = output.Dim(f.status)
+		} else if f.root != "" {
+			statusStr = output.Green(f.status)
+		}
+		fmt.Printf("%-40s  %s\n", f.ns, statusStr)
+	}
+	synced := 0
+	for _, f := range found {
+		if f.root != "" && f.status != "not in vault" {
+			synced++
+		}
+	}
+	audit.Log("discover", fmt.Sprintf("path=%s synced=%d", scanPath, synced))
 	return nil
 }

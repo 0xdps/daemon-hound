@@ -13,6 +13,7 @@ import (
 )
 
 var initRemote string
+var initForce bool
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -29,6 +30,7 @@ This command:
 
 func init() {
 	initCmd.Flags().StringVar(&initRemote, "remote", "", "Git URL of the private vault repository")
+	initCmd.Flags().BoolVar(&initForce, "force", false, "Re-initialize even if already set up on this machine")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -37,30 +39,53 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Check if already initialized
 	if err := cfg.Load(); err == nil {
-		return fmt.Errorf("daemon-hound already initialized (machine_id: %s)", cfg.MachineID())
+		if !initForce {
+			return fmt.Errorf("daemon-hound already initialized (machine_id: %s). Use --force to re-initialize", cfg.MachineID())
+		}
+		fmt.Fprintf(os.Stderr, "Warning: re-initializing — previous machine_id %s will be replaced.\n", cfg.MachineID())
 	}
 
 	// Prompt for remote if not provided
 	if initRemote == "" {
-		remote, err := utils.PromptInput("Vault repository URL (e.g. git@github.com:you/vault.git):")
+		// Pre-fill with existing remote if re-initializing
+		defaultRemote := ""
+		if initForce {
+			_ = cfg.Load()
+			defaultRemote = cfg.VaultRemote()
+		}
+		promptMsg := "Vault repository URL (e.g. git@github.com:you/vault.git):"
+		if defaultRemote != "" {
+			promptMsg = fmt.Sprintf("Vault repository URL [%s]:", defaultRemote)
+		}
+		remote, err := utils.PromptInput(promptMsg)
 		if err != nil {
 			return err
+		}
+		if remote == "" && defaultRemote != "" {
+			remote = defaultRemote
 		}
 		initRemote = remote
 	}
 
-	// Initialize config
-	if err := cfg.Init(); err != nil {
+	// Initialize config (saves machine UUID and vault remote)
+	if err := cfg.Init(initRemote); err != nil {
 		return fmt.Errorf("failed to initialize config: %w", err)
 	}
 
-	// Prompt for master password
+	// Prompt for master password with confirmation
 	password, err := utils.PromptPassword("Enter master password (used to encrypt your identity key):")
 	if err != nil {
 		return err
 	}
 	if password == "" {
 		return fmt.Errorf("master password cannot be empty")
+	}
+	confirm, err := utils.PromptPassword("Confirm master password:")
+	if err != nil {
+		return err
+	}
+	if password != confirm {
+		return fmt.Errorf("passwords do not match")
 	}
 
 	// Generate age identity

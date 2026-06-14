@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/0xdps/daemon-hound/internal/models"
 	"github.com/0xdps/daemon-hound/internal/storage"
@@ -67,9 +68,18 @@ func (t *Tracker) Track(localPath string, mode models.FileMode) (*models.Tracked
 			return nil, fmt.Errorf("failed to save binding: %w", err)
 		}
 	} else {
-		// Global file
+		// Global file — store path relative to $HOME to preserve subdirectory structure.
 		namespace = "global"
-		relPath = filepath.Base(localPath)
+		home, homeErr := os.UserHomeDir()
+		if homeErr != nil {
+			return nil, fmt.Errorf("failed to get home directory: %w", homeErr)
+		}
+		rel, relErr := filepath.Rel(home, localPath)
+		if relErr != nil || strings.HasPrefix(rel, "..") {
+			// File is outside $HOME — fall back to base name.
+			rel = filepath.Base(localPath)
+		}
+		relPath = rel
 	}
 
 	// Read and encrypt file
@@ -109,6 +119,11 @@ func (t *Tracker) Status(file models.TrackedFile) (models.DirtyStatus, error) {
 
 	if _, err := os.Stat(localPath); os.IsNotExist(err) {
 		return models.StatusMissing, nil
+	}
+
+	// No checksum stored yet — file tracked but never synced
+	if file.Checksum == "" {
+		return models.StatusNew, nil
 	}
 
 	checksum, err := utils.FileChecksum(localPath)
@@ -160,4 +175,42 @@ func (t *Tracker) resolveLocalPath(file models.TrackedFile) (string, error) {
 		return "", fmt.Errorf("no local binding for namespace %s", file.Namespace)
 	}
 	return filepath.Join(root, file.RelPath), nil
+}
+
+// ResolveKey determines the vault state key (namespace:relPath) for a local file path
+// without performing any writes or encryption.
+func (t *Tracker) ResolveKey(localPath string) (namespace, relPath string, err error) {
+	localPath, err = utils.NormalizePath(localPath)
+	if err != nil {
+		return
+	}
+	if utils.IsInsideGitRepo(filepath.Dir(localPath)) {
+		var repoRoot, origin string
+		repoRoot, err = utils.FindGitRoot(filepath.Dir(localPath))
+		if err != nil {
+			return
+		}
+		origin, err = utils.GetGitOrigin(repoRoot)
+		if err != nil {
+			return
+		}
+		namespace, err = utils.DeriveNamespace(origin)
+		if err != nil {
+			return
+		}
+		relPath, err = utils.RelPath(repoRoot, localPath)
+		return
+	}
+	namespace = "global"
+	home, homeErr := os.UserHomeDir()
+	if homeErr != nil {
+		err = fmt.Errorf("failed to get home directory: %w", homeErr)
+		return
+	}
+	rel, relErr := filepath.Rel(home, localPath)
+	if relErr != nil || strings.HasPrefix(rel, "..") {
+		rel = filepath.Base(localPath)
+	}
+	relPath = rel
+	return
 }
