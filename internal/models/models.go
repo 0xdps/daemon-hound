@@ -14,7 +14,7 @@ const (
 type MachineConfig struct {
 	MachineID   string            `toml:"machine_id"`
 	VaultRemote string            `toml:"vault_remote,omitempty"`
-	Bindings    map[string]string `toml:"bindings"` // namespace -> local absolute path
+	Bindings    map[string]string `toml:"bindings"`               // namespace -> local absolute path
 	PendingPush bool              `toml:"pending_push,omitempty"` // local vault commits not yet pushed to remote
 }
 

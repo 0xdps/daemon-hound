@@ -75,9 +75,9 @@ func runExport(cmd *cobra.Command, args []string) error {
 
 	// Export secrets.
 	type secretExport struct {
-		Name  string              `json:"name"`
-		Value string              `json:"value"`
-		Refs  []models.SecretRef  `json:"refs,omitempty"`
+		Name  string             `json:"name"`
+		Value string             `json:"value"`
+		Refs  []models.SecretRef `json:"refs,omitempty"`
 	}
 	var secrets []secretExport
 	for name, secret := range state.Secrets {

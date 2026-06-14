@@ -52,4 +52,3 @@ func mustLock() func() {
 	}
 	return l.Release
 }
-

@@ -491,4 +491,3 @@ func updateFileWithSecret(cfg *config.Config, ref models.SecretRef, value string
 	}
 	return nil
 }
-
