@@ -29,7 +29,16 @@ var daemonRunCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		runner, err := daemon.NewRunner(cfg)
+		// Load vault identity for smart conflict resolution (best-effort).
+		// If the identity cannot be loaded the daemon still runs, but conflicts
+		// fall back to recording them for manual user resolution.
+		_, vault, _, err := loadContext()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not load vault identity (%v) — smart merge disabled\n", err)
+			vault = nil
+		}
+
+		runner, err := daemon.NewRunner(cfg, vault)
 		if err != nil {
 			return fmt.Errorf("failed to create daemon runner: %w", err)
 		}

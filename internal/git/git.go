@@ -203,3 +203,49 @@ func (c *Client) GetConflictedFiles() ([]string, error) {
 
 	return conflicted, nil
 }
+
+// GetConflictVersions retrieves the three git-staged versions of a conflicted file:
+//   - base  (:1:) — the common ancestor (before both machines diverged)
+//   - local (:2:) — our (local) version
+//   - remote(:3:) — their (remote) version
+//
+// filename must be relative to the vault repository root (e.g. "state.toml.age").
+func (c *Client) GetConflictVersions(filename string) (base, local, remote []byte, err error) {
+	get := func(stage int) ([]byte, error) {
+		ref := fmt.Sprintf(":%d:%s", stage, filename)
+		cmd := exec.Command("git", "-C", c.vaultPath, "show", ref)
+		out, e := cmd.Output()
+		if e != nil {
+			return nil, fmt.Errorf("git show %s: %w", ref, e)
+		}
+		return out, nil
+	}
+
+	base, err = get(1)
+	if err != nil {
+		return
+	}
+	local, err = get(2)
+	if err != nil {
+		return
+	}
+	remote, err = get(3)
+	return
+}
+
+// StageFile writes content to a file in the vault and marks it as resolved in git.
+// Used after smart merge to replace the conflicted file with the merged result.
+func (c *Client) StageFile(filename string, content []byte) error {
+	path := filepath.Join(c.vaultPath, filename)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return fmt.Errorf("mkdir for staged file: %w", err)
+	}
+	if err := os.WriteFile(path, content, 0644); err != nil {
+		return fmt.Errorf("write staged file: %w", err)
+	}
+	cmd := exec.Command("git", "-C", c.vaultPath, "add", filename)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git add %s: %w\n%s", filename, err, string(out))
+	}
+	return nil
+}
