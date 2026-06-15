@@ -12,6 +12,8 @@ Thumbs.db
 /target/
 /dist/
 /build/
+/bin/
+/obj/
 *.o
 *.a
 
