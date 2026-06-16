@@ -82,13 +82,21 @@ func (c *Client) Push() error {
 }
 
 // CommitAll stages all changes and commits with the given message.
+// The current hostname is appended to every message so it's clear which
+// machine originated the change, e.g.: "daemon-hound: sync [myhost]"
 func (c *Client) CommitAll(message string) error {
 	cmd := exec.Command("git", "-C", c.vaultPath, "add", "-A")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git add failed: %w\n%s", err, string(out))
 	}
 
-	cmd = exec.Command("git", "-C", c.vaultPath, "commit", "-m", message)
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		host = "unknown"
+	}
+	fullMessage := fmt.Sprintf("%s [%s]", message, host)
+
+	cmd = exec.Command("git", "-C", c.vaultPath, "commit", "-m", fullMessage)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		s := string(out)
