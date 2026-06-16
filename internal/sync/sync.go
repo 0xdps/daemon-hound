@@ -77,8 +77,7 @@ func (s *Syncer) Pull() ([]Result, error) {
 	}
 
 	var results []Result
-	stateModified := false
-	for key, file := range state.Files {
+	for _, file := range state.Files {
 		if !s.shouldProcess(file) {
 			continue
 		}
@@ -101,27 +100,15 @@ func (s *Syncer) Pull() ([]Result, error) {
 			continue
 		}
 
-		// Update checksum after restore
-		checksum, err := utils.FileChecksum(localPath)
-		if err != nil {
-			results = append(results, Result{File: file, Action: "error", Error: err})
-			continue
-		}
-		file.Checksum = checksum
-		file.LastSyncAt = time.Now()
-		state.Files[key] = file
-		stateModified = true
+		// The remote state.toml.age already contains the authoritative checksum
+		// written by the pushing machine. After Restore() the local file has
+		// exactly that content, so there is nothing to write back to state.
+		// We must NOT update LastSyncAt here — doing so would dirty state on
+		// every pull and generate a spurious commit that bounces forever
+		// between machines (A pulls → new timestamp → commits → B pulls → ...).
+		_ = localPath
 
 		results = append(results, Result{File: file, Action: "pulled"})
-	}
-
-	// Only persist state if we actually restored files — avoids a spurious
-	// age-encrypted write (different nonce every call) that would create an
-	// unnecessary git commit on every sync even when nothing changed.
-	if stateModified {
-		if err := s.vault.SaveState(state); err != nil {
-			return results, fmt.Errorf("failed to save vault state: %w", err)
-		}
 	}
 
 	return results, nil
