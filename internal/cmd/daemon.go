@@ -10,6 +10,8 @@ import (
 
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/daemon"
+	"github.com/0xdps/daemon-hound/internal/git"
+	dhsync "github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -29,16 +31,20 @@ var daemonRunCmd = &cobra.Command{
 			return fmt.Errorf("failed to load config: %w", err)
 		}
 
-		// Load vault identity for smart conflict resolution (best-effort).
-		// If the identity cannot be loaded the daemon still runs, but conflicts
-		// fall back to recording them for manual user resolution.
-		_, vault, _, err := loadContext()
+		// Load vault identity for smart conflict resolution and dirty-file encryption (best-effort).
+		// If the identity cannot be loaded the daemon still runs, but dirty-file encryption
+		// and smart merge are disabled until the next restart.
+		cfg2, vault, tr, err := loadContext()
+		var syncer *dhsync.Syncer
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: could not load vault identity (%v) — smart merge disabled\n", err)
+			fmt.Fprintf(os.Stderr, "Warning: could not load vault identity (%v) — file sync and smart merge disabled\n", err)
 			vault = nil
+		} else {
+			gc := git.NewClient(config.VaultPath())
+			syncer = dhsync.NewSyncer(vault, tr, gc, cfg2)
 		}
 
-		runner, err := daemon.NewRunner(cfg, vault)
+		runner, err := daemon.NewRunner(cfg, vault, syncer)
 		if err != nil {
 			return fmt.Errorf("failed to create daemon runner: %w", err)
 		}

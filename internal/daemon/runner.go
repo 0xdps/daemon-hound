@@ -17,6 +17,7 @@ import (
 	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/0xdps/daemon-hound/internal/merge"
 	"github.com/0xdps/daemon-hound/internal/storage"
+	dhsync "github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -24,6 +25,7 @@ import (
 type Runner struct {
 	cfg        *config.Config
 	vault      *storage.Vault // nil if identity could not be loaded
+	syncer     *dhsync.Syncer // nil if identity could not be loaded
 	logger     *log.Logger
 	errFile    *os.File
 	watcher    *fsnotify.Watcher
@@ -34,8 +36,9 @@ type Runner struct {
 }
 
 // NewRunner creates a new daemon runner.
-// vault may be nil when the identity cannot be loaded; smart merge is skipped in that case.
-func NewRunner(cfg *config.Config, vault *storage.Vault) (*Runner, error) {
+// vault and syncer may be nil when the identity cannot be loaded; dirty-file encryption
+// and smart merge are skipped in that case.
+func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) (*Runner, error) {
 	logPath, err := getLogPath()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get log path: %w", err)
@@ -66,6 +69,7 @@ func NewRunner(cfg *config.Config, vault *storage.Vault) (*Runner, error) {
 	return &Runner{
 		cfg:        cfg,
 		vault:      vault,
+		syncer:     syncer,
 		logger:     logger,
 		errFile:    errFile,
 		watcher:    watcher,
@@ -110,11 +114,16 @@ func (r *Runner) Run(ctx context.Context) error {
 	logRotateTicker := time.NewTicker(1 * time.Hour)
 	defer logRotateTicker.Stop()
 
+	// Watch tracked file directories so local edits trigger an immediate sync.
+	r.refreshTrackedWatches()
+
 	// Initial sync
 	r.logger.Println("Performing initial sync...")
 	if err := r.performSync(); err != nil {
 		r.logger.Printf("Initial sync failed: %v", err)
 	}
+	// Refresh watches after initial sync in case new files were pulled.
+	r.refreshTrackedWatches()
 
 	// Main loop
 	for {
@@ -152,6 +161,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			if err := r.performSync(); err != nil {
 				r.logger.Printf("Scheduled poll failed: %v", err)
 			}
+			r.refreshTrackedWatches()
 
 		case <-logRotateTicker.C:
 			if err := r.logRotator.Rotate(); err != nil {
@@ -168,20 +178,15 @@ func (r *Runner) Stop() {
 
 // isRelevantChange checks if a file change is relevant for syncing.
 func (r *Runner) isRelevantChange(path string) bool {
-	// Ignore dotfiles and temporary files
 	base := filepath.Base(path)
-	if len(base) > 0 && base[0] == '.' {
-		return false
-	}
+	// Ignore editor swap/backup files
 	if len(base) > 0 && base[len(base)-1] == '~' {
 		return false
 	}
-
-	// Ignore .git directory
+	// Ignore .git internals
 	if containsPath(path, ".git") {
 		return false
 	}
-
 	return true
 }
 
@@ -245,24 +250,35 @@ func (r *Runner) performSync() error {
 		}
 	}
 
-	// Check for local changes
-	hasChanges, err := gc.HasChanges()
-	if err != nil {
-		r.logger.Printf("Warning: failed to check for local changes: %v", err)
-	} else if hasChanges {
-		r.logger.Println("Detected local changes, committing...")
-
-		// Commit local changes
-		if err := gc.CommitAll("[daemon] Sync local changes"); err != nil {
-			r.logger.Printf("Failed to commit changes: %v", err)
-		} else {
-			r.logger.Println("Committed local changes")
-
-			// Push to remote
-			if err := gc.Push(); err != nil {
-				r.logger.Printf("Failed to push to remote: %v", err)
+	if r.syncer != nil {
+		// Encrypt any locally dirty tracked files into the vault, then commit and push.
+		results, err := r.syncer.Push()
+		if err != nil {
+			r.logger.Printf("Warning: push failed: %v", err)
+		}
+		for _, res := range results {
+			if res.Error != nil {
+				r.logger.Printf("Error syncing %s/%s: %v", res.File.Namespace, res.File.RelPath, res.Error)
+			} else if res.Action == "pushed" {
+				r.logger.Printf("Pushed: %s/%s", res.File.Namespace, res.File.RelPath)
+			}
+		}
+	} else {
+		// No vault identity — fall back to committing any pre-existing vault git changes.
+		hasChanges, err := gc.HasChanges()
+		if err != nil {
+			r.logger.Printf("Warning: failed to check for local changes: %v", err)
+		} else if hasChanges {
+			r.logger.Println("Detected local changes, committing...")
+			if err := gc.CommitAll("[daemon] Sync local changes"); err != nil {
+				r.logger.Printf("Failed to commit changes: %v", err)
 			} else {
-				r.logger.Println("Pushed to remote")
+				r.logger.Println("Committed local changes")
+				if err := gc.Push(); err != nil {
+					r.logger.Printf("Failed to push to remote: %v", err)
+				} else {
+					r.logger.Println("Pushed to remote")
+				}
 			}
 		}
 	}
@@ -349,6 +365,36 @@ func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath
 	}
 	if err := store.Add(c); err != nil {
 		r.logger.Printf("Warning: failed to record conflict %s: %v", filePath, err)
+	}
+}
+
+// refreshTrackedWatches adds fsnotify watches for the parent directories of all
+// locally-bound tracked files so that edits to those files trigger an immediate sync.
+func (r *Runner) refreshTrackedWatches() {
+	if r.vault == nil {
+		return
+	}
+	state, err := r.vault.LoadState()
+	if err != nil {
+		r.logger.Printf("Warning: could not load state for watch refresh: %v", err)
+		return
+	}
+	for _, file := range state.Files {
+		var localDir string
+		if file.Namespace == "global" {
+			localDir = filepath.Dir(file.RelPath)
+		} else {
+			root, ok := r.cfg.GetBinding(file.Namespace)
+			if !ok {
+				continue
+			}
+			localDir = filepath.Dir(filepath.Join(root, file.RelPath))
+		}
+		if _, err := os.Stat(localDir); err == nil {
+			if addErr := r.watcher.Add(localDir); addErr == nil {
+				r.logger.Printf("Watching tracked dir: %s", localDir)
+			}
+		}
 	}
 }
 
