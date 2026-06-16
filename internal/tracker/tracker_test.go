@@ -117,7 +117,7 @@ func TestTrackerRestore(t *testing.T) {
 		Mode:      models.ModeSync,
 	}
 	plaintext := []byte("RESTORED=value")
-	if err := vault.StoreFile(file, plaintext); err != nil {
+	if _, err := vault.StoreFile(file, plaintext); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
 
@@ -159,7 +159,7 @@ func TestTrackerRestoreGlobal(t *testing.T) {
 		MachineID: "test-machine",
 	}
 	plaintext := []byte("alias ll='ls -la'")
-	if err := vault.StoreFile(file, plaintext); err != nil {
+	if _, err := vault.StoreFile(file, plaintext); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
 

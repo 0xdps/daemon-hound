@@ -104,7 +104,7 @@ func (t *Tracker) Track(localPath string, mode models.FileMode) (*models.Tracked
 		file.MachineID = t.config.MachineID()
 	}
 
-	if err := t.vault.StoreFile(file, plaintext); err != nil {
+	if _, err := t.vault.StoreFile(file, plaintext); err != nil {
 		return nil, fmt.Errorf("failed to store file in vault: %w", err)
 	}
 

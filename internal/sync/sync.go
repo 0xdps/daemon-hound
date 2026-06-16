@@ -163,11 +163,14 @@ func (s *Syncer) Push() ([]Result, error) {
 			continue
 		}
 
-		if err := s.vault.StoreFile(file, plaintext); err != nil {
+		written, err := s.vault.StoreFile(file, plaintext)
+		if err != nil {
 			results = append(results, Result{File: file, Action: "error", Error: err})
 			continue
 		}
 
+		// If StoreFile was a no-op (content unchanged) update only the checksum
+		// in state so Status() returns clean next time, but don't mark state dirty.
 		checksum, err := utils.FileChecksum(localPath)
 		if err != nil {
 			results = append(results, Result{File: file, Action: "error", Error: err})
@@ -176,7 +179,9 @@ func (s *Syncer) Push() ([]Result, error) {
 		file.Checksum = checksum
 		file.LastSyncAt = time.Now()
 		state.Files[key] = file
-		stateModified = true
+		if written {
+			stateModified = true
+		}
 
 		results = append(results, Result{File: file, Action: "pushed"})
 	}

@@ -25,7 +25,7 @@ func TestVaultStoreAndRetrieve(t *testing.T) {
 	}
 
 	// Store
-	if err := vault.StoreFile(file, plaintext); err != nil {
+	if _, err := vault.StoreFile(file, plaintext); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
 
@@ -63,7 +63,7 @@ func TestVaultFileExists(t *testing.T) {
 		t.Error("FileExistsInVault should be false for non-existent file")
 	}
 
-	if err := vault.StoreFile(file, []byte("test")); err != nil {
+	if _, err := vault.StoreFile(file, []byte("test")); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
 
@@ -86,7 +86,7 @@ func TestVaultRemoveFile(t *testing.T) {
 		Mode:      models.ModeSync,
 	}
 
-	if err := vault.StoreFile(file, []byte("test")); err != nil {
+	if _, err := vault.StoreFile(file, []byte("test")); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
 

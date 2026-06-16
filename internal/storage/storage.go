@@ -176,27 +176,38 @@ func (v *Vault) SaveState(state *models.VaultState) error {
 // StoreFile encrypts and writes a file into the vault layout.
 // For sync mode: vault/sync/<namespace>/<relPath>.age
 // For backup mode: vault/backup/<machineID>/<namespace>/<relPath>.age
-func (v *Vault) StoreFile(file models.TrackedFile, plaintext []byte) error {
-	enc, err := v.Encrypt(plaintext)
-	if err != nil {
-		return err
-	}
-
+// Returns (false, nil) when the on-disk plaintext is already identical (no write performed),
+// (true, nil) when the file was written, or (false, err) on failure.
+// Skipping the write avoids spurious age re-encryptions (different nonce → different
+// ciphertext → empty git commits on every sync cycle).
+func (v *Vault) StoreFile(file models.TrackedFile, plaintext []byte) (bool, error) {
 	var dir string
 	if file.Mode == models.ModeBackup {
 		dir = filepath.Join(v.path, "backup", file.MachineID, file.Namespace)
 	} else {
 		dir = filepath.Join(v.path, "sync", file.Namespace)
 	}
-
 	vaultFilePath := filepath.Join(dir, file.RelPath+".age")
+
+	// Skip write if on-disk plaintext is identical.
+	if existing, err := os.ReadFile(vaultFilePath); err == nil {
+		if current, decErr := v.Decrypt(existing); decErr == nil && sha256Equal(current, plaintext) {
+			return false, nil
+		}
+	}
+
+	enc, err := v.Encrypt(plaintext)
+	if err != nil {
+		return false, err
+	}
+
 	if err := os.MkdirAll(filepath.Dir(vaultFilePath), 0755); err != nil {
-		return fmt.Errorf("failed to create vault file directory: %w", err)
+		return false, fmt.Errorf("failed to create vault file directory: %w", err)
 	}
 	if err := os.WriteFile(vaultFilePath, enc, 0644); err != nil {
-		return fmt.Errorf("failed to write vault file: %w", err)
+		return false, fmt.Errorf("failed to write vault file: %w", err)
 	}
-	return nil
+	return true, nil
 }
 
 // RetrieveFile reads and decrypts a file from the vault layout.
