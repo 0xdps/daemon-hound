@@ -129,6 +129,39 @@ func (c *Client) EnsureGitDir() error {
 	return nil
 }
 
+// IsInMerge returns true when the vault repo has an in-progress merge that has
+// not yet been committed or aborted (i.e. MERGE_HEAD exists).
+func (c *Client) IsInMerge() bool {
+	_, err := os.Stat(filepath.Join(c.vaultPath, ".git", "MERGE_HEAD"))
+	return err == nil
+}
+
+// AbortMerge aborts an in-progress merge, restoring the working tree to the
+// pre-merge state. Safe to call even when no merge is in progress.
+func (c *Client) AbortMerge() error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "merge", "--abort")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git merge --abort failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// ResolveConflictsRemote resolves all merge conflicts by taking the remote
+// (theirs) version of every conflicted file, then stages them.
+// Used for vault .age files where binary content makes text merging impossible
+// and the remote is considered authoritative.
+func (c *Client) ResolveConflictsRemote() error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "checkout", "--theirs", ".")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to checkout --theirs: %w\n%s", err, string(out))
+	}
+	cmd = exec.Command("git", "-C", c.vaultPath, "add", "-A")
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("failed to stage resolved files: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
 // HasConflicts checks if there are merge conflicts in the working directory.
 func (c *Client) HasConflicts() (bool, error) {
 	cmd := exec.Command("git", "-C", c.vaultPath, "status", "--porcelain")

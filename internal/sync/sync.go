@@ -220,6 +220,25 @@ func (s *Syncer) Push() ([]Result, error) {
 // Committing local changes first ensures git pull always has a clean working
 // tree to merge into — avoids the "local changes would be overwritten" abort.
 func (s *Syncer) Sync() ([]Result, error) {
+	// Pre-flight: if a previous merge was left unfinished (e.g. a prior sync
+	// crashed mid-pull) the vault is stuck and git pull will refuse to run.
+	// Vault files are encrypted binary blobs — 3-way text merge is meaningless.
+	// Recover by aborting the stale merge; we will re-push local changes below.
+	if s.git.IsInMerge() {
+		if hasConflicts, _ := s.git.HasConflicts(); hasConflicts {
+			fmt.Fprintln(os.Stderr, "Warning: recovering from stuck merge — taking remote version of conflicted files")
+			if err := s.git.ResolveConflictsRemote(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: conflict resolution failed: %v\n", err)
+				_ = s.git.AbortMerge() // last resort: abort and start fresh
+			} else {
+				_ = s.git.CommitAll("daemon-hound: resolve vault merge conflicts [auto]")
+			}
+		} else {
+			// In-merge but no conflicted files — just commit the resolved state.
+			_ = s.git.CommitAll("daemon-hound: complete merge [auto]")
+		}
+	}
+
 	// Phase 1: Encrypt and commit any locally dirty files so git has a clean
 	// working tree before we attempt a pull.
 	pushResults, pushErr := s.Push()
@@ -231,15 +250,28 @@ func (s *Syncer) Sync() ([]Result, error) {
 	pullResults, pullErr := s.Pull()
 	all := append(pullResults, pushResults...)
 	if pullErr != nil {
-		// Offline or unreachable — local changes are already committed; try to push.
-		fmt.Fprintf(os.Stderr, "Warning: could not pull from remote (offline?): %v\n", pullErr)
-		if err := s.git.Push(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: could not push to remote (offline?): %v\n", err)
-			_ = s.config.SetPendingPush(true)
+		// Check if pull failed due to conflicts (remote deleted files we added).
+		// Resolve by taking remote, then push our own changes on top.
+		if hasConflicts, _ := s.git.HasConflicts(); hasConflicts {
+			fmt.Fprintln(os.Stderr, "Warning: merge conflict during pull — taking remote version of conflicted files")
+			if err := s.git.ResolveConflictsRemote(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: conflict resolution failed: %v\n", err)
+				_ = s.config.SetPendingPush(true)
+				return all, nil
+			}
+			_ = s.git.CommitAll("daemon-hound: resolve vault merge conflicts [auto]")
+			// Fall through to Phase 3 to push local changes on top.
 		} else {
-			_ = s.config.SetPendingPush(false)
+			// Offline or unreachable — local changes are already committed; try to push.
+			fmt.Fprintf(os.Stderr, "Warning: could not pull from remote (offline?): %v\n", pullErr)
+			if err := s.git.Push(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: could not push to remote (offline?): %v\n", err)
+				_ = s.config.SetPendingPush(true)
+			} else {
+				_ = s.config.SetPendingPush(false)
+			}
+			return all, nil
 		}
-		return all, nil
 	}
 
 	// Phase 3: Commit any state changes written by Pull (restored file checksums)

@@ -232,6 +232,22 @@ func (r *Runner) performSync() error {
 	vaultPath := config.VaultPath()
 	gc := git.NewClient(vaultPath)
 
+	// Pre-flight: recover from a stuck in-progress merge before doing anything.
+	// Vault files are encrypted binary blobs — take remote for all conflicts.
+	if gc.IsInMerge() {
+		if hasConflicts, _ := gc.HasConflicts(); hasConflicts {
+			r.logger.Println("Recovering from stuck merge — taking remote for all conflicted files")
+			if err := gc.ResolveConflictsRemote(); err != nil {
+				r.logger.Printf("Warning: conflict resolution failed: %v — aborting merge", err)
+				_ = gc.AbortMerge()
+			} else {
+				_ = gc.CommitAll("[daemon] Resolve vault merge conflicts")
+			}
+		} else {
+			_ = gc.CommitAll("[daemon] Complete in-progress merge")
+		}
+	}
+
 	// Pull changes from remote (includes fetch)
 	if err := gc.Pull(); err != nil {
 		r.logger.Printf("Warning: failed to pull from remote: %v", err)
@@ -239,33 +255,20 @@ func (r *Runner) performSync() error {
 		r.logger.Println("Pulled from remote")
 	}
 
-	// Check for merge conflicts
+	// Check for merge conflicts after pull
 	hasConflicts, err := gc.HasConflicts()
 	if err != nil {
 		r.logger.Printf("Warning: failed to check for conflicts: %v", err)
 	} else if hasConflicts {
-		r.logger.Println("Merge conflicts detected")
-
-		conflictedFiles, err := gc.GetConflictedFiles()
-		if err != nil {
-			r.logger.Printf("Warning: failed to get conflicted files: %v", err)
+		r.logger.Println("Merge conflicts detected after pull — taking remote for all conflicted files")
+		if err := gc.ResolveConflictsRemote(); err != nil {
+			r.logger.Printf("Warning: conflict resolution failed: %v", err)
 		} else {
-			r.logger.Printf("Conflicted files: %v", conflictedFiles)
-			r.resolveConflicts(gc, vaultPath, conflictedFiles)
-		}
-
-		// Check if any conflicts remain unresolved after smart merge attempt
-		stillConflicted, _ := gc.HasConflicts()
-		if stillConflicted {
-			r.logger.Println("[WAITING] Some conflicts need manual resolution — run: dh conflicts list")
-			return nil // do not push with unresolved conflicts
-		}
-
-		// Commit the resolution
-		if err := gc.CommitAll("[daemon] Resolve merge conflicts"); err != nil {
-			r.logger.Printf("Failed to commit conflict resolution: %v", err)
-		} else {
-			r.logger.Println("Committed conflict resolution")
+			if err := gc.CommitAll("[daemon] Resolve vault merge conflicts"); err != nil {
+				r.logger.Printf("Failed to commit conflict resolution: %v", err)
+			} else {
+				r.logger.Println("Committed conflict resolution")
+			}
 		}
 	}
 
