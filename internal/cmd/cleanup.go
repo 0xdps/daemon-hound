@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/0xdps/daemon-hound/internal/config"
+	"github.com/0xdps/daemon-hound/internal/daemon"
 	"github.com/0xdps/daemon-hound/internal/keychain"
 	"github.com/0xdps/daemon-hound/internal/output"
 	"github.com/0xdps/daemon-hound/internal/utils"
@@ -15,21 +16,25 @@ var cleanupForce bool
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "Remove all local DaemonHound data (vault, config, identity, keychain)",
+	Short: "Completely remove DaemonHound from this machine",
 	Long: `Completely remove DaemonHound from this machine.
 
-This command removes:
-  • ~/.dh/vault (local vault clone)
-  • ~/.dh/config.toml (machine configuration)
-  • ~/.dh/identity.age (encrypted identity key)
-  • ~/.dh/audit.log (audit log)
-  • ~/.dh/sync.lock (process lock file)
-  • Master password from OS keychain
+This command:
+  1. Stops and uninstalls the background sync daemon
+  2. Removes the master password from the OS keychain (logout)
+  3. Removes all local data under ~/.dh
+     • vault/        — local vault clone
+     • config.toml   — machine configuration
+     • identity.age  — encrypted identity key
+     • daemon logs   — daemon.log, daemon.error.log
+     • sync.lock     — process lock file
+     • audit.log     — audit log
 
 This does NOT affect your remote vault repository. Your tracked files
-and vault state remain safe in the remote git repository.
+and secrets remain safe in the remote git repository.
 
-To re-initialize later, run 'dh init' with the same vault remote.`,
+To re-initialize on this machine later, run:
+  dh init --remote <your-vault-url>`,
 	RunE: runCleanup,
 }
 
@@ -41,34 +46,22 @@ func init() {
 func runCleanup(cmd *cobra.Command, args []string) error {
 	appDir := config.AppDir()
 
-	// Check if already clean
+	appDirExists := true
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
-		if !keychain.IsSet() {
-			fmt.Println("DaemonHound is not initialized on this machine.")
-			return nil
-		}
-		// Only keychain entry exists
-		fmt.Println("No local data found, but keychain entry exists.")
-		if !cleanupForce {
-			confirm, err := utils.PromptInput("Remove keychain entry? (yes/no): ")
-			if err != nil {
-				return err
-			}
-			if confirm != "yes" && confirm != "y" {
-				fmt.Println("Cleanup cancelled.")
-				return nil
-			}
-		}
-		if err := keychain.Delete(); err != nil && keychain.IsSet() {
-			return fmt.Errorf("failed to remove keychain entry: %w", err)
-		}
-		fmt.Println("Keychain entry removed.")
+		appDirExists = false
+	}
+
+	if !appDirExists && !keychain.IsSet() {
+		fmt.Println("DaemonHound is not initialized on this machine.")
 		return nil
 	}
 
 	// Prompt for confirmation unless --force
 	if !cleanupForce {
-		fmt.Printf("This will permanently remove all local DaemonHound data from:\n  %s\n\n", appDir)
+		fmt.Printf("This will completely remove DaemonHound from this machine:\n")
+		fmt.Printf("  • Stop and uninstall the background sync daemon\n")
+		fmt.Printf("  • Remove the master password from keychain\n")
+		fmt.Printf("  • Delete all local data under %s\n\n", appDir)
 		fmt.Println("Your remote vault repository will NOT be affected.")
 		confirm, err := utils.PromptInput("Are you sure? (yes/no): ")
 		if err != nil {
@@ -80,24 +73,39 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Remove keychain entry
+	// Step 1: Stop and uninstall the daemon
+	sm := daemon.NewServiceManager()
+	if installed, err := sm.IsInstalled(); err == nil && installed {
+		if err := sm.Uninstall(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to uninstall daemon: %v\n", err)
+		} else {
+			fmt.Println(output.Green("✓") + " Daemon stopped and uninstalled")
+		}
+	} else {
+		fmt.Println(output.Dim("  Daemon not installed, skipping"))
+	}
+
+	// Step 2: Remove master password from keychain (logout)
 	if keychain.IsSet() {
 		if err := keychain.Delete(); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to remove keychain entry: %v\n", err)
 		} else {
 			fmt.Println(output.Green("✓") + " Removed master password from keychain")
 		}
+	} else {
+		fmt.Println(output.Dim("  No keychain entry, skipping"))
 	}
 
-	// Remove entire ~/.dh directory
-	if err := os.RemoveAll(appDir); err != nil {
-		return fmt.Errorf("failed to remove %s: %w", appDir, err)
+	// Step 3: Remove all local data
+	if appDirExists {
+		if err := os.RemoveAll(appDir); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", appDir, err)
+		}
+		fmt.Printf("%s Removed local data (%s)\n", output.Green("✓"), appDir)
 	}
 
-	fmt.Printf("%s Removed all local data from %s\n", output.Green("✓"), appDir)
 	fmt.Println("\n" + output.Bold("DaemonHound has been completely removed from this machine."))
 	fmt.Println(output.Dim("Your remote vault repository remains intact."))
 	fmt.Printf("\nTo re-initialize, run: %s\n", output.Cyan("dh init --remote <your-vault-url>"))
-
 	return nil
 }
