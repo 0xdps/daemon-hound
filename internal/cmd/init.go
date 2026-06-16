@@ -15,6 +15,7 @@ import (
 
 var initRemote string
 var initForce bool
+var initAgeKey string
 
 var initCmd = &cobra.Command{
 	Use:   "init",
@@ -25,13 +26,17 @@ This command:
 1. Generates a stable machine UUID
 2. Generates an age identity key (encrypted with your master password)
 3. Clones (or initializes) the vault repository
-4. Stores configuration in ~/.dh/`,
+4. Stores configuration in ~/.dh/
+
+When joining an existing vault on a new machine, use --age-key with the key
+printed by 'dh export-identity' on your original machine.`,
 	RunE: runInit,
 }
 
 func init() {
 	initCmd.Flags().StringVar(&initRemote, "remote", "", "Git URL of the private vault repository")
 	initCmd.Flags().BoolVar(&initForce, "force", false, "Re-initialize even if already set up on this machine")
+	initCmd.Flags().StringVar(&initAgeKey, "age-key", "", "Existing age private key (AGE-SECRET-KEY-...) for joining a vault from another machine")
 	rootCmd.AddCommand(initCmd)
 }
 
@@ -100,14 +105,25 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("passwords do not match")
 	}
 
-	// Generate age identity
-	identity, err := storage.GenerateIdentity()
-	if err != nil {
-		return fmt.Errorf("failed to generate age identity: %w", err)
+	// Resolve the age identity: use provided key or generate a fresh one.
+	var identityBytes []byte
+	if initAgeKey != "" {
+		// Validate the provided key parses correctly before storing it.
+		if _, err := storage.ParseIdentity(initAgeKey); err != nil {
+			return fmt.Errorf("invalid --age-key: %w", err)
+		}
+		identityBytes = []byte(initAgeKey)
+		fmt.Fprintln(os.Stderr, "Using provided age identity.")
+	} else {
+		identity, err := storage.GenerateIdentity()
+		if err != nil {
+			return fmt.Errorf("failed to generate age identity: %w", err)
+		}
+		identityBytes = []byte(identity.String())
 	}
 
 	// Encrypt identity with password using global salt (scrypt+AES-GCM)
-	encryptedIdentity, err := utils.EncryptWithPassword([]byte(identity.String()), password, cfg.IdentitySalt())
+	encryptedIdentity, err := utils.EncryptWithPassword(identityBytes, password, cfg.IdentitySalt())
 	if err != nil {
 		return fmt.Errorf("failed to encrypt identity: %w", err)
 	}
