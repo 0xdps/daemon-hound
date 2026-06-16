@@ -18,6 +18,7 @@ import (
 	"github.com/0xdps/daemon-hound/internal/merge"
 	"github.com/0xdps/daemon-hound/internal/storage"
 	dhsync "github.com/0xdps/daemon-hound/internal/sync"
+	"github.com/0xdps/daemon-hound/internal/tracker"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -209,8 +210,26 @@ func (r *Runner) performSync() error {
 	vaultRemote := r.cfg.VaultRemote()
 	r.logger.Printf("Starting sync (vault: %s)", vaultRemote)
 
+	// Reload config from disk on every sync cycle so that bindings added by
+	// `dh track` or `dh discover` after the daemon started are picked up
+	// immediately rather than requiring a daemon restart.
+	freshCfg := config.NewConfig()
+	if err := freshCfg.Load(); err != nil {
+		r.logger.Printf("Warning: failed to reload config: %v", err)
+		freshCfg = r.cfg // fall back to startup config
+	}
+
+	// Rebuild syncer with fresh config if vault identity is available.
+	var syncer *dhsync.Syncer
+	if r.vault != nil {
+		vaultPath := config.VaultPath()
+		gcSyncer := git.NewClient(vaultPath)
+		tr := tracker.NewTracker(r.vault, freshCfg)
+		syncer = dhsync.NewSyncer(r.vault, tr, gcSyncer, freshCfg)
+	}
+
 	// Create git client for vault repository
-	vaultPath := filepath.Join(os.Getenv("HOME"), ".dh", "vault")
+	vaultPath := config.VaultPath()
 	gc := git.NewClient(vaultPath)
 
 	// Pull changes from remote (includes fetch)
@@ -250,9 +269,9 @@ func (r *Runner) performSync() error {
 		}
 	}
 
-	if r.syncer != nil {
+	if syncer != nil {
 		// Encrypt any locally dirty tracked files into the vault, then commit and push.
-		results, err := r.syncer.Push()
+		results, err := syncer.Push()
 		if err != nil {
 			r.logger.Printf("Warning: push failed: %v", err)
 		}
@@ -370,9 +389,14 @@ func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath
 
 // refreshTrackedWatches adds fsnotify watches for the parent directories of all
 // locally-bound tracked files so that edits to those files trigger an immediate sync.
+// Config is reloaded from disk each call so bindings added after daemon startup are watched.
 func (r *Runner) refreshTrackedWatches() {
 	if r.vault == nil {
 		return
+	}
+	freshCfg := config.NewConfig()
+	if err := freshCfg.Load(); err != nil {
+		freshCfg = r.cfg // fall back to startup config
 	}
 	state, err := r.vault.LoadState()
 	if err != nil {
@@ -382,9 +406,10 @@ func (r *Runner) refreshTrackedWatches() {
 	for _, file := range state.Files {
 		var localDir string
 		if file.Namespace == "global" {
-			localDir = filepath.Dir(file.RelPath)
+			home, _ := os.UserHomeDir()
+			localDir = filepath.Dir(filepath.Join(home, file.RelPath))
 		} else {
-			root, ok := r.cfg.GetBinding(file.Namespace)
+			root, ok := freshCfg.GetBinding(file.Namespace)
 			if !ok {
 				continue
 			}
