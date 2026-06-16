@@ -54,15 +54,15 @@ func (c *Client) AddRemote(remoteURL string) error {
 
 // Pull pulls the latest changes from the remote.
 func (c *Client) Pull() error {
-	cmd := exec.Command("git", "-C", c.vaultPath, "pull", "origin", "HEAD")
+	// --no-rebase explicitly selects merge strategy so the caller never needs
+	// pull.rebase configured globally in the user's git config.
+	cmd := exec.Command("git", "-C", c.vaultPath, "pull", "--no-rebase")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		// Ignore "already up to date" and "no tracking information" errors
 		s := string(out)
 		if strings.Contains(s, "Already up to date") || strings.Contains(s, "up-to-date") {
 			return nil
 		}
-		// If the repo is empty or has no commits, ignore
 		if strings.Contains(s, "fatal: couldn't find remote ref") || strings.Contains(s, "fatal: not a git repository") {
 			return nil
 		}

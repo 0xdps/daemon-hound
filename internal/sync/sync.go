@@ -77,6 +77,7 @@ func (s *Syncer) Pull() ([]Result, error) {
 	}
 
 	var results []Result
+	stateModified := false
 	for key, file := range state.Files {
 		if !s.shouldProcess(file) {
 			continue
@@ -109,12 +110,18 @@ func (s *Syncer) Pull() ([]Result, error) {
 		file.Checksum = checksum
 		file.LastSyncAt = time.Now()
 		state.Files[key] = file
+		stateModified = true
 
 		results = append(results, Result{File: file, Action: "pulled"})
 	}
 
-	if err := s.vault.SaveState(state); err != nil {
-		return results, fmt.Errorf("failed to save vault state: %w", err)
+	// Only persist state if we actually restored files — avoids a spurious
+	// age-encrypted write (different nonce every call) that would create an
+	// unnecessary git commit on every sync even when nothing changed.
+	if stateModified {
+		if err := s.vault.SaveState(state); err != nil {
+			return results, fmt.Errorf("failed to save vault state: %w", err)
+		}
 	}
 
 	return results, nil
@@ -128,6 +135,7 @@ func (s *Syncer) Push() ([]Result, error) {
 	}
 
 	var results []Result
+	stateModified := false
 	for key, file := range state.Files {
 		if !s.shouldProcess(file) {
 			continue
@@ -168,12 +176,19 @@ func (s *Syncer) Push() ([]Result, error) {
 		file.Checksum = checksum
 		file.LastSyncAt = time.Now()
 		state.Files[key] = file
+		stateModified = true
 
 		results = append(results, Result{File: file, Action: "pushed"})
 	}
 
-	if err := s.vault.SaveState(state); err != nil {
-		return results, fmt.Errorf("failed to save vault state: %w", err)
+	// Only re-encrypt and write state when something actually changed.
+	// SaveState always produces different ciphertext (fresh age nonce) so we
+	// must guard it — an unconditional write would create a spurious git commit
+	// on every sync cycle even when nothing changed.
+	if stateModified {
+		if err := s.vault.SaveState(state); err != nil {
+			return results, fmt.Errorf("failed to save vault state: %w", err)
+		}
 	}
 
 	// Commit and push
@@ -209,20 +224,43 @@ func (s *Syncer) Push() ([]Result, error) {
 	return results, nil
 }
 
-// Sync runs Pull then Push. If Pull fails (e.g. offline), a warning is printed
-// and Push continues so local dirty files are at least committed locally.
+// Sync runs Push (commit local changes) then Pull then re-Push to remote.
+// Committing local changes first ensures git pull always has a clean working
+// tree to merge into — avoids the "local changes would be overwritten" abort.
 func (s *Syncer) Sync() ([]Result, error) {
-	pullResults, pullErr := s.Pull()
-	if pullErr != nil {
-		// Offline or unreachable — warn but continue so local changes are committed.
-		fmt.Fprintf(os.Stderr, "Warning: could not pull from remote (offline?): %v\n", pullErr)
-		fmt.Fprintf(os.Stderr, "Continuing with local push...\n")
-	}
+	// Phase 1: Encrypt and commit any locally dirty files so git has a clean
+	// working tree before we attempt a pull.
 	pushResults, pushErr := s.Push()
-	all := append(pullResults, pushResults...)
 	if pushErr != nil {
-		return all, pushErr
+		return pushResults, pushErr
 	}
+
+	// Phase 2: Pull remote changes and restore any files updated on other machines.
+	pullResults, pullErr := s.Pull()
+	all := append(pullResults, pushResults...)
+	if pullErr != nil {
+		// Offline or unreachable — local changes are already committed; try to push.
+		fmt.Fprintf(os.Stderr, "Warning: could not pull from remote (offline?): %v\n", pullErr)
+		if err := s.git.Push(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not push to remote (offline?): %v\n", err)
+			_ = s.config.SetPendingPush(true)
+		} else {
+			_ = s.config.SetPendingPush(false)
+		}
+		return all, nil
+	}
+
+	// Phase 3: Commit any state changes written by Pull (restored file checksums)
+	// and push everything to remote.
+	if err := s.git.CommitAll("daemon-hound: sync"); err == nil {
+		if err := s.git.Push(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not push to remote (offline?): %v\n", err)
+			_ = s.config.SetPendingPush(true)
+		} else {
+			_ = s.config.SetPendingPush(false)
+		}
+	}
+
 	return all, nil
 }
 
