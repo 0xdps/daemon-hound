@@ -248,59 +248,37 @@ func (r *Runner) performSync() error {
 		}
 	}
 
-	// Pull changes from remote (includes fetch)
-	if err := gc.Pull(); err != nil {
-		r.logger.Printf("Warning: failed to pull from remote: %v", err)
-	} else {
-		r.logger.Println("Pulled from remote")
-	}
-
-	// Check for merge conflicts after pull
-	hasConflicts, err := gc.HasConflicts()
-	if err != nil {
-		r.logger.Printf("Warning: failed to check for conflicts: %v", err)
-	} else if hasConflicts {
-		r.logger.Println("Merge conflicts detected after pull — taking remote for all conflicted files")
-		if err := gc.ResolveConflictsRemote(); err != nil {
-			r.logger.Printf("Warning: conflict resolution failed: %v", err)
-		} else {
-			if err := gc.CommitAll("[daemon] Resolve vault merge conflicts"); err != nil {
-				r.logger.Printf("Failed to commit conflict resolution: %v", err)
-			} else {
-				r.logger.Println("Committed conflict resolution")
-			}
-		}
-	}
-
+	// Pull changes from remote, restore files to disk, then push any local
+	// dirty files. Using syncer.Sync() ensures tracker.Restore() is called
+	// so that remote changes (e.g. from another machine) are actually written
+	// to the tracked file paths — a raw gc.Pull() only downloads the .age
+	// files but never restores them, causing a continuous dirty→push loop.
 	if syncer != nil {
-		// Encrypt any locally dirty tracked files into the vault, then commit and push.
-		results, err := syncer.Push()
+		results, err := syncer.Sync()
 		if err != nil {
-			r.logger.Printf("Warning: push failed: %v", err)
+			r.logger.Printf("Warning: sync failed: %v", err)
 		}
 		for _, res := range results {
 			if res.Error != nil {
 				r.logger.Printf("Error syncing %s/%s: %v", res.File.Namespace, res.File.RelPath, res.Error)
 			} else if res.Action == "pushed" {
 				r.logger.Printf("Pushed: %s/%s", res.File.Namespace, res.File.RelPath)
+			} else if res.Action == "pulled" {
+				r.logger.Printf("Pulled: %s/%s", res.File.Namespace, res.File.RelPath)
 			}
 		}
 	} else {
-		// No vault identity — fall back to committing any pre-existing vault git changes.
-		hasChanges, err := gc.HasChanges()
-		if err != nil {
-			r.logger.Printf("Warning: failed to check for local changes: %v", err)
-		} else if hasChanges {
-			r.logger.Println("Detected local changes, committing...")
+		// No vault identity — do a raw pull and commit any pre-existing changes.
+		if err := gc.Pull(); err != nil {
+			r.logger.Printf("Warning: failed to pull from remote: %v", err)
+		} else {
+			r.logger.Println("Pulled from remote")
+		}
+		if hasChanges, err := gc.HasChanges(); err == nil && hasChanges {
 			if err := gc.CommitAll("[daemon] Sync local changes"); err != nil {
 				r.logger.Printf("Failed to commit changes: %v", err)
-			} else {
-				r.logger.Println("Committed local changes")
-				if err := gc.Push(); err != nil {
-					r.logger.Printf("Failed to push to remote: %v", err)
-				} else {
-					r.logger.Println("Pushed to remote")
-				}
+			} else if err := gc.Push(); err != nil {
+				r.logger.Printf("Failed to push to remote: %v", err)
 			}
 		}
 	}
