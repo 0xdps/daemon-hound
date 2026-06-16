@@ -11,6 +11,7 @@ import (
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/0xdps/daemon-hound/internal/models"
+	"github.com/0xdps/daemon-hound/internal/storage"
 	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
 )
@@ -111,46 +112,40 @@ func runSecretSet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("secret value cannot be empty")
 	}
 
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
 	encValue, err := vault.Encrypt([]byte(value))
 	if err != nil {
 		return fmt.Errorf("failed to encrypt secret: %w", err)
 	}
 
-	secret, exists := state.Secrets[name]
-	if !exists {
-		secret = models.Secret{Name: name}
-	}
-	secret.Value = encValue
-	secret.UpdatedAt = time.Now()
-	state.Secrets[name] = secret
-
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
-	// Update all referenced files with per-file output
-	updatedCount := 0
-	for _, ref := range secret.Refs {
-		if err := updateFileWithSecret(cfg, ref, value); err != nil {
-			fmt.Fprintf(os.Stderr, "  Warning: failed to update %s in %s: %v\n", ref.File, ref.Namespace, err)
-			continue
-		}
-		fmt.Printf("  → Updated %s in %s  (%s)\n", ref.File, ref.Namespace, ref.Key)
-		updatedCount++
-	}
-
-	// Commit and push
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: update secret %s", name)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: update secret %s", name), func(state *models.VaultState) error {
+		secret, exists := state.Secrets[name]
+		if !exists {
+			secret = models.Secret{Name: name}
+		}
+		secret.Value = encValue
+		secret.UpdatedAt = time.Now()
+		state.Secrets[name] = secret
+		return nil
+	}); err != nil {
+		return err
 	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+
+	// Update all referenced files with per-file output (read state fresh after commit)
+	state, err := vault.LoadState()
+	if err != nil {
+		return fmt.Errorf("failed to reload vault state: %w", err)
+	}
+	updatedCount := 0
+	if secret, ok := state.Secrets[name]; ok {
+		for _, ref := range secret.Refs {
+			if err := updateFileWithSecret(cfg, ref, value); err != nil {
+				fmt.Fprintf(os.Stderr, "  Warning: failed to update %s in %s: %v\n", ref.File, ref.Namespace, err)
+				continue
+			}
+			fmt.Printf("  → Updated %s in %s  (%s)\n", ref.File, ref.Namespace, ref.Key)
+			updatedCount++
+		}
 	}
 
 	if updatedCount > 0 {
@@ -239,16 +234,6 @@ func runSecretRef(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
-	secret, ok := state.Secrets[name]
-	if !ok {
-		return fmt.Errorf("secret not found: %s (use `dh secret set %s` first)", name, name)
-	}
-
 	// Determine namespace from current directory
 	repoRoot, err := utils.FindGitRoot(".")
 	if err != nil {
@@ -270,41 +255,40 @@ func runSecretRef(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Add or update ref
 	ref := models.SecretRef{Namespace: namespace, File: filePath, Key: key}
-	found := false
-	for i, existing := range secret.Refs {
-		if existing.Namespace == namespace && existing.File == filePath {
-			secret.Refs[i] = ref
-			found = true
-			break
-		}
-	}
-	if !found {
-		secret.Refs = append(secret.Refs, ref)
-	}
-	state.Secrets[name] = secret
+	var secretValue []byte
 
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
-	// Write current secret value into the file
-	value, err := vault.Decrypt(secret.Value)
-	if err != nil {
-		return fmt.Errorf("failed to decrypt secret: %w", err)
-	}
-	if err := updateFileWithSecret(cfg, ref, string(value)); err != nil {
-		return fmt.Errorf("failed to update file: %w", err)
-	}
-
-	// Commit and push the updated state
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: ref %s → %s:%s", name, namespace, filePath)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: ref %s → %s:%s", name, namespace, filePath), func(state *models.VaultState) error {
+		secret, ok := state.Secrets[name]
+		if !ok {
+			return fmt.Errorf("secret not found: %s (use `dh secret set %s` first)", name, name)
+		}
+		found := false
+		for i, existing := range secret.Refs {
+			if existing.Namespace == namespace && existing.File == filePath {
+				secret.Refs[i] = ref
+				found = true
+				break
+			}
+		}
+		if !found {
+			secret.Refs = append(secret.Refs, ref)
+		}
+		state.Secrets[name] = secret
+
+		val, err := vault.Decrypt(secret.Value)
+		if err != nil {
+			return fmt.Errorf("failed to decrypt secret: %w", err)
+		}
+		secretValue = val
+		return nil
+	}); err != nil {
+		return err
 	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+
+	if err := updateFileWithSecret(cfg, ref, string(secretValue)); err != nil {
+		return fmt.Errorf("failed to update file: %w", err)
 	}
 
 	fmt.Printf("Mapped: %s → %s:%s:%s\n", name, namespace, filePath, key)
@@ -321,27 +305,15 @@ func runSecretDelete(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
-	if _, ok := state.Secrets[name]; !ok {
-		return fmt.Errorf("secret not found: %s", name)
-	}
-
-	delete(state.Secrets, name)
-
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: delete secret %s", name)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
-	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: delete secret %s", name), func(state *models.VaultState) error {
+		if _, ok := state.Secrets[name]; !ok {
+			return fmt.Errorf("secret not found: %s", name)
+		}
+		delete(state.Secrets, name)
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	fmt.Printf("Deleted secret: %s\n", name)
@@ -359,16 +331,6 @@ func runSecretUnref(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
-	secret, ok := state.Secrets[name]
-	if !ok {
-		return fmt.Errorf("secret not found: %s", name)
-	}
-
 	// Determine namespace from current directory
 	repoRoot, err := utils.FindGitRoot(".")
 	if err != nil {
@@ -383,32 +345,29 @@ func runSecretUnref(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to derive namespace: %w", err)
 	}
 
-	// Remove the matching ref
-	newRefs := secret.Refs[:0]
-	removed := false
-	for _, ref := range secret.Refs {
-		if ref.Namespace == namespace && ref.File == filePath {
-			removed = true
-			continue
-		}
-		newRefs = append(newRefs, ref)
-	}
-	if !removed {
-		return fmt.Errorf("no mapping found for %s in %s:%s", name, namespace, filePath)
-	}
-	secret.Refs = newRefs
-	state.Secrets[name] = secret
-
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: unref %s from %s:%s", name, namespace, filePath)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
-	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: unref %s from %s:%s", name, namespace, filePath), func(state *models.VaultState) error {
+		secret, ok := state.Secrets[name]
+		if !ok {
+			return fmt.Errorf("secret not found: %s", name)
+		}
+		newRefs := secret.Refs[:0]
+		removed := false
+		for _, ref := range secret.Refs {
+			if ref.Namespace == namespace && ref.File == filePath {
+				removed = true
+				continue
+			}
+			newRefs = append(newRefs, ref)
+		}
+		if !removed {
+			return fmt.Errorf("no mapping found for %s in %s:%s", name, namespace, filePath)
+		}
+		secret.Refs = newRefs
+		state.Secrets[name] = secret
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	fmt.Printf("Removed mapping: %s from %s:%s\n", name, namespace, filePath)
@@ -425,37 +384,75 @@ func runSecretRename(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
-	secret, ok := state.Secrets[oldName]
-	if !ok {
-		return fmt.Errorf("secret not found: %s", oldName)
-	}
-	if _, exists := state.Secrets[newName]; exists {
-		return fmt.Errorf("secret already exists: %s", newName)
-	}
-
-	secret.Name = newName
-	delete(state.Secrets, oldName)
-	state.Secrets[newName] = secret
-
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: rename secret %s → %s", oldName, newName)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
-	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: rename secret %s → %s", oldName, newName), func(state *models.VaultState) error {
+		secret, ok := state.Secrets[oldName]
+		if !ok {
+			return fmt.Errorf("secret not found: %s", oldName)
+		}
+		if _, exists := state.Secrets[newName]; exists {
+			return fmt.Errorf("secret already exists: %s", newName)
+		}
+		secret.Name = newName
+		delete(state.Secrets, oldName)
+		state.Secrets[newName] = secret
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	fmt.Printf("Renamed secret: %s → %s\n", oldName, newName)
 	audit.Log("secret rename", fmt.Sprintf("%s → %s", oldName, newName))
+	return nil
+}
+
+// vaultCommitPush is the standard write pattern for all vault mutations:
+//  1. Pull the latest remote state (so we start from the freshest version)
+//  2. Load the decrypted state
+//  3. Apply the caller's mutation via fn
+//  4. Save (re-encrypt) the state
+//  5. Commit
+//  6. Push — if rejected because remote moved ahead, pull and retry once
+//
+// This prevents the "local changes would be overwritten" abort and the
+// "non-fast-forward rejected" push error that occur when the daemon or
+// another machine pushed between our load and our push.
+func vaultCommitPush(gc *git.Client, vault *storage.Vault, commitMsg string, fn func(*models.VaultState) error) error {
+	// Step 1: pull first so we mutate the latest state.
+	if err := gc.Pull(); err != nil {
+		// Non-fatal — we may be offline; proceed with local state.
+		fmt.Fprintf(os.Stderr, "Warning: could not pull before write (offline?): %v\n", err)
+	}
+
+	// Step 2+3: load and mutate.
+	state, err := vault.LoadState()
+	if err != nil {
+		return fmt.Errorf("failed to load vault state: %w", err)
+	}
+	if err := fn(state); err != nil {
+		return err
+	}
+
+	// Step 4: save.
+	if err := vault.SaveState(state); err != nil {
+		return fmt.Errorf("failed to save vault state: %w", err)
+	}
+
+	// Step 5: commit.
+	if err := gc.CommitAll(commitMsg); err != nil {
+		return fmt.Errorf("failed to commit: %w", err)
+	}
+
+	// Step 6: push with one pull-and-retry on non-fast-forward rejection.
+	if err := gc.Push(); err != nil {
+		// Pull to integrate remote changes and retry.
+		if pullErr := gc.Pull(); pullErr != nil {
+			return fmt.Errorf("failed to push: %w (and pull retry failed: %v)", err, pullErr)
+		}
+		if err := gc.Push(); err != nil {
+			return fmt.Errorf("failed to push: %w", err)
+		}
+	}
 	return nil
 }
 

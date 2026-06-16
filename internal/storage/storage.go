@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -123,7 +124,10 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 	return state, nil
 }
 
-// SaveState encrypts and writes the vault state to disk.
+// SaveState encrypts and writes the vault state to disk only when the content
+// has changed. Because age uses a random nonce on every Encrypt call the
+// ciphertext differs even for identical plaintext, so we compare a SHA-256 of
+// the TOML encoding against the decrypted on-disk content before writing.
 // Any legacy plain state.toml is removed after a successful write.
 func (v *Vault) SaveState(state *models.VaultState) error {
 	if err := os.MkdirAll(v.path, 0755); err != nil {
@@ -135,9 +139,21 @@ func (v *Vault) SaveState(state *models.VaultState) error {
 	if err := toml.NewEncoder(&buf).Encode(state); err != nil {
 		return fmt.Errorf("failed to encode vault state: %w", err)
 	}
+	newToml := buf.Bytes()
+
+	// Skip the write if the on-disk plaintext is identical — this avoids a
+	// spurious age re-encryption (different nonce → different ciphertext →
+	// unnecessary git commit on every sync cycle).
+	if existing, err := os.ReadFile(v.VaultStatePath()); err == nil {
+		if plain, decErr := v.Decrypt(existing); decErr == nil {
+			if sha256Equal(plain, newToml) {
+				return nil
+			}
+		}
+	}
 
 	// Encrypt the TOML bytes.
-	enc, err := v.Encrypt(buf.Bytes())
+	enc, err := v.Encrypt(newToml)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt vault state: %w", err)
 	}
@@ -223,4 +239,11 @@ func (v *Vault) RemoveFile(file models.TrackedFile) error {
 		return fmt.Errorf("failed to remove vault file: %w", err)
 	}
 	return nil
+}
+
+// sha256Equal reports whether two byte slices have the same SHA-256 digest.
+func sha256Equal(a, b []byte) bool {
+	da := sha256.Sum256(a)
+	db := sha256.Sum256(b)
+	return da == db
 }
