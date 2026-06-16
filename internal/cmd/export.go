@@ -7,7 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/models"
+	"github.com/0xdps/daemon-hound/internal/storage"
+	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -34,10 +37,32 @@ func init() {
 }
 
 func runExport(cmd *cobra.Command, args []string) error {
-	_, vault, _, err := loadContext()
+	cfg := config.NewConfig()
+	if err := cfg.Load(); err != nil {
+		return fmt.Errorf("not initialized: %w", err)
+	}
+
+	// Always require explicit password confirmation for export — never use keychain.
+	fmt.Fprintln(os.Stderr, "Export contains unencrypted secrets. Master password required to proceed.")
+	password, err := utils.PromptPassword("Master password:")
 	if err != nil {
 		return err
 	}
+
+	encIdentity, err := os.ReadFile(config.IdentityPath())
+	if err != nil {
+		return fmt.Errorf("failed to read identity: %w", err)
+	}
+	identityStr, err := utils.DecryptWithPassword(string(encIdentity), password, cfg.IdentitySalt())
+	if err != nil {
+		return fmt.Errorf("incorrect password")
+	}
+	identity, err := storage.ParseIdentity(string(identityStr))
+	if err != nil {
+		return fmt.Errorf("failed to parse identity: %w", err)
+	}
+
+	vault := storage.NewVault(config.VaultPath(), identity)
 
 	if exportDir == "" {
 		exportDir = fmt.Sprintf("dh-export-%s", time.Now().UTC().Format("20060102-150405"))
