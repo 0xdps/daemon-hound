@@ -6,6 +6,7 @@ import (
 	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
+	"github.com/0xdps/daemon-hound/internal/models"
 	"github.com/spf13/cobra"
 )
 
@@ -34,42 +35,25 @@ func runUntrack(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Resolve namespace and relative path via tracker (avoids duplicating logic)
 	namespace, relPath, err := tr.ResolveKey(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to resolve file key: %w", err)
 	}
-
-	// Load vault state
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
 	key := namespace + ":" + relPath
-	file, exists := state.Files[key]
-	if !exists {
-		return fmt.Errorf("file is not tracked: %s", args[0])
-	}
 
-	// Remove from vault storage
-	if err := vault.RemoveFile(file); err != nil {
-		return fmt.Errorf("failed to remove file from vault: %w", err)
-	}
-
-	// Remove from state
-	delete(state.Files, key)
-	if err := vault.SaveState(state); err != nil {
-		return fmt.Errorf("failed to save vault state: %w", err)
-	}
-
-	// Commit and push
 	gitClient := git.NewClient(config.VaultPath())
-	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: untrack %s (%s)", relPath, namespace)); err != nil {
-		return fmt.Errorf("failed to commit: %w", err)
-	}
-	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: untrack %s (%s)", relPath, namespace), func(state *models.VaultState) error {
+		file, exists := state.Files[key]
+		if !exists {
+			return fmt.Errorf("file is not tracked: %s", args[0])
+		}
+		if err := vault.RemoveFile(file); err != nil {
+			return fmt.Errorf("failed to remove file from vault: %w", err)
+		}
+		delete(state.Files, key)
+		return nil
+	}); err != nil {
+		return err
 	}
 
 	fmt.Printf("Untracked: %s (%s)\n", args[0], namespace)

@@ -51,18 +51,26 @@ func runTrack(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid mode: %s (must be 'sync' or 'backup')", trackMode)
 	}
 
-	// Load state first so we can check for idempotency before encrypting.
-	state, err := vault.LoadState()
-	if err != nil {
-		return fmt.Errorf("failed to load vault state: %w", err)
-	}
-
 	ns, rel, err := tr.ResolveKey(args[0])
 	if err != nil {
 		return fmt.Errorf("failed to resolve file key: %w", err)
 	}
 	key := ns + ":" + rel
 
+	gitClient := git.NewClient(config.VaultPath())
+
+	// Pull BEFORE tr.Track() writes the .age file to disk.
+	// If we pull after, git sees the freshly-created .age file as an untracked
+	// working-tree file that the remote also has and refuses to merge.
+	if err := gitClient.Pull(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not pull before write (offline?): %v\n", err)
+	}
+
+	// Check idempotency against the (now up-to-date) state before encrypting.
+	state, err := vault.LoadState()
+	if err != nil {
+		return fmt.Errorf("failed to load vault state: %w", err)
+	}
 	if existing, exists := state.Files[key]; exists {
 		fmt.Printf("Already tracked: %s (%s, mode=%s)\n", args[0], existing.Namespace, existing.Mode)
 		return nil
@@ -73,19 +81,21 @@ func runTrack(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// Update vault state
 	state.Files[key] = *file
 	if err := vault.SaveState(state); err != nil {
 		return fmt.Errorf("failed to save vault state: %w", err)
 	}
-
-	// Commit and push
-	gitClient := git.NewClient(config.VaultPath())
 	if err := gitClient.CommitAll(fmt.Sprintf("daemon-hound: track %s (%s)", file.RelPath, file.Namespace)); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
 	}
+	// Push with one pull-and-retry on non-fast-forward rejection.
 	if err := gitClient.Push(); err != nil {
-		return fmt.Errorf("failed to push: %w", err)
+		if pullErr := gitClient.Pull(); pullErr != nil {
+			return fmt.Errorf("failed to push: %w (and pull retry failed: %v)", err, pullErr)
+		}
+		if err := gitClient.Push(); err != nil {
+			return fmt.Errorf("failed to push: %w", err)
+		}
 	}
 
 	fmt.Printf("Tracked: %s (%s, mode=%s)\n", args[0], file.Namespace, mode)
