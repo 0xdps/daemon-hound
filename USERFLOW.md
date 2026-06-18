@@ -9,7 +9,7 @@ This document describes the primary user journeys in DaemonHound.
 You have a new machine or are using DaemonHound for the first time.
 
 ```bash
-dh init --remote git@github.com:you/my-vault.git
+dhd init --remote git@github.com:you/my-vault.git
 # Enter master password: ••••••••
 # Confirm master password: ••••••••
 ```
@@ -27,7 +27,7 @@ DaemonHound will:
 ### Re-initializing an existing machine
 
 ```bash
-dh init --force
+dhd init --force
 # Vault repository URL [git@github.com:you/my-vault.git]:   ← pre-filled
 ```
 
@@ -40,10 +40,10 @@ Inside a project that has a Git remote:
 ```bash
 cd ~/projects/pingpong-api
 
-dh track .env.local        # sync mode (default) — shared across machines
-dh track .env.test         # sync mode
+dhd track .env.local        # sync mode (default) — shared across machines
+dhd track .env.test         # sync mode
 
-dh track ~/.zshrc --mode backup   # backup mode — this machine only
+dhd track ~/.zshrc --mode backup   # backup mode — this machine only
 ```
 
 DaemonHound:
@@ -62,20 +62,20 @@ Re-running `dh track` on an already-tracked file is safe — it reports "already
 Remove a file from the shared vault entirely:
 
 ```bash
-dh untrack .env.local
+dhd untrack .env.local
 ```
 
 Remove a file from this machine only, keeping the vault entry available for other machines:
 
 ```bash
-dh untrack --local .env.local
-dh untrack --local github.com/you/pingpong-api:.env.local
+dhd untrack --local .env.local
+dhd untrack --local github.com/you/pingpong-api:.env.local
 ```
 
 After deleting local project folders, remove every missing tracked file from this machine only:
 
 ```bash
-dh untrack --missing
+dhd untrack --missing
 ```
 
 Local-only untracking records an ignore in `~/.dh/config.toml`; it does not delete encrypted vault contents or shared tracking metadata.
@@ -85,7 +85,7 @@ Local-only untracking records an ignore in `~/.dh/config.toml`; it does not dele
 ## Flow 3: Check Sync Status
 
 ```bash
-dh status
+dhd status
 # github.com/you/pingpong-api
 #   .env.local    clean
 #   .env.test     dirty  (modified locally, not yet pushed)
@@ -97,7 +97,7 @@ dh status
 
 dh status --namespace github.com/you/pingpong-api   # filter to one namespace
 
-dh status --output json   # machine-readable output
+dhd status --output json   # machine-readable output
 ```
 
 Status values:
@@ -111,19 +111,19 @@ Status values:
 ## Flow 4: Push and Pull Changes
 
 ```bash
-dh sync
+dhd sync
 # Pulls any remote changes first, then pushes local dirty files.
 # → github.com/you/pingpong-api  .env.test    pushed
 # → Done
 
-dh sync --dry-run           # preview what would change without writing anything
+dhd sync --dry-run           # preview what would change without writing anything
 
-dh sync --namespace github.com/you/pingpong-api   # only this namespace
+dhd sync --namespace github.com/you/pingpong-api   # only this namespace
 ```
 
 ### Offline behavior
 
-If the vault remote is unreachable, `dh sync` skips the pull and pushes local dirty files to the local git repo. A **pending push** flag is set. The next successful `dh sync` retries the remote push automatically. `dh status` shows the pending push notice.
+If the vault remote is unreachable, `dhd sync` skips the pull and pushes local dirty files to the local git repo. A **pending push** flag is set. The next successful `dhd sync` retries the remote push automatically. `dhd status` shows the pending push notice.
 
 ---
 
@@ -136,7 +136,7 @@ You have a second machine where the project lives at a different path.
 On Machine 1, export the age identity:
 
 ```bash
-dh export-identity
+dhd export-identity
 # Master password: ••••••••
 # AGE-SECRET-KEY-...
 ```
@@ -146,7 +146,7 @@ Keep the printed key secret. Anyone with it can decrypt the vault.
 On Machine 2, initialize with the exported key:
 
 ```bash
-dh init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
+dhd init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
 # Enter and confirm the master password for this machine's encrypted identity file
 ```
 

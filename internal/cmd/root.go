@@ -17,7 +17,7 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:     "dh",
+	Use:     "dhd",
 	Short:   "DaemonHound",
 	Long:    `Opinionated local config and secret management for developers.`,
 	Version: fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, date),

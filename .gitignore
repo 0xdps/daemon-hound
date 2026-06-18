@@ -25,4 +25,4 @@ Thumbs.db
 
 # DaemonHound vault (never commit the actual vault)
 .dh/
-dh
+dhd

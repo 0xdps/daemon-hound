@@ -16,7 +16,7 @@ Describe the feature and how it would work from a user perspective.
 
 ```bash
 # Example CLI usage if applicable
-dh <command>
+dhd <command>
 ```
 
 ## Alternatives Considered

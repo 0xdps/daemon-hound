@@ -35,17 +35,17 @@ Reports will be acknowledged as quickly as possible. Please allow reasonable tim
 
 The age identity key (`~/.dh/identity.age`) is the root of all encryption. It is:
 
-- Generated once at `dh init`
+- Generated once at `dhd init`
 - Never stored in the vault
 - Never transmitted anywhere
 
 If this key is lost, encrypted vault data cannot be recovered. You are responsible for backing it up.
 
-To set up another machine against the same vault, export the identity from an existing machine with `dh export-identity` and provide it to `dh init --age-key <key>` on the new machine. Treat the exported key as plaintext secret material.
+To set up another machine against the same vault, export the identity from an existing machine with `dhd export-identity` and provide it to `dhd init --age-key <key>` on the new machine. Treat the exported key as plaintext secret material.
 
 ## Background Daemon
 
-`dh init` attempts to install a user-level background daemon on supported platforms:
+`dhd init` attempts to install a user-level background daemon on supported platforms:
 
 - macOS: launchd user agent
 - Linux: systemd user service
@@ -53,4 +53,4 @@ To set up another machine against the same vault, export the identity from an ex
 
 The daemon watches tracked file locations and the local vault clone, polls the configured Git remote, and writes logs under `~/.dh/`. It does not run with elevated privileges and does not contact any network service other than the Git remote configured by the user.
 
-Use `dh daemon status`, `dh daemon logs`, and `dh daemon errors` to inspect daemon state. Use `dh cleanup` to stop/uninstall the daemon and remove local DaemonHound data from a machine.
+Use `dhd daemon status`, `dhd daemon logs`, and `dhd daemon errors` to inspect daemon state. Use `dhd cleanup` to stop/uninstall the daemon and remove local DaemonHound data from a machine.

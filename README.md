@@ -39,10 +39,10 @@ Install the latest release with the install script:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
-dh version
+dhd version
 ```
 
-Linux package users can type `daemon-hound` or use the `dh` symlink. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
+Linux package users can use `dhd` directly or `daemon-hound` as an alias. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
 
 ---
 
@@ -52,15 +52,15 @@ Linux package users can type `daemon-hound` or use the `dh` symlink. See [INSTAL
 
 ```bash
 # Initialize DaemonHound with your private vault repo
-dh init --remote git@github.com:you/my-vault.git
+dhd init --remote git@github.com:you/my-vault.git
 
 # Inside any project, start tracking files
 cd ~/projects/pingpong-api
-dh track .env.local
-dh track .env.test
+dhd track .env.local
+dhd track .env.test
 
 # Encrypt and push to the vault
-dh sync
+dhd sync
 ```
 
 DaemonHound reads the `origin` remote, derives a namespace (`github.com/you/pingpong-api`), encrypts the file with your master password, and stores it in the vault. No manual configuration required.
@@ -69,22 +69,22 @@ DaemonHound reads the `origin` remote, derives a namespace (`github.com/you/ping
 
 ```bash
 # On the first machine, export the shared age identity
-dh export-identity
+dhd export-identity
 
 # On the second machine, initialize with the same vault repo and exported key
-dh init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
+dhd init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
 
 # Move into the project directory (path can differ between machines)
 cd ~/work/pingpong-api
 
 # Sync — DaemonHound detects the namespace and restores tracked files
-dh sync
+dhd sync
 # → github.com/you/pingpong-api: 2 tracked files found
 # →   .env.local   ✓ restored
 # →   .env.test    ✓ restored
 ```
 
-No need to re-run `dh track` on the second machine. Once a namespace exists in the vault, `dh sync` handles everything automatically. The age identity is required because the master password protects your local identity file; it is not itself the vault decryption key.
+No need to re-run `dhd track` on the second machine. Once a namespace exists in the vault, `dhd sync` handles everything automatically. The age identity is required because the master password protects your local identity file; it is not itself the vault decryption key.
 
 ---
 
@@ -130,14 +130,14 @@ vault/
 **Sync mode** — shared across all machines. Default for project files.
 
 ```bash
-dh track .env.local              # defaults to --mode sync
-dh track .env.local --mode sync
+dhd track .env.local              # defaults to --mode sync
+dhd track .env.local --mode sync
 ```
 
 **Backup mode** — machine-specific. Each machine keeps its own independent copy. No cross-machine sync occurs.
 
 ```bash
-dh track ~/.zshrc --mode backup
+dhd track ~/.zshrc --mode backup
 ```
 
 ### Global Files
@@ -145,8 +145,8 @@ dh track ~/.zshrc --mode backup
 Files outside a Git repository use a `global` namespace:
 
 ```bash
-dh track ~/.zshrc     --mode backup  # per-machine shell config
-dh track ~/.gitconfig               # synced across machines
+dhd track ~/.zshrc     --mode backup  # per-machine shell config
+dhd track ~/.gitconfig               # synced across machines
 ```
 
 ### Discover
@@ -154,9 +154,9 @@ dh track ~/.gitconfig               # synced across machines
 Automatically find all Git repositories under a directory (up to 4 levels deep), check each one against the vault, and sync any namespace that already has tracked files:
 
 ```bash
-dh discover           # scans from current directory
-dh discover ~/projects
-dh discover ~/         # scan home directory
+dhd discover           # scans from current directory
+dhd discover ~/projects
+dhd discover ~/         # scan home directory
 ```
 
 Example output:
@@ -172,7 +172,7 @@ github.com/dps/old-repo       not in vault     – skipped
 2 namespaces restored, 2 skipped
 ```
 
-This is the recommended command when setting up a new machine — run `dh init` once, then `dh discover ~/projects` to restore everything in one step instead of `cd`-ing into each repo.
+This is the recommended command when setting up a new machine — run `dhd init` once, then `dhd discover ~/projects` to restore everything in one step instead of `cd`-ing into each repo.
 
 ---
 
@@ -181,28 +181,28 @@ This is the recommended command when setting up a new machine — run `dh init` 
 Store and retrieve named secrets:
 
 ```bash
-dh secret set openai-key      # prompts for value
-dh secret get openai-key
-dh secret list
+dhd secret set openai-key      # prompts for value
+dhd secret get openai-key
+dhd secret list
 ```
 
 Secrets are mapped to specific env var keys in specific files — each repo can use a different variable name for the same logical secret. You define the mapping once per repo:
 
 ```bash
 cd ~/projects/pingpong-api
-dh secret ref openai-key .env.local OPENAI_API_KEY
+dhd secret ref openai-key .env.local OPENAI_API_KEY
 
 cd ~/projects/portfolio
-dh secret ref openai-key .env.local OPENAI_KEY
+dhd secret ref openai-key .env.local OPENAI_KEY
 ```
 
 When you rotate a secret, DaemonHound immediately rewrites every referenced file on disk using each repo's own key name, and marks them dirty for the next sync:
 
 ```bash
-dh secret set openai-key NEW_VALUE
+dhd secret set openai-key NEW_VALUE
 # → Updated .env.local in github.com/dps/pingpong-api  (OPENAI_API_KEY)
 # → Updated .env.local in github.com/dps/portfolio     (OPENAI_KEY)
-# → 2 files marked dirty — run `dh sync` to push
+# → 2 files marked dirty — run `dhd sync` to push
 ```
 
 ---
@@ -210,46 +210,46 @@ dh secret set openai-key NEW_VALUE
 ## Command Reference
 
 ```
-dh init [--remote <url>] [--age-key <key>]  Initialize DaemonHound and connect a vault repo
-dh track <file> [--mode sync|backup]        Start tracking a file
-dh untrack <file>                           Stop tracking a file and remove it from the vault
-dh untrack --local <file|namespace:path>    Remove tracking from this machine only
-dh untrack --missing                        Locally ignore tracked files missing on this machine
-dh discover [path] [--depth N]              Scan Git repos and sync known namespaces
-dh sync [--dry-run] [--namespace <ns>]      Push and pull tracked files
-dh status [--namespace <ns>] [--output json] Show tracked file status
+dhd init [--remote <url>] [--age-key <key>]  Initialize DaemonHound and connect a vault repo
+dhd track <file> [--mode sync|backup]        Start tracking a file
+dhd untrack <file>                           Stop tracking a file and remove it from the vault
+dhd untrack --local <file|namespace:path>    Remove tracking from this machine only
+dhd untrack --missing                        Locally ignore tracked files missing on this machine
+dhd discover [path] [--depth N]              Scan Git repos and sync known namespaces
+dhd sync [--dry-run] [--namespace <ns>]      Push and pull tracked files
+dhd status [--namespace <ns>] [--output json] Show tracked file status
 
-dh secret set <key>                         Store or update a secret (prompts for value)
-dh secret get <key>                         Retrieve a secret value
-dh secret list [key]                        List secrets or mappings for one secret
-dh secret ref <key> <file> <ENV_VAR>        Map a secret to a key in a file
-dh secret unref <key> <file>                Remove a secret mapping
-dh secret rename <old> <new>                Rename a secret and preserve mappings
-dh secret delete <key>                      Delete a secret and its mappings
+dhd secret set <key>                         Store or update a secret (prompts for value)
+dhd secret get <key>                         Retrieve a secret value
+dhd secret list [key]                        List secrets or mappings for one secret
+dhd secret ref <key> <file> <ENV_VAR>        Map a secret to a key in a file
+dhd secret unref <key> <file>                Remove a secret mapping
+dhd secret rename <old> <new>                Rename a secret and preserve mappings
+dhd secret delete <key>                      Delete a secret and its mappings
 
-dh daemon run                               Run the daemon in the foreground
-dh daemon status                            Check daemon installation/running state
-dh daemon logs [-f] [-n N]                  View daemon logs
-dh daemon errors [-f] [-n N]                View daemon error logs
-dh daemon stop                              Stop the background daemon
-dh daemon restart                           Restart the background daemon
+dhd daemon run                               Run the daemon in the foreground
+dhd daemon status                            Check daemon installation/running state
+dhd daemon logs [-f] [-n N]                  View daemon logs
+dhd daemon errors [-f] [-n N]                View daemon error logs
+dhd daemon stop                              Stop the background daemon
+dhd daemon restart                           Restart the background daemon
 
-dh conflicts list                           List detected conflicts
-dh conflicts show <file>                    Show conflict details
-dh conflicts resolve <file> --strategy local|remote
-dh conflicts clear                          Clear resolved conflicts
+dhd conflicts list                           List detected conflicts
+dhd conflicts show <file>                    Show conflict details
+dhd conflicts resolve <file> --strategy local|remote
+dhd conflicts clear                          Clear resolved conflicts
 
-dh doctor [--fix]                           Check setup and repair common issues
-dh machines [--output json]                 List machines with backup files
-dh rekey                                    Change the master password
-dh export [--dir <path>]                    Export decrypted files and secrets
-dh export-identity                          Print the age identity for a new machine
-dh logout                                   Remove cached master password from keychain
-dh cleanup [--force]                        Remove local DaemonHound state from this machine
-dh version                                  Print version information
+dhd doctor [--fix]                           Check setup and repair common issues
+dhd machines [--output json]                 List machines with backup files
+dhd rekey                                    Change the master password
+dhd export [--dir <path>]                    Export decrypted files and secrets
+dhd export-identity                          Print the age identity for a new machine
+dhd logout                                   Remove cached master password from keychain
+dhd cleanup [--force]                        Remove local DaemonHound state from this machine
+dhd version                                  Print version information
 ```
 
-`dh sync` works offline. If the vault remote is unreachable, changes are queued locally. The next successful sync pushes them. `dh status` shows pending pushes.
+`dhd sync` works offline. If the vault remote is unreachable, changes are queued locally. The next successful sync pushes them. `dhd status` shows pending pushes.
 
 ---
 

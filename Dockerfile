@@ -25,14 +25,14 @@ ARG COMMIT=none
 ARG DATE=unknown
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -ldflags="-s -w -X github.com/0xdps/daemon-hound/internal/cmd.version=${VERSION} -X github.com/0xdps/daemon-hound/internal/cmd.commit=${COMMIT} -X github.com/0xdps/daemon-hound/internal/cmd.date=${DATE}" \
-    -o dh ./cmd/dh
+    -o dhd ./cmd/dhd
 
 # Runtime stage
 FROM alpine:latest
 
 RUN apk add --no-cache git ca-certificates
 
-COPY --from=builder /build/dh /usr/local/bin/dh
+COPY --from=builder /build/dhd /usr/local/bin/dhd
 RUN chmod +x /usr/local/bin/dh
 
 # Create a non-root user for running dh

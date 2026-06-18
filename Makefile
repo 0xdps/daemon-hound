@@ -8,16 +8,16 @@ LDFLAGS := -s -w \
 
 .PHONY: run
 run:
-	go run ./cmd/dh
+	go run ./cmd/dhd
 
 .PHONY: build
 build:
-	go build -ldflags "$(LDFLAGS)" -o bin/dh ./cmd/dh
+	go build -ldflags "$(LDFLAGS)" -o bin/dhd ./cmd/dhd
 
 .PHONY: build-macos
 build-macos: build-macos-icon
 	@mkdir -p build/DaemonHound.app/Contents/{MacOS,Resources}
-	cp bin/dh build/DaemonHound.app/Contents/MacOS/dh
+	cp bin/dhd build/DaemonHound.app/Contents/MacOS/dhd
 	cp build/Info.plist build/DaemonHound.app/Contents/
 	cp build/AppIcon.icns build/DaemonHound.app/Contents/Resources/
 	@echo "✓ macOS app bundle created: build/DaemonHound.app"
@@ -25,7 +25,7 @@ build-macos: build-macos-icon
 .PHONY: install-macos
 install-macos: build-macos
 	@cp -r build/DaemonHound.app ~/Applications/DaemonHound.app
-	@chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dh
+	@chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dhd
 	@echo "✓ Daemon Hound installed to ~/Applications/DaemonHound.app"
 
 .PHONY: launch-daemon
@@ -93,4 +93,4 @@ docker-build:
 
 .PHONY: install
 install:
-	go install -ldflags "$(LDFLAGS)" ./cmd/dh
+	go install -ldflags "$(LDFLAGS)" ./cmd/dhd

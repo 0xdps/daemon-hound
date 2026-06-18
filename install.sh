@@ -5,7 +5,7 @@
 set -e
 
 REPO="0xdps/daemon-hound"
-BINARY="dh"
+BINARY="dhd"
 INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 
 # Detect OS
