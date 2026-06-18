@@ -124,7 +124,7 @@ nfpms:
     section: utils
     priority: optional
     contents:
-      - src: "dh"
+      - src: "dist/dh_{{ .Os }}_{{ .Arch }}{{ if .Arm }}_v{{ .Arm }}{{ end }}/dh"
         dst: "/usr/bin/daemon-hound"
       - src: "daemon-hound"
         dst: "/usr/bin/dh"
