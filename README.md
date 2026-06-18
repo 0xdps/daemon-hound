@@ -42,7 +42,7 @@ curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh
 dh version
 ```
 
-Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes are covered in [INSTALL.md](INSTALL.md).
+Linux package users can type `daemon-hound` or use the `dh` symlink. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
 
 ---
 

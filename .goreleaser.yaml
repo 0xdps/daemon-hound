@@ -123,6 +123,12 @@ nfpms:
     bindir: /usr/bin
     section: utils
     priority: optional
+    contents:
+      - src: "dh"
+        dst: "/usr/bin/daemon-hound"
+      - src: "daemon-hound"
+        dst: "/usr/bin/dh"
+        type: "symlink"
 
 dockers:
   - image_templates:

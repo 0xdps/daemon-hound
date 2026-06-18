@@ -28,8 +28,10 @@ Make sure the chosen directory is in `PATH`.
 Download the `.deb` asset from the latest release, then install it:
 
 ```bash
-sudo dpkg -i daemon-hound_*_amd64.deb
+sudo dpkg -i daemon-hound_*_linux_amd64.deb
 sudo apt-get install -f
+daemon-hound version
+# or use the dh symlink:
 dh version
 ```
 
@@ -40,23 +42,29 @@ Use the `arm64` package on ARM64 systems.
 Download the `.rpm` asset from the latest release, then install it:
 
 ```bash
-sudo rpm -i daemon-hound-*.x86_64.rpm
+sudo rpm -i daemon-hound_*_linux_amd64.rpm
+daemon-hound version
+# or use the dh symlink:
 dh version
 ```
 
-Use the `aarch64` package on ARM64 systems.
+Use the `arm64` packages on ARM64 systems.
 
 ### Alpine Linux
 
 ```bash
-sudo apk add --allow-untrusted daemon-hound-*.apk
+sudo apk add --allow-untrusted daemon-hound_*_linux_amd64.apk
+daemon-hound version
+# or use the dh symlink:
 dh version
 ```
 
 ### Arch Linux
 
 ```bash
-sudo pacman -U daemon-hound-*.pkg.tar.zst
+sudo pacman -U daemon-hound_*_linux_amd64.pkg.tar.zst
+daemon-hound version
+# or use the dh symlink:
 dh version
 ```
 
