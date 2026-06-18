@@ -26,6 +26,7 @@ type MachineConfig struct {
 	VaultRemote  string            `toml:"vault_remote,omitempty"`
 	IdentitySalt string            `toml:"identity_salt,omitempty"` // prefix@postfix salt for identity encryption (global across machines)
 	Bindings     map[string]string `toml:"bindings"`                // namespace -> local absolute path
+	IgnoredFiles []string          `toml:"ignored_files,omitempty"` // local-only ignores, key: "namespace:relPath"
 	PendingPush  bool              `toml:"pending_push,omitempty"`  // local vault commits not yet pushed to remote
 	Daemon       DaemonConfig      `toml:"daemon"`                  // daemon configuration
 }

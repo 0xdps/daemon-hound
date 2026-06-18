@@ -199,7 +199,9 @@ dh secret set openai-key NEW_VALUE
 ```
 dh init [--remote <url>] [--age-key <key>]  Initialize DaemonHound and connect a vault repo
 dh track <file> [--mode sync|backup]        Start tracking a file
-dh untrack <file>                           Stop tracking a file
+dh untrack <file>                           Stop tracking a file and remove it from the vault
+dh untrack --local <file|namespace:path>    Remove tracking from this machine only
+dh untrack --missing                        Locally ignore tracked files missing on this machine
 dh discover [path] [--depth N]              Scan Git repos and sync known namespaces
 dh sync [--dry-run] [--namespace <ns>]      Push and pull tracked files
 dh status [--namespace <ns>] [--output json] Show tracked file status

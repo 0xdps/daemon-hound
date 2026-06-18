@@ -26,6 +26,7 @@ type ConfigReader interface {
 	MachineID() string
 	GetBinding(namespace string) (string, bool)
 	SetBinding(namespace, localPath string) error
+	IsFileIgnored(namespace, relPath string) bool
 	PendingPush() bool
 	SetPendingPush(pending bool) error
 }
@@ -49,6 +50,9 @@ func (s *Syncer) WithNamespaceFilter(ns string) *Syncer {
 
 // shouldProcess reports whether a file should be included given the current filters.
 func (s *Syncer) shouldProcess(file models.TrackedFile) bool {
+	if s.config.IsFileIgnored(file.Namespace, file.RelPath) {
+		return false
+	}
 	if file.Mode == models.ModeBackup && file.MachineID != s.config.MachineID() {
 		return false
 	}

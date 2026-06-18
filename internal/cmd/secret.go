@@ -138,6 +138,9 @@ func runSecretSet(cmd *cobra.Command, args []string) error {
 	updatedCount := 0
 	if secret, ok := state.Secrets[name]; ok {
 		for _, ref := range secret.Refs {
+			if cfg.IsFileIgnored(ref.Namespace, ref.File) {
+				continue
+			}
 			if err := updateFileWithSecret(cfg, ref, value); err != nil {
 				fmt.Fprintf(os.Stderr, "  Warning: failed to update %s in %s: %v\n", ref.File, ref.Namespace, err)
 				continue

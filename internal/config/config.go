@@ -29,7 +29,8 @@ func NewConfig() *Config {
 	return &Config{
 		path: filepath.Join(home, AppDirName, ConfigFileName),
 		data: models.MachineConfig{
-			Bindings: make(map[string]string),
+			Bindings:     make(map[string]string),
+			IgnoredFiles: nil,
 		},
 	}
 }
@@ -54,6 +55,7 @@ func (c *Config) Init(vaultRemote string) error {
 	c.data.MachineID = uuid.New().String()
 	c.data.VaultRemote = vaultRemote
 	c.data.Bindings = make(map[string]string)
+	c.data.IgnoredFiles = nil
 	c.loaded = true
 	return c.Save()
 }
@@ -125,6 +127,59 @@ func (c *Config) Bindings() map[string]string {
 		out[k] = v
 	}
 	return out
+}
+
+// IgnoreFile records a tracked file as ignored on this machine only.
+func (c *Config) IgnoreFile(namespace, relPath string) error {
+	key := trackedFileKey(namespace, relPath)
+	for _, existing := range c.data.IgnoredFiles {
+		if existing == key {
+			return nil
+		}
+	}
+	c.data.IgnoredFiles = append(c.data.IgnoredFiles, key)
+	return c.Save()
+}
+
+// UnignoreFile removes a local-only ignore for a tracked file.
+func (c *Config) UnignoreFile(namespace, relPath string) error {
+	key := trackedFileKey(namespace, relPath)
+	kept := c.data.IgnoredFiles[:0]
+	removed := false
+	for _, existing := range c.data.IgnoredFiles {
+		if existing == key {
+			removed = true
+			continue
+		}
+		kept = append(kept, existing)
+	}
+	if !removed {
+		return nil
+	}
+	c.data.IgnoredFiles = kept
+	return c.Save()
+}
+
+// IsFileIgnored reports whether a tracked file is ignored on this machine only.
+func (c *Config) IsFileIgnored(namespace, relPath string) bool {
+	key := trackedFileKey(namespace, relPath)
+	for _, existing := range c.data.IgnoredFiles {
+		if existing == key {
+			return true
+		}
+	}
+	return false
+}
+
+// IgnoredFiles returns all local-only ignored tracked file keys.
+func (c *Config) IgnoredFiles() []string {
+	out := make([]string, len(c.data.IgnoredFiles))
+	copy(out, c.data.IgnoredFiles)
+	return out
+}
+
+func trackedFileKey(namespace, relPath string) string {
+	return namespace + ":" + relPath
 }
 
 // AppDir returns the absolute path to ~/.dh.

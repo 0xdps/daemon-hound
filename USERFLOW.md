@@ -57,6 +57,29 @@ DaemonHound:
 
 Re-running `dh track` on an already-tracked file is safe — it reports "already tracked" and exits.
 
+### Stop tracking files
+
+Remove a file from the shared vault entirely:
+
+```bash
+dh untrack .env.local
+```
+
+Remove a file from this machine only, keeping the vault entry available for other machines:
+
+```bash
+dh untrack --local .env.local
+dh untrack --local github.com/you/pingpong-api:.env.local
+```
+
+After deleting local project folders, remove every missing tracked file from this machine only:
+
+```bash
+dh untrack --missing
+```
+
+Local-only untracking records an ignore in `~/.dh/config.toml`; it does not delete encrypted vault contents or shared tracking metadata.
+
 ---
 
 ## Flow 3: Check Sync Status
@@ -403,6 +426,9 @@ Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/renam
 | Re-initialize machine             | `dh init --force`                          |
 | Track a project file              | `dh track .env.local`                      |
 | Track a machine-only file         | `dh track ~/.zshrc --mode backup`          |
+| Remove from vault                 | `dh untrack <file>`                        |
+| Remove from this machine only     | `dh untrack --local <file>`                |
+| Remove missing local references   | `dh untrack --missing`                     |
 | Push/pull changes                 | `dh sync`                                  |
 | Preview changes                   | `dh sync --dry-run`                        |
 | Sync one namespace only           | `dh sync --namespace <ns>`                 |

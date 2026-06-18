@@ -22,6 +22,7 @@ type ConfigReader interface {
 	MachineID() string
 	GetBinding(namespace string) (string, bool)
 	SetBinding(namespace, localPath string) error
+	UnignoreFile(namespace, relPath string) error
 }
 
 // NewTracker creates a new Tracker.
@@ -106,6 +107,10 @@ func (t *Tracker) Track(localPath string, mode models.FileMode) (*models.Tracked
 
 	if _, err := t.vault.StoreFile(file, plaintext); err != nil {
 		return nil, fmt.Errorf("failed to store file in vault: %w", err)
+	}
+
+	if err := t.config.UnignoreFile(file.Namespace, file.RelPath); err != nil {
+		return nil, fmt.Errorf("failed to clear local ignore: %w", err)
 	}
 
 	return &file, nil

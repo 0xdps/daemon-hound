@@ -49,6 +49,9 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	byNS := make(map[string][]fileEntry)
 	for _, file := range state.Files {
+		if cfg.IsFileIgnored(file.Namespace, file.RelPath) {
+			continue
+		}
 		if statusNamespace != "" && file.Namespace != statusNamespace {
 			continue
 		}
@@ -57,6 +60,11 @@ func runStatus(cmd *cobra.Command, args []string) error {
 			fileStatus = models.DirtyStatus("error")
 		}
 		byNS[file.Namespace] = append(byNS[file.Namespace], fileEntry{file, fileStatus})
+	}
+
+	if len(byNS) == 0 {
+		fmt.Println("No tracked files for this machine.")
+		return nil
 	}
 
 	if statusOutput == "json" {

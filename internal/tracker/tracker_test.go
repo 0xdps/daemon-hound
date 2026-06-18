@@ -19,6 +19,7 @@ type mockConfig struct {
 func (m *mockConfig) MachineID() string                   { return m.machineID }
 func (m *mockConfig) GetBinding(ns string) (string, bool) { v, ok := m.bindings[ns]; return v, ok }
 func (m *mockConfig) SetBinding(ns, path string) error    { m.bindings[ns] = path; return nil }
+func (m *mockConfig) UnignoreFile(ns, path string) error  { return nil }
 
 // calculateChecksum computes a simple checksum for testing
 func calculateChecksum(path string) (string, error) {

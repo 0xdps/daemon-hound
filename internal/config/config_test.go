@@ -66,6 +66,45 @@ func TestConfigBindings(t *testing.T) {
 	}
 }
 
+func TestConfigIgnoredFiles(t *testing.T) {
+	dir := t.TempDir()
+	c := newTestCfg(dir)
+	if err := c.Init(""); err != nil {
+		t.Fatalf("Init failed: %v", err)
+	}
+
+	if c.IsFileIgnored("github.com/test/repo", ".env.local") {
+		t.Fatal("file should not be ignored initially")
+	}
+	if err := c.IgnoreFile("github.com/test/repo", ".env.local"); err != nil {
+		t.Fatalf("IgnoreFile failed: %v", err)
+	}
+	if err := c.IgnoreFile("github.com/test/repo", ".env.local"); err != nil {
+		t.Fatalf("duplicate IgnoreFile failed: %v", err)
+	}
+	if !c.IsFileIgnored("github.com/test/repo", ".env.local") {
+		t.Fatal("file should be ignored")
+	}
+	if got := c.IgnoredFiles(); len(got) != 1 || got[0] != "github.com/test/repo:.env.local" {
+		t.Fatalf("IgnoredFiles = %#v", got)
+	}
+
+	c2 := newTestCfg(dir)
+	if err := c2.Load(); err != nil {
+		t.Fatalf("Load failed: %v", err)
+	}
+	if !c2.IsFileIgnored("github.com/test/repo", ".env.local") {
+		t.Fatal("ignored file should persist across Load")
+	}
+
+	if err := c2.UnignoreFile("github.com/test/repo", ".env.local"); err != nil {
+		t.Fatalf("UnignoreFile failed: %v", err)
+	}
+	if c2.IsFileIgnored("github.com/test/repo", ".env.local") {
+		t.Fatal("file should not be ignored after UnignoreFile")
+	}
+}
+
 func TestConfigPendingPush(t *testing.T) {
 	dir := t.TempDir()
 	c := newTestCfg(dir)
