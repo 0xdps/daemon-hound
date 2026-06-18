@@ -199,4 +199,4 @@ release:
   footer: |
     ## Changelog
 
-    See [CHANGELOG.md](https://github.com/0xdps/daemon-hound/blob/main/CHANGELOG.md) for full details.
+    See [CHANGELOG.md](https://github.com/0xdps/daemon-hound/blob/trunk/CHANGELOG.md) for full details.

@@ -33,6 +33,19 @@ Most existing tools are either too complex (Vault, Doppler), require a SaaS subs
 
 ---
 
+## Installation
+
+Install the latest release with the install script:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+dh version
+```
+
+Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes are covered in [INSTALL.md](INSTALL.md).
+
+---
+
 ## Getting Started
 
 ### First Machine

@@ -2,6 +2,8 @@
 
 This document describes how DaemonHound is built, released, and distributed across all supported platforms.
 
+For current user-facing installation and update instructions, see [INSTALL.md](INSTALL.md).
+
 ---
 
 ## Table of Contents
@@ -130,10 +132,10 @@ dh status
 
 ```bash
 # Default install to /usr/local/bin
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
 
 # Custom install directory
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/main/install.sh | INSTALL_DIR=$HOME/.local/bin sh
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | INSTALL_DIR=$HOME/.local/bin sh
 ```
 
 The script auto-detects your OS and architecture, downloads the correct binary, and installs it.
@@ -186,7 +188,7 @@ brew tap 0xdps/packages
 brew install daemon-hound
 
 # Or install script
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
 ```
 
 #### Linux
@@ -197,7 +199,7 @@ brew tap 0xdps/packages
 brew install daemon-hound
 
 # Or install script
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
 
 # Or download .deb/.rpm/.apk from releases
 ```

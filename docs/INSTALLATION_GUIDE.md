@@ -1,5 +1,7 @@
 # Cross-Platform Installation Guide
 
+> For current user-facing install, update, daemon restart, and uninstall instructions, see [../INSTALL.md](../INSTALL.md). This document keeps the broader packaging and distribution overview.
+
 ## Overview
 
 daemon-hound supports **macOS, Linux, and Windows** through multiple installation methods. Here's how it all works together:

@@ -9,9 +9,13 @@
   - What's ready to use now
 
 ### 📦 Installation & Distribution
+- **[../INSTALL.md](../INSTALL.md)** ← **USER INSTALL GUIDE**
+  - Latest install, update, daemon restart, and uninstall instructions
+  - Linux packages, install script, Homebrew, Scoop, and direct downloads
+
 - **[INSTALLATION_GUIDE.md](INSTALLATION_GUIDE.md)**
-  - How users install on macOS, Linux, Windows
-  - Multiple installation methods per platform
+  - Historical cross-platform distribution details
+  - Packaging and artifact overview
   
 - **[MACOS_APP_BUNDLE.md](MACOS_APP_BUNDLE.md)**
   - macOS app bundle with proper icon
@@ -135,11 +139,11 @@ make tag TAG=v1.1.0
 # ✓ Publishes Docker images
 # ✓ Updates Homebrew/Scoop (if GH_PAT set)
 
-# Users can then install from:
-brew install daemon-hound              # macOS
-sudo apt install daemon-hound          # Linux (Debian/Ubuntu)
-scoop install daemon-hound             # Windows
-docker pull ghcr.io/0xdps/daemon-hound # Docker
+# Users can then install from the release channels in ../INSTALL.md
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+brew install daemon-hound
+scoop install daemon-hound
+docker pull ghcr.io/0xdps/daemon-hound:latest
 ```
 
 ---
@@ -169,6 +173,8 @@ Single Go Codebase (daemon-hound/)
 ## For Users
 
 ### Installation Options
+
+See [../INSTALL.md](../INSTALL.md) for the current user-facing install and update instructions.
 
 **macOS**:
 ```bash
