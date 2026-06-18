@@ -65,8 +65,9 @@ dh version
 For x86_64 Linux:
 
 ```bash
-VERSION=v1.1.0
-curl -LO "https://github.com/0xdps/daemon-hound/releases/download/${VERSION}/daemon-hound_${VERSION}_Linux_x86_64.tar.gz"
+RELEASE_TAG=v1.1.0
+VERSION=${RELEASE_TAG#v}
+curl -LO "https://github.com/0xdps/daemon-hound/releases/download/${RELEASE_TAG}/daemon-hound_${VERSION}_Linux_x86_64.tar.gz"
 tar -xzf "daemon-hound_${VERSION}_Linux_x86_64.tar.gz"
 sudo install -m 0755 dh /usr/local/bin/dh
 dh version

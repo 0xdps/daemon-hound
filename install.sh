@@ -14,7 +14,7 @@ case "$OS" in
     linux) OS="Linux" ;;
     darwin) OS="Darwin" ;;
     mingw*|msys*|cygwin*) OS="Windows" ;;
-    freebsd) OS="FreeBSD" ;;
+    freebsd) OS="Freebsd" ;;
     *)
         echo "Unsupported OS: $OS"
         exit 1
@@ -43,17 +43,18 @@ fi
 
 # Fetch latest release version
 echo "Fetching latest release..."
-VERSION=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-if [ -z "$VERSION" ]; then
+RELEASE_TAG=$(curl -fsSL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+if [ -z "$RELEASE_TAG" ]; then
     echo "Failed to fetch latest release version"
     exit 1
 fi
+VERSION=${RELEASE_TAG#v}
 
-echo "Latest version: ${VERSION}"
+echo "Latest version: ${RELEASE_TAG}"
 
 # Construct download URL
 ASSET_NAME="daemon-hound_${VERSION}_${OS}_${ARCH}.${EXT}"
-DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${VERSION}/${ASSET_NAME}"
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${ASSET_NAME}"
 
 echo "Downloading ${ASSET_NAME}..."
 TMP_DIR=$(mktemp -d)
