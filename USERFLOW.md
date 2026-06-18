@@ -19,6 +19,8 @@ DaemonHound will:
 2. Generate an age identity key → encrypted with your password → `~/.dh/identity.age`
 3. Clone (or create) the vault repo locally at `~/.dh/vault/`
 4. Save the vault remote URL so `--force` re-init can pre-fill it
+5. Store the master password in the OS keychain when available
+6. Install the background sync daemon on supported platforms
 
 > ⚠️ Back up `~/.dh/identity.age` immediately. Without it, encrypted vault data cannot be recovered.
 
@@ -108,10 +110,24 @@ You have a second machine where the project lives at a different path.
 
 ### Step 1 — Initialize
 
+On Machine 1, export the age identity:
+
 ```bash
-dh init --remote git@github.com:you/my-vault.git
-# Enter the same master password used on Machine 1
+dh export-identity
+# Master password: ••••••••
+# AGE-SECRET-KEY-...
 ```
+
+Keep the printed key secret. Anyone with it can decrypt the vault.
+
+On Machine 2, initialize with the exported key:
+
+```bash
+dh init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
+# Enter and confirm the master password for this machine's encrypted identity file
+```
+
+The master password protects `~/.dh/identity.age` locally. The shared age identity is what allows multiple machines to decrypt the same vault contents.
 
 ### Step 2a — Sync a single project
 
@@ -305,10 +321,65 @@ The export directory contains:
 When retiring a machine:
 
 1. Run `dh sync` to ensure all local changes are pushed
-2. Delete `~/.dh/` from the machine
+2. Run `dh cleanup` to stop/uninstall the daemon, remove the cached keychain password, and delete local data under `~/.dh/`
 3. Backup mode files for that machine UUID remain in the vault but will no longer be updated
 
+```bash
+dh cleanup
+# or, for automation:
+dh cleanup --force
+```
+
 Sync mode files are unaffected — other machines continue to use them normally.
+
+---
+
+## Flow 12: Background Daemon Operations
+
+`dh init` installs the daemon automatically when the platform supports user-level services. Manual `dh sync` remains available, but the daemon handles routine sync cycles.
+
+```bash
+dh daemon status
+# ✓ Daemon service installed
+# ✓ Daemon is running
+
+dh daemon logs
+dh daemon logs -f
+dh daemon logs -n 100
+
+dh daemon errors
+
+dh daemon restart
+dh daemon stop
+```
+
+For debugging or manual service setup, run the daemon in the foreground:
+
+```bash
+dh daemon run
+```
+
+The daemon watches tracked file directories, watches the local vault clone, polls the remote every 30 seconds, rotates logs, and uses the same user permissions as the CLI.
+
+---
+
+## Flow 13: Conflict Review
+
+Most encrypted vault conflicts are resolved automatically by the sync engine. When the daemon records a conflict for review:
+
+```bash
+dh conflicts list
+dh conflicts show .env.local
+
+dh conflicts resolve .env.local --strategy local
+# or:
+dh conflicts resolve .env.local --strategy remote
+
+dh sync
+dh conflicts clear
+```
+
+`local` keeps this machine's version; `remote` accepts the remote version. `dh conflicts clear` only removes resolved conflict records.
 
 ---
 
@@ -340,6 +411,8 @@ Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/renam
 | Check sync status                 | `dh status`                                |
 | JSON status (scripting)           | `dh status --output json`                  |
 | Store a secret                    | `dh secret set <key>`                      |
+| Retrieve a secret                 | `dh secret get <key>`                      |
+| List secrets                      | `dh secret list [key]`                     |
 | Rotate a secret                   | `dh secret set <key>` (new value)          |
 | Rename a secret                   | `dh secret rename <old> <new>`             |
 | Map secret to a file              | `dh secret ref <key> <file> <ENV_VAR>`     |
@@ -350,4 +423,9 @@ Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/renam
 | List backup machines              | `dh machines`                              |
 | Change master password            | `dh rekey`                                 |
 | Export everything to plaintext    | `dh export`                                |
+| Export identity for new machine   | `dh export-identity`                       |
+| Check daemon                      | `dh daemon status`                         |
+| View daemon logs                  | `dh daemon logs`                           |
+| Resolve conflicts                 | `dh conflicts resolve <file>`              |
 | Remove cached password            | `dh logout`                                |
+| Remove local installation         | `dh cleanup`                               |

@@ -55,8 +55,11 @@ DaemonHound reads the `origin` remote, derives a namespace (`github.com/you/ping
 ### Second Machine
 
 ```bash
-# Initialize with the same vault repo and master password
-dh init --remote git@github.com:you/my-vault.git
+# On the first machine, export the shared age identity
+dh export-identity
+
+# On the second machine, initialize with the same vault repo and exported key
+dh init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
 
 # Move into the project directory (path can differ between machines)
 cd ~/work/pingpong-api
@@ -68,7 +71,7 @@ dh sync
 # →   .env.test    ✓ restored
 ```
 
-No need to re-run `dh track` on the second machine. Once a namespace exists in the vault, `dh sync` handles everything automatically.
+No need to re-run `dh track` on the second machine. Once a namespace exists in the vault, `dh sync` handles everything automatically. The age identity is required because the master password protects your local identity file; it is not itself the vault decryption key.
 
 ---
 
@@ -194,16 +197,41 @@ dh secret set openai-key NEW_VALUE
 ## Command Reference
 
 ```
-dh init [--remote <url>]        Initialize DaemonHound and connect a vault repo
-dh track <file>                 Start tracking a file (auto-detects namespace from origin)
-dh discover [path]              Scan directories for Git repos and sync known namespaces
-dh sync                         Push and pull all tracked files to/from the vault
-dh status                       Show the status of all tracked files
+dh init [--remote <url>] [--age-key <key>]  Initialize DaemonHound and connect a vault repo
+dh track <file> [--mode sync|backup]        Start tracking a file
+dh untrack <file>                           Stop tracking a file
+dh discover [path] [--depth N]              Scan Git repos and sync known namespaces
+dh sync [--dry-run] [--namespace <ns>]      Push and pull tracked files
+dh status [--namespace <ns>] [--output json] Show tracked file status
 
-dh secret set <key>             Store or update a secret (prompts for value)
-dh secret get <key>             Retrieve a secret value
-dh secret ref <key> <file> <ENV_VAR>  Map a secret to a specific key in a file
-dh secret list [key]            List all secrets, or all mappings for a specific secret
+dh secret set <key>                         Store or update a secret (prompts for value)
+dh secret get <key>                         Retrieve a secret value
+dh secret list [key]                        List secrets or mappings for one secret
+dh secret ref <key> <file> <ENV_VAR>        Map a secret to a key in a file
+dh secret unref <key> <file>                Remove a secret mapping
+dh secret rename <old> <new>                Rename a secret and preserve mappings
+dh secret delete <key>                      Delete a secret and its mappings
+
+dh daemon run                               Run the daemon in the foreground
+dh daemon status                            Check daemon installation/running state
+dh daemon logs [-f] [-n N]                  View daemon logs
+dh daemon errors [-f] [-n N]                View daemon error logs
+dh daemon stop                              Stop the background daemon
+dh daemon restart                           Restart the background daemon
+
+dh conflicts list                           List detected conflicts
+dh conflicts show <file>                    Show conflict details
+dh conflicts resolve <file> --strategy local|remote
+dh conflicts clear                          Clear resolved conflicts
+
+dh doctor [--fix]                           Check setup and repair common issues
+dh machines [--output json]                 List machines with backup files
+dh rekey                                    Change the master password
+dh export [--dir <path>]                    Export decrypted files and secrets
+dh export-identity                          Print the age identity for a new machine
+dh logout                                   Remove cached master password from keychain
+dh cleanup [--force]                        Remove local DaemonHound state from this machine
+dh version                                  Print version information
 ```
 
 `dh sync` works offline. If the vault remote is unreachable, changes are queued locally. The next successful sync pushes them. `dh status` shows pending pushes.

@@ -212,7 +212,9 @@ func concatCSV(localRows, remoteRows [][]string, localH, remoteH []string) ([]by
 	var all [][]string
 	for _, row := range localRows {
 		all = append(all, row)
-		if len(row) > 0 { seenFirst[row[0]] = true }
+		if len(row) > 0 {
+			seenFirst[row[0]] = true
+		}
 	}
 	for _, row := range remoteRows {
 		if len(row) == 0 || !seenFirst[row[0]] {

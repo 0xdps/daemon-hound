@@ -50,9 +50,15 @@ func mergeJSON(base, local, remote interface{}) (interface{}, bool) {
 	if baseIsMap && localIsMap && remoteIsMap {
 		out := make(map[string]interface{})
 		allKeys := make(map[string]struct{})
-		for k := range baseMap { allKeys[k] = struct{}{} }
-		for k := range localMap { allKeys[k] = struct{}{} }
-		for k := range remoteMap { allKeys[k] = struct{}{} }
+		for k := range baseMap {
+			allKeys[k] = struct{}{}
+		}
+		for k := range localMap {
+			allKeys[k] = struct{}{}
+		}
+		for k := range remoteMap {
+			allKeys[k] = struct{}{}
+		}
 
 		for key := range allKeys {
 			bv, inBase := baseMap[key]
@@ -79,14 +85,20 @@ func mergeJSON(base, local, remote interface{}) (interface{}, bool) {
 			case !inBase && inLocal && inRemote:
 				// Both added this key
 				merged, ok := mergeJSON(nil, lv, rv)
-				if !ok { return nil, false }
+				if !ok {
+					return nil, false
+				}
 				out[key] = merged
 			default:
 				// Present in at least one side with a base
 				var baseVal interface{}
-				if inBase { baseVal = bv }
+				if inBase {
+					baseVal = bv
+				}
 				merged, ok := mergeJSON(baseVal, lv, rv)
-				if !ok { return nil, false }
+				if !ok {
+					return nil, false
+				}
 				out[key] = merged
 			}
 		}
@@ -114,8 +126,12 @@ func mergeJSON(base, local, remote interface{}) (interface{}, bool) {
 
 // jsonEqual compares two JSON values for equality via re-marshalling.
 func jsonEqual(a, b interface{}) bool {
-	if a == nil && b == nil { return true }
-	if a == nil || b == nil { return false }
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
 	aj, _ := json.Marshal(a)
 	bj, _ := json.Marshal(b)
 	return string(aj) == string(bj)
