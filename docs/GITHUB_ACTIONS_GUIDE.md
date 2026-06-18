@@ -57,8 +57,8 @@ strategy:
 ```bash
 GOOS=darwin GOARCH=amd64 go build \
   -ldflags "-X version=..., -X commit=..., -X date=..." \
-  -o dist/dh-darwin-amd64 \
-  ./cmd/dh
+  -o dist/dhd-darwin-amd64 \
+  ./cmd/dhd
 ```
 
 **Result**: 6 binaries compiled (one per platform/arch combination)
@@ -298,9 +298,9 @@ goreleaser release --clean
 #### Build Section
 ```yaml
 builds:
-  - id: dh
-    main: ./cmd/dh
-    binary: dh
+  - id: dhd
+    main: ./cmd/dhd
+    binary: dhd
     goos: [darwin, linux, windows, freebsd]
     goarch: [amd64, arm64]
     ldflags: [version, commit, date]

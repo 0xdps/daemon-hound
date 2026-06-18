@@ -50,7 +50,7 @@ func (l *Lock) Acquire() error {
 		return l.Acquire()
 	}
 
-	return fmt.Errorf("another dh process (PID %d) is running — if it has exited, delete %s", pid, l.path)
+	return fmt.Errorf("another dhd process (PID %d) is running — if it has exited, delete %s", pid, l.path)
 }
 
 // Release releases the lock and removes the lock file.

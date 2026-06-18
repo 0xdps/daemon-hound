@@ -29,7 +29,7 @@ This command:
 4. Stores configuration in ~/.dh/
 
 When joining an existing vault on a new machine, use --age-key with the key
-printed by 'dh export-identity' on your original machine.`,
+printed by 'dhd export-identity' on your original machine.`,
 	RunE: runInit,
 }
 
@@ -157,7 +157,7 @@ func runInit(cmd *cobra.Command, args []string) error {
 	sm := daemon.NewServiceManager()
 	if err := sm.Install(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to install daemon service: %v\n", err)
-		fmt.Fprintf(os.Stderr, "You can manually start syncing with: dh sync\n")
+		fmt.Fprintf(os.Stderr, "You can manually start syncing with: dhd sync\n")
 	} else {
 		fmt.Println("✓ Background sync daemon installed")
 		fmt.Println("  Auto-starts on system boot")

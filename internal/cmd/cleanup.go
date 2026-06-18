@@ -34,7 +34,7 @@ This does NOT affect your remote vault repository. Your tracked files
 and secrets remain safe in the remote git repository.
 
 To re-initialize on this machine later, run:
-  dh init --remote <your-vault-url>`,
+  dhd init --remote <your-vault-url>`,
 	RunE: runCleanup,
 }
 
@@ -106,6 +106,6 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("\n" + output.Bold("DaemonHound has been completely removed from this machine."))
 	fmt.Println(output.Dim("Your remote vault repository remains intact."))
-	fmt.Printf("\nTo re-initialize, run: %s\n", output.Cyan("dh init --remote <your-vault-url>"))
+	fmt.Printf("\nTo re-initialize, run: %s\n", output.Cyan("dhd init --remote <your-vault-url>"))
 	return nil
 }

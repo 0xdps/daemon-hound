@@ -4,7 +4,7 @@ This guide walks through testing all daemon features on macOS, Linux, and Window
 
 ## Prerequisites
 
-- DaemonHound binary built: `go build ./cmd/dh`
+- DaemonHound binary built: `go build ./cmd/dhd`
 - A remote Git repository for vault testing
 - System access to verify service registration
 
@@ -16,7 +16,7 @@ This guide walks through testing all daemon features on macOS, Linux, and Window
 
 ```bash
 # Remove any existing installation
-dh cleanup --force 2>/dev/null || true
+dhd cleanup --force 2>/dev/null || true
 
 # Verify cleanup worked
 ls -la ~/.dh 2>/dev/null && echo "FAIL: .dh directory still exists" || echo "PASS: .dh cleaned up"
@@ -26,7 +26,7 @@ ls -la ~/.dh 2>/dev/null && echo "FAIL: .dh directory still exists" || echo "PAS
 
 ```bash
 # Initialize with a test vault repository
-dh init --remote git@github.com:YOUR_USERNAME/test-vault.git
+dhd init --remote git@github.com:YOUR_USERNAME/test-vault.git
 
 # Expected output:
 # ✓ Vault directory initialized
@@ -50,7 +50,7 @@ launchctl list | grep daemon-hound
 cat ~/Library/LaunchAgents/com.daemon-hound.plist | head -20
 
 # Verify daemon is running
-dh daemon status
+dhd daemon status
 
 # Expected:
 # ✓ Daemon service installed
@@ -67,7 +67,7 @@ cat ~/.config/systemd/user/daemon-hound.service | head -20
 systemctl --user status daemon-hound
 
 # Verify daemon is running
-dh daemon status
+dhd daemon status
 
 # Expected:
 # ✓ Daemon service installed
@@ -89,7 +89,7 @@ Get-ScheduledTask | Where-Object {$_.TaskName -eq "DaemonHound"}
 schtasks /query /tn DaemonHound /v
 
 # Verify daemon is running
-dh daemon status
+dhd daemon status
 
 # Expected:
 # ✓ Daemon service installed
@@ -112,10 +112,10 @@ mkdir -p ~/test-project
 echo "SECRET_KEY=dev123" > ~/test-project/.env
 
 # Track the file
-dh track ~/test-project/.env --namespace test-project
+dhd track ~/test-project/.env --namespace test-project
 
 # Verify file was tracked
-dh status
+dhd status
 
 # Expected output should show the file in "sync" mode
 ```
@@ -130,7 +130,7 @@ echo "SECRET_KEY=dev456" > ~/test-project/.env
 sleep 5
 
 # Check daemon logs for sync activity
-dh daemon logs | tail -20
+dhd daemon logs | tail -20
 
 # Expected in logs:
 # - "Detected local change"
@@ -158,7 +158,7 @@ echo "UPDATED=true" >> state.toml.age.dec  # or whatever tracked file is decrypt
 sleep 35
 
 # Check daemon logs
-dh daemon logs | tail -20
+dhd daemon logs | tail -20
 
 # Expected in logs:
 # - "Pulled from remote"
@@ -177,14 +177,14 @@ cat ~/test-project/.env
 **Machine A:**
 ```bash
 echo "VERSION=A" > ~/test-project/version.txt
-dh track ~/test-project/version.txt --namespace test-project
+dhd track ~/test-project/version.txt --namespace test-project
 sleep 5  # Let daemon sync
 ```
 
 **Machine B** (different system or simulated):
 ```bash
 echo "VERSION=B" > ~/test-project/version.txt
-dh track ~/test-project/version.txt --namespace test-project
+dhd track ~/test-project/version.txt --namespace test-project
 sleep 5  # Let daemon sync
 ```
 
@@ -196,7 +196,7 @@ echo "VERSION=A2" > ~/test-project/version.txt
 sleep 35  # Wait for daemon to poll
 
 # Check logs for conflict detection
-dh daemon logs | grep -i conflict
+dhd daemon logs | grep -i conflict
 
 # Expected in logs:
 # - "Merge conflicts detected"
@@ -213,12 +213,12 @@ dh daemon logs | grep -i conflict
 
 ```bash
 # Monitor daemon logs to see sync activity
-dh daemon logs -f &
+dhd daemon logs -f &
 
 # Track multiple files to generate activity
 for i in {1..20}; do
   echo "FILE_$i=value_$i" > ~/test-project/file$i.txt
-  dh track ~/test-project/file$i.txt --namespace test-project
+  dhd track ~/test-project/file$i.txt --namespace test-project
   sleep 1
 done
 
@@ -247,7 +247,7 @@ cd ~/.dh
 touch -d "40 days ago" daemon.2026-05-05-10-00-00.log
 
 # Wait for log rotation check (happens hourly, but let's simulate by running daemon briefly)
-dh daemon run &
+dhd daemon run &
 DAEMON_PID=$!
 sleep 65  # Wait past 1 minute mark so rotation check might occur
 kill $DAEMON_PID 2>/dev/null || true
@@ -264,13 +264,13 @@ ls -la daemon.2026-05-05-10-00-00.log 2>/dev/null && echo "WARN: Old log not cle
 
 ```bash
 # View last 50 lines
-dh daemon logs
+dhd daemon logs
 
 # View last 100 lines
-dh daemon logs -n 100
+dhd daemon logs -n 100
 
 # Follow logs in real-time
-dh daemon logs -f
+dhd daemon logs -f
 # (Press Ctrl+C to stop)
 ```
 
@@ -278,17 +278,17 @@ dh daemon logs -f
 
 ```bash
 # Stop daemon
-dh daemon stop
+dhd daemon stop
 
 # Verify stopped
-dh daemon status
+dhd daemon status
 # Expected: Should show "⚠️  Daemon is not running"
 
 # Restart daemon
-dh daemon restart
+dhd daemon restart
 
 # Verify running
-dh daemon status
+dhd daemon status
 # Expected: "✓ Daemon is running"
 ```
 
@@ -296,7 +296,7 @@ dh daemon status
 
 ```bash
 # View error logs
-dh daemon errors
+dhd daemon errors
 
 # Expected: Should show any sync errors, watcher errors, etc.
 # If no errors yet, that's fine (clean operation)
@@ -317,12 +317,12 @@ sudo reboot
 # Wait for system to come back up
 
 # After reboot, check daemon status
-dh daemon status
+dhd daemon status
 
 # Expected: ✓ Daemon is running
 
 # Check logs to verify daemon started automatically
-dh daemon logs | head -30
+dhd daemon logs | head -30
 
 # Expected to see: "=== Daemon started ===" near the reboot time
 ```
@@ -332,14 +332,14 @@ dh daemon logs | head -30
 **Before reboot on Machine A:**
 ```bash
 echo "BEFORE_REBOOT=value" > ~/test-project/test.txt
-dh track ~/test-project/test.txt --namespace test-project
+dhd track ~/test-project/test.txt --namespace test-project
 ```
 
 **On Machine B** (while Machine A is rebooting):
 ```bash
 # Make a remote change
 echo "WHILE_REBOOTING=value" >> ~/test-project/test.txt
-dh track ~/test-project/test.txt --namespace test-project
+dhd track ~/test-project/test.txt --namespace test-project
 ```
 
 **After Machine A reboots:**
@@ -358,17 +358,17 @@ cat ~/test-project/test.txt
 
 ```bash
 # Before cleanup
-dh status  # Should show vault info
+dhd status  # Should show vault info
 
 # Perform cleanup without prompt
-dh cleanup --force
+dhd cleanup --force
 
 # Verify cleanup
 ls ~/.dh 2>/dev/null && echo "FAIL: Some files remain" || echo "PASS: All cleaned"
 
 # Verify keychain entry removed (varies by OS)
-# macOS: security find-generic-password -s "dh" | grep -q "found 0" && echo "PASS: Keychain cleaned"
-# Linux: ! keyctl search @u user dh 2>/dev/null && echo "PASS: Keyring cleaned"
+# macOS: security find-generic-password -s "daemon-hound" | grep -q "found 0" && echo "PASS: Keychain cleaned"
+# Linux: ! keyctl search @u user daemon-hound 2>/dev/null && echo "PASS: Keyring cleaned"
 ```
 
 ---
@@ -414,7 +414,7 @@ ls ~/.dh 2>/dev/null && echo "FAIL: Some files remain" || echo "PASS: All cleane
 
 ```bash
 # Check if service is installed
-dh daemon status
+dhd daemon status
 
 # Manually check service status
 # macOS: launchctl list | grep daemon-hound
@@ -422,7 +422,7 @@ dh daemon status
 # Windows: schtasks /query /tn DaemonHound
 
 # Restart daemon manually
-dh daemon restart
+dhd daemon restart
 ```
 
 ### Logs not appearing
@@ -432,36 +432,36 @@ dh daemon restart
 ls -la ~/.dh/daemon*.log
 
 # Check if daemon is actually running
-dh daemon status
+dhd daemon status
 
 # Try running daemon in foreground for debugging
-dh daemon run
+dhd daemon run
 
 # Check for errors
-dh daemon errors
+dhd daemon errors
 ```
 
 ### Sync not happening
 
 ```bash
 # Verify daemon is running
-dh daemon status
+dhd daemon status
 
 # Check recent logs
-dh daemon logs -n 50
+dhd daemon logs -n 50
 
 # Manually trigger sync for testing
-dh sync
+dhd sync
 
 # Verify vault is initialized
-dh status
+dhd status
 ```
 
 ### Conflicts not resolving
 
 ```bash
 # Check conflict logs
-dh daemon logs | grep -i conflict
+dhd daemon logs | grep -i conflict
 
 # Check git state
 cd ~/.dh/vault

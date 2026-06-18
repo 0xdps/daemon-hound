@@ -9,14 +9,14 @@ This release completes the daemon infrastructure and adds automated background s
 #### 1. **Global Identity Salt** ✅
 - Salt format: `base64(16-byte-prefix)@base64(16-byte-postfix)` = 32 bytes total
 - Stored plaintext in `~/.dh/config.toml` (not secret, enables multi-machine consistency)
-- Generated at `dh init` time
+- Generated at `dhd init` time
 - All machines using same vault can decrypt identity with same password
 - Enables seamless password sharing across teams
 - **NEW in v1.1.0**: Integrated with daemon for true multi-machine sync
 
 #### 2. **Daemon Auto-Installation** ✅
-- During `dh init`, daemon service automatically registered with OS
-- No manual `dh daemon install` needed
+- During `dhd init`, daemon service automatically registered with OS
+- No manual `dhd daemon install` needed
 - Service automatically starts on next system boot
 - OS-specific implementation:
   - **macOS**: `~/Library/LaunchAgents/com.daemon-hound.plist`
@@ -52,8 +52,8 @@ This release completes the daemon infrastructure and adds automated background s
 
 #### 6. **Cleanup Command** ✅
 ```bash
-dh cleanup              # Prompts for confirmation
-dh cleanup --force      # Skips confirmation
+dhd cleanup              # Prompts for confirmation
+dhd cleanup --force      # Skips confirmation
 
 # Removes:
 # - ~/.dh/ directory (entire vault)
@@ -63,14 +63,14 @@ dh cleanup --force      # Skips confirmation
 
 #### 7. **Daemon Management Commands** ✅
 ```bash
-dh daemon run           # Run daemon in foreground (testing)
-dh daemon status        # Check if running
-dh daemon logs          # View sync logs
-dh daemon logs -f       # Follow logs in real-time
-dh daemon logs -n 100   # View last 100 lines
-dh daemon errors        # View error logs
-dh daemon stop          # Stop daemon
-dh daemon restart       # Restart daemon
+dhd daemon run           # Run daemon in foreground (testing)
+dhd daemon status        # Check if running
+dhd daemon logs          # View sync logs
+dhd daemon logs -f       # Follow logs in real-time
+dhd daemon logs -n 100   # View last 100 lines
+dhd daemon errors        # View error logs
+dhd daemon stop          # Stop daemon
+dhd daemon restart       # Restart daemon
 ```
 
 ---
@@ -122,7 +122,7 @@ Key features:
 
 Key features:
 - Type: simple
-- ExecStart: /path/to/dh daemon run
+- ExecStart: /path/to/dhd daemon run
 - Restart: always
 - RestartSec: 10s
 - Logs via journalctl
@@ -134,7 +134,7 @@ DaemonHound task
 
 Key features:
 - Triggers: On logon + Registration
-- Action: Run /path/to/dh daemon run
+- Action: Run /path/to/dhd daemon run
 - Restart: 3 times with 1-minute intervals
 - Run Level: Least Privilege
 ```
@@ -199,7 +199,7 @@ Machine C: password "secret" + salt "XYZ@UVW" = key_C → cannot decrypt state_A
 4. Daemon performs initial sync
 5. Daemon enters main loop (watch + poll)
 
-**On `dh track <file>`:**
+**On `dhd track <file>`:**
 1. File added to vault
 2. Daemon detects change in next poll
 3. Commits and pushes to remote
@@ -266,7 +266,7 @@ Comprehensive end-to-end testing guide provided in `E2E_TESTING_GUIDE.md`:
 **None!** v1.1.0 is backward compatible:
 - Existing vault configurations work with daemon
 - Existing global salt from v1.0.x continues to work
-- `dh sync` command still works alongside daemon
+- `dhd sync` command still works alongside daemon
 
 **Upgrade:** Simply rebuild binary or install new version. Daemon auto-starts on next boot.
 
@@ -316,16 +316,16 @@ Comprehensive end-to-end testing guide provided in `E2E_TESTING_GUIDE.md`:
 
 ```bash
 # v1.0.x manual process
-dh init --remote git@...
-dh track file1
-dh track file2
-# Manual: dh sync (every time you want to sync)
+dhd init --remote git@...
+dhd track file1
+dhd track file2
+# Manual: dhd sync (every time you want to sync)
 
 # v1.1.0 automatic process
-dh cleanup  # Optional: clean old installation
-dh init --remote git@...  # Daemon auto-installs!
-dh track file1
-dh track file2
+dhd cleanup  # Optional: clean old installation
+dhd init --remote git@...  # Daemon auto-installs!
+dhd track file1
+dhd track file2
 # Automatic: Files sync every 30 seconds! ✨
 ```
 
@@ -333,11 +333,11 @@ dh track file2
 
 ```bash
 # If you manually installed daemon in v1.0.x:
-dh daemon stop          # Or: systemctl --user stop daemon-hound
-dh cleanup --force      # Clean everything
+dhd daemon stop          # Or: systemctl --user stop daemon-hound
+dhd cleanup --force      # Clean everything
 
 # Reinstall with auto-daemon in v1.1.0
-dh init --remote git@...  # Daemon auto-installs with correct config
+dhd init --remote git@...  # Daemon auto-installs with correct config
 ```
 
 ---

@@ -29,9 +29,9 @@ Use --missing to ignore every tracked file that is currently missing on this
 machine. This is useful after deleting local project folders.
 
 Example:
-  dh untrack .env.local
-  dh untrack --local github.com/you/repo:.env.local
-  dh untrack --missing`,
+  dhd untrack .env.local
+  dhd untrack --local github.com/you/repo:.env.local
+  dhd untrack --missing`,
 	Args: validateUntrackArgs,
 	RunE: runUntrack,
 }

@@ -16,9 +16,9 @@ ls -lh dist/
 ```
 
 **Output**: 
-- `dist/daemon-hound_VERSION_Darwin_x86_64/dh` (macOS binary)
-- `dist/daemon-hound_VERSION_Linux_x86_64/dh` (Linux binary)
-- `dist/daemon-hound_VERSION_Windows_x86_64/dh.exe` (Windows binary)
+- `dist/daemon-hound_VERSION_Darwin_x86_64/dhd` (macOS binary)
+- `dist/daemon-hound_VERSION_Linux_x86_64/dhd` (Linux binary)
+- `dist/daemon-hound_VERSION_Windows_x86_64/dhd.exe` (Windows binary)
 - Docker images built locally
 
 ---
@@ -70,7 +70,7 @@ Result:
   
 Each includes:
   ├─ DaemonHound.app/
-  │  ├─ Contents/MacOS/dh          (binary)
+  │  ├─ Contents/MacOS/dhd          (binary)
   │  ├─ Contents/Info.plist        (metadata)
   │  └─ Contents/Resources/AppIcon.icns (your logo as app icon)
   ├─ README.md
@@ -105,7 +105,7 @@ Result:
   
 Result:
   ✓ daemon-hound_1.1.0_Windows_x86_64.zip
-    └─ dh.exe (portable executable)
+    └─ dhd.exe (portable executable)
     
 .goreleaser.yaml scoops:
   Updates → 0xdps/scoop-bucket
@@ -209,7 +209,7 @@ $ brew install daemon-hound
 ==> Installing daemon-hound
 ✓ Installed
 
-$ dh --version
+$ dhd --version
 Daemon Hound v1.1.0
 ```
 
@@ -231,13 +231,13 @@ $ sudo apt install daemon-hound_1.1.0_amd64.deb
 Setting up daemon-hound (1.1.0)...
 Processing triggers for man-db (2.10.2-1)...
 
-$ dh --version
+$ dhd --version
 Daemon Hound v1.1.0
 
-$ dh daemon
+$ dhd daemon
 ```
 
-✅ Binary in `/usr/bin/dh`  
+✅ Binary in `/usr/bin/dhd`  
 ✅ Version 1.1.0
 
 ---
@@ -247,10 +247,10 @@ $ dh daemon
 > scoop install daemon-hound
 Installing 'daemon-hound' (1.1.0) [100%]
 
-> dh --version
+> dhd --version
 Daemon Hound v1.1.0
 
-> dh daemon
+> dhd daemon
 ```
 
 ✅ Available in PowerShell  
@@ -265,7 +265,7 @@ All builds inherit version from:
 1. **Git tag** (v1.1.0) → goreleaser
 2. **Goreleaser** → ldflags in Makefile
 3. **Build** → `go build -ldflags "-X github.com/0xdps/daemon-hound/internal/cmd.version=1.1.0"`
-4. **Binary** → `dh --version` shows v1.1.0
+4. **Binary** → `dhd --version` shows v1.1.0
 5. **Package** → .deb, .rpm, .dmg all show 1.1.0
 6. **Distribution** → Homebrew, Scoop, package managers see 1.1.0
 
@@ -294,7 +294,7 @@ Result: Consistent version everywhere.
 
 ## Why App Icon Now Shows Correctly
 
-**Before**: `dh` binary alone has no metadata → generic "exec" icon
+**Before**: `dhd` binary alone has no metadata → generic "exec" icon
 
 **Now**: `DaemonHound.app` bundle includes:
 ```

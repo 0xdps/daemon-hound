@@ -33,9 +33,9 @@ FROM alpine:latest
 RUN apk add --no-cache git ca-certificates
 
 COPY --from=builder /build/dhd /usr/local/bin/dhd
-RUN chmod +x /usr/local/bin/dh
+RUN chmod +x /usr/local/bin/dhd
 
-# Create a non-root user for running dh
+# Create a non-root user for running dhd
 RUN adduser -D -s /bin/sh dhuser
 
 # Set up volumes for config and working directory
@@ -44,5 +44,5 @@ WORKDIR /work
 
 USER dhuser
 
-ENTRYPOINT ["dh"]
+ENTRYPOINT ["dhd"]
 CMD ["--help"]

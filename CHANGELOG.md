@@ -11,15 +11,15 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - **Background Daemon Service** — automatic, always-running synchronization
-  - `dh daemon run` — run daemon in foreground (for testing/debugging)
-  - `dh daemon status` — check if daemon is installed and running
-  - `dh daemon logs` — view recent sync activity logs
-    - `dh daemon logs -f` to follow logs in real-time
-    - `dh daemon logs -n 100` to view last N lines
-  - `dh daemon errors` — view daemon error logs for troubleshooting
-  - `dh daemon stop` — stop the daemon service
-  - `dh daemon restart` — restart the daemon service
-- **Automatic Daemon Installation** — installed during `dh init` with no manual setup required
+  - `dhd daemon run` — run daemon in foreground (for testing/debugging)
+  - `dhd daemon status` — check if daemon is installed and running
+  - `dhd daemon logs` — view recent sync activity logs
+    - `dhd daemon logs -f` to follow logs in real-time
+    - `dhd daemon logs -n 100` to view last N lines
+  - `dhd daemon errors` — view daemon error logs for troubleshooting
+  - `dhd daemon stop` — stop the daemon service
+  - `dhd daemon restart` — restart the daemon service
+- **Automatic Daemon Installation** — installed during `dhd init` with no manual setup required
   - macOS: Registers with launchd (`~/Library/LaunchAgents/com.daemon-hound.plist`)
   - Linux: Registers with systemd (`~/.config/systemd/user/daemon-hound.service`)
   - Windows: Registers with Task Scheduler (`DaemonHound` task)
@@ -50,19 +50,19 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Comprehensive Logging** — detailed audit trail of all operations
   - Sync logs with timestamps: "Pulled from remote", "Detected conflicts", etc.
   - Error logs for troubleshooting: watcher errors, permission issues, etc.
-  - Both logs viewable via `dh daemon logs` and `dh daemon errors` commands
+  - Both logs viewable via `dhd daemon logs` and `dhd daemon errors` commands
 
 ### Changed
-- `dh init` now automatically installs the daemon service
-  - No separate `dh daemon install` command needed
+- `dhd init` now automatically installs the daemon service
+  - No separate `dhd daemon install` command needed
   - Daemon starts on next system boot automatically
-  - Manual `dh sync` is now optional (daemon syncs continuously)
+  - Manual `dhd sync` is now optional (daemon syncs continuously)
 - Service registration abstracted to factory pattern
   - Single `daemon.ServiceManager` interface handles all OS-specific details
   - Easy to add support for additional service managers in future
 
 ### Security
-- Daemon service runs with same user permissions as `dh` CLI (no escalation)
+- Daemon service runs with same user permissions as `dhd` CLI (no escalation)
 - Log files stored in `~/.dh/` (user-private directory, mode 0700)
 - Global salt remains plaintext in config (correct design for multi-machine consistency)
 
@@ -82,7 +82,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## v1.0.2
 
 ### Added
-- `dh cleanup` — completely remove DaemonHound from the local machine
+- `dhd cleanup` — completely remove DaemonHound from the local machine
   - Removes `~/.dh/` directory (vault, config, identity, audit log, lock file)
   - Removes master password from OS keychain
   - `--force` flag to skip confirmation prompt
@@ -92,7 +92,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Salt format: `base64(16-byte-prefix)@base64(16-byte-postfix)` = 32-byte salt
   - Ensures same password + same salt = same encryption key across all machines
   - Enables proper identity synchronization in multi-machine setups
-  - Generated once during `dh init`, preserved during `dh rekey`
+  - Generated once during `dhd init`, preserved during `dhd rekey`
 
 ### Changed
 - Identity encryption now requires global salt (removed legacy random-salt mode)
@@ -104,13 +104,13 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## v1.0.1
 
 ### Changed
-- `dh doctor` now displays the configured git remote URL
+- `dhd doctor` now displays the configured git remote URL
   - Updated health checks to explicitly show git remote configuration
   - Improved clarity by separating "git remote configured" from "vault remote reachable" checks
 
 ### Fixed
 - **CRITICAL**: Global files were being restored on all machines instead of only on the machine that tracked them
-  - This caused files like `.zshrc` to be overwritten with stale versions from the vault during `dh sync`
+  - This caused files like `.zshrc` to be overwritten with stale versions from the vault during `dhd sync`
   - Global files are now always machine-specific with a `MachineID` set during tracking
   - Pull operation now checks `MachineID` for global files before restoring them
 - Docker build failures in GitHub Actions
@@ -124,63 +124,63 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## v1.0.0
 
 ### Added
-- `dh init` — initialize vault, generate age identity, clone or create vault repo
+- `dhd init` — initialize vault, generate age identity, clone or create vault repo
   - Password confirmation (type twice) to prevent typo-induced key loss
   - `--force` flag to re-initialize an already-configured machine
   - Pre-fills vault remote URL when using `--force`
-- `dh track <file>` — encrypt and track a file
+- `dhd track <file>` — encrypt and track a file
   - `--mode sync` (default) for files shared across machines
   - `--mode backup` for machine-specific files
   - Idempotency check: reports "already tracked" if file is already tracked
   - Gitignore warning: warns if file is tracked in Git (to prevent committing secrets)
   - Immediate commit and push to vault after tracking
-- `dh untrack <file>` — stop tracking a file; removes encrypted copy from vault
+- `dhd untrack <file>` — stop tracking a file; removes encrypted copy from vault
   - Commits and pushes the removal to the vault
-- `dh sync` — pull then push tracked files
+- `dhd sync` — pull then push tracked files
   - `--dry-run` flag to preview changes without modifying anything
   - `--namespace` flag to sync only a specific namespace
   - Offline resilience: continues with local commit if remote push fails
   - Pending push tracking: retries failed pushes on next successful sync
   - Colour-coded output for visual clarity
-- `dh status` — show per-file status (clean / dirty / new / missing)
+- `dhd status` — show per-file status (clean / dirty / new / missing)
   - Mode annotations: shows `(backup, this machine only)` for backup files
   - Pending push notice: warns when local vault commits haven't been pushed
   - `--output json` flag for machine-readable output
   - `--namespace` flag to filter to a specific namespace
   - Colour-coded status indicators
-- `dh discover [path]` — scan directory tree and sync all known namespaces
+- `dhd discover [path]` — scan directory tree and sync all known namespaces
   - Shows correct vault file counts per namespace
   - `--output json` flag for machine-readable output
   - Colour-coded output for visual clarity
-- `dh secret set <name>` — store an encrypted secret
+- `dhd secret set <name>` — store an encrypted secret
   - Per-file rotation output showing which files were updated
-- `dh secret get <name>` — retrieve the raw value of a secret
-- `dh secret list [name]` — list all secrets or mappings for a specific secret
-- `dh secret ref <name> <file> <KEY>` — map a secret to a file and environment variable
+- `dhd secret get <name>` — retrieve the raw value of a secret
+- `dhd secret list [name]` — list all secrets or mappings for a specific secret
+- `dhd secret ref <name> <file> <KEY>` — map a secret to a file and environment variable
   - Commits and pushes the mapping to the vault
-- `dh secret delete <name>` — delete a secret and all its mappings
-- `dh secret unref <name> <file>` — remove a secret mapping from a file
-- `dh secret rename <old> <new>` — rename a secret, preserving its value and all mappings
-- `dh logout` — remove cached master password from OS keychain
+- `dhd secret delete <name>` — delete a secret and all its mappings
+- `dhd secret unref <name> <file>` — remove a secret mapping from a file
+- `dhd secret rename <old> <new>` — rename a secret, preserving its value and all mappings
+- `dhd logout` — remove cached master password from OS keychain
   - Gracefully handles "already logged out" state
-- `dh doctor` — comprehensive health check
+- `dhd doctor` — comprehensive health check
   - Checks: config, identity file, vault directory, git repo, remote, bindings, pending push
   - `--fix` flag to auto-repair common issues (creates dirs, inits git, adds remote)
   - Colour-coded output (✓ green, ⚠ yellow, ✗ red)
-- `dh machines` — list machine UUIDs that have backup files in the vault
+- `dhd machines` — list machine UUIDs that have backup files in the vault
   - Highlights current machine
   - `--output json` flag for machine-readable output
-- `dh rekey` — change the master password
+- `dhd rekey` — change the master password
   - Prompts for current password, then new password (with confirmation)
   - Re-encrypts the age identity atomically
   - Vault contents remain unchanged
-- `dh export` — decrypt all files and secrets to a local directory
-  - `--dir` flag to specify output directory (default: `dh-export-<timestamp>`)
+- `dhd export` — decrypt all files and secrets to a local directory
+  - `--dir` flag to specify output directory (default: `dhd-export-<timestamp>`)
   - Exports tracked files to `files/<namespace>/<relPath>`
   - Exports secrets to `secrets.json`
   - Displays warning about plaintext exposure
-- `dh version` — print version string
-- Shell completions via `dh completion [bash|zsh|fish|powershell]` (built-in via cobra)
+- `dhd version` — print version string
+- Shell completions via `dhd completion [bash|zsh|fish|powershell]` (built-in via cobra)
 - **Security enhancements:**
   - File locking: PID-based lock at `~/.dh/sync.lock` prevents concurrent mutations
   - Audit log: append-only log at `~/.dh/audit.log` records all mutating commands
@@ -190,29 +190,29 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - Global file paths: preserve subdirectory structure relative to `$HOME` (not just basename)
 
 ### Fixed
-- `dh untrack` was committing locally but never pushing to remote
-- `dh track` silently overwrote state when tracking the same file twice
-- `dh secret set` rotation output now shows per-file detail instead of a bare count
-- `dh secret ref` was saving the mapping but never committing/pushing the vault state
+- `dhd untrack` was committing locally but never pushing to remote
+- `dhd track` silently overwrote state when tracking the same file twice
+- `dhd secret set` rotation output now shows per-file detail instead of a bare count
+- `dhd secret ref` was saving the mapping but never committing/pushing the vault state
 - `updateFileWithSecret` no longer constructs its own `config.Config`; receives it as a parameter
-- `dh logout` gracefully handles "already logged out" instead of returning an error
-- `dh discover` now shows correct vault file counts instead of sync-result counts
-- `dh status` was discarding config; now checks `PendingPush` and shows mode annotations
+- `dhd logout` gracefully handles "already logged out" instead of returning an error
+- `dhd discover` now shows correct vault file counts instead of sync-result counts
+- `dhd status` was discarding config; now checks `PendingPush` and shows mode annotations
 - `StatusNew` is now returned by `tracker.Status()` when the stored checksum is empty
 
 ### Changed
-- `dh init` now prompts to confirm the master password (type twice)
-- `dh init --force` pre-fills the vault remote URL prompt with existing configured remote
+- `dhd init` now prompts to confirm the master password (type twice)
+- `dhd init --force` pre-fills the vault remote URL prompt with existing configured remote
 
 ---
 
 ## Release History
 
 Previous releases (v0.1.0, v0.1.1) have been removed in preparation for a proper v1.0.0 release with the complete feature set documented above.
-- `dh init` persists the vault remote URL in `~/.dh/config.toml`
-- `dh sync` continues to push local dirty files even when the remote pull fails (offline mode); commits locally and sets a pending-push flag instead of aborting
-- `dh sync` retries a pending push on the next successful `dh sync`
-- `dh secret list` shows mapping count per secret when listing all secrets
+- `dhd init` persists the vault remote URL in `~/.dh/config.toml`
+- `dhd sync` continues to push local dirty files even when the remote pull fails (offline mode); commits locally and sets a pending-push flag instead of aborting
+- `dhd sync` retries a pending push on the next successful `dhd sync`
+- `dhd secret list` shows mapping count per secret when listing all secrets
 
 ### Architecture
 - `models.MachineConfig` gains `PendingPush bool` field to track offline-committed-but-not-pushed state

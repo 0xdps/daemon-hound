@@ -114,7 +114,7 @@ func runStatus(cmd *cobra.Command, args []string) error {
 
 	if cfg.PendingPush() {
 		fmt.Println()
-		fmt.Println(output.Yellow("Note: local vault commits are pending push to remote. Run `dh sync` when online."))
+		fmt.Println(output.Yellow("Note: local vault commits are pending push to remote. Run `dhd sync` when online."))
 	}
 	return nil
 }

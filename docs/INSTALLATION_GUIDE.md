@@ -33,7 +33,7 @@ Development                Distribution                        Installation
 │  macOS (darwin):                                                                               │
 │  ├─ daemon-hound_1.1.0_macOS_x86_64.dmg      ← App bundle + icon ready-to-install           │
 │  ├─ daemon-hound_1.1.0_macOS_arm64.dmg       ← M1/M2 version                               │
-│  └─ dh (binary in archives/)                                                                │
+│  └─ dhd (binary in archives/)                                                                │
 │                                                                                                  │
 │  Linux (linux):                                                                                │
 │  ├─ daemon-hound_1.1.0_linux_x86_64.tar.gz   ← Raw binary + docs                           │
@@ -71,7 +71,7 @@ Development                Distribution                        Installation
 ```bash
 brew tap 0xdps/packages
 brew install daemon-hound
-# Starts with: dh daemon
+# Starts with: dhd daemon
 ```
 ✅ Auto-updates via Homebrew  
 ✅ App shows properly in Activity Monitor  
@@ -81,7 +81,7 @@ brew install daemon-hound
 ```bash
 # Download daemon-hound_1.1.0_macOS_x86_64.dmg from releases
 # Double-click → drag app to Applications folder
-# Then: /Applications/DaemonHound.app/Contents/MacOS/dh daemon
+# Then: /Applications/DaemonHound.app/Contents/MacOS/dhd daemon
 ```
 ✅ Graphical install  
 ✅ App icon visible in Applications  
@@ -91,7 +91,7 @@ brew install daemon-hound
 ```bash
 # Download daemon-hound_1.1.0_macOS_x86_64.tar.gz
 tar xzf daemon-hound_1.1.0_macOS_x86_64.tar.gz
-./dh daemon
+./dhd daemon
 ```
 ⚠️ No auto-updates  
 ✅ Simple, no dependencies
@@ -101,7 +101,7 @@ tar xzf daemon-hound_1.1.0_macOS_x86_64.tar.gz
 git clone https://github.com/0xdps/daemon-hound
 cd daemon-hound
 make install-macos
-~/Applications/DaemonHound.app/Contents/MacOS/dh daemon
+~/Applications/DaemonHound.app/Contents/MacOS/dhd daemon
 ```
 
 ---
@@ -114,28 +114,28 @@ make install-macos
 ```bash
 # From release .deb file
 sudo dpkg -i daemon-hound_1.1.0_amd64.deb
-dh daemon
+dhd daemon
 ```
 
 **RedHat/CentOS/Fedora**:
 ```bash
 # From release .rpm file
 sudo rpm -i daemon-hound-1.1.0-1.x86_64.rpm
-dh daemon
+dhd daemon
 ```
 
 **Alpine**:
 ```bash
 # From release .apk file
 sudo apk add --allow-untrusted daemon-hound-1.1.0-1.apk
-dh daemon
+dhd daemon
 ```
 
 **Arch Linux**:
 ```bash
 # From release .pkg.tar.zst file
 sudo pacman -U daemon-hound-1.1.0-1-x86_64.pkg.tar.zst
-dh daemon
+dhd daemon
 ```
 
 ✅ Auto-updates via package manager  
@@ -146,8 +146,8 @@ dh daemon
 ```bash
 # Download daemon-hound_1.1.0_linux_x86_64.tar.gz
 tar xzf daemon-hound_1.1.0_linux_x86_64.tar.gz
-sudo mv dh /usr/local/bin/
-dh daemon
+sudo mv dhd /usr/local/bin/
+dhd daemon
 ```
 
 #### **Method 3: Build Locally**
@@ -155,7 +155,7 @@ dh daemon
 git clone https://github.com/0xdps/daemon-hound
 cd daemon-hound
 make build
-./bin/dh daemon
+./bin/dhd daemon
 ```
 
 ---
@@ -166,7 +166,7 @@ make build
 ```powershell
 scoop bucket add 0xdps https://github.com/0xdps/scoop-bucket
 scoop install daemon-hound
-dh daemon
+dhd daemon
 ```
 ✅ Auto-updates  
 ✅ PATH management  
@@ -176,7 +176,7 @@ dh daemon
 ```powershell
 # Download daemon-hound_1.1.0_Windows_x86_64.zip
 Expand-Archive daemon-hound_1.1.0_Windows_x86_64.zip -DestinationPath C:\daemon-hound
-C:\daemon-hound\dh.exe daemon
+C:\daemon-hound\dhd.exe daemon
 ```
 
 #### **Method 3: Build Locally**
@@ -185,7 +185,7 @@ C:\daemon-hound\dh.exe daemon
 git clone https://github.com/0xdps/daemon-hound
 cd daemon-hound
 make build
-.\bin\dh.exe daemon
+.\bin\dhd.exe daemon
 ```
 
 ---
@@ -197,7 +197,7 @@ make build
 ```bash
 # 1. Regular build (all platforms work the same)
 make build
-# Creates: bin/dh (or bin/dh.exe on Windows)
+# Creates: bin/dhd (or bin/dhd.exe on Windows)
 
 # 2. macOS app bundle (macOS only)
 make build-macos
@@ -281,7 +281,7 @@ daemon-hound (Go source)
 make build   make build-macos    make release  make snapshot
    │          │                        │             │
    ▼          ▼                        ▼             ▼
-bin/dh   DaemonHound.app         All Platforms  Test Build
+bin/dhd   DaemonHound.app         All Platforms  Test Build
    │          │                        │             │
    └──────────┬────────────────────────┤─────────────┘
               │                        │
@@ -298,17 +298,17 @@ If you're contributing to daemon-hound, you can test on all platforms:
 ```bash
 # Test on macOS
 make build-macos && make install-macos
-~/Applications/DaemonHound.app/Contents/MacOS/dh --version
+~/Applications/DaemonHound.app/Contents/MacOS/dhd --version
 
 # Test on Linux
-make build && ./bin/dh --version
+make build && ./bin/dhd --version
 
 # Test on Windows (from WSL or Windows terminal)
-make build && .\bin\dh.exe --version
+make build && .\bin\dhd.exe --version
 
 # Test Docker
 make snapshot  # Creates docker images
-docker run ghcr.io/0xdps/daemon-hound:dev dh --version
+docker run ghcr.io/0xdps/daemon-hound:dev dhd --version
 ```
 
 ---

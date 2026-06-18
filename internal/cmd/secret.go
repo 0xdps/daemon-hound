@@ -48,7 +48,7 @@ var secretRefCmd = &cobra.Command{
 	Long: `Map a secret to a specific file and environment variable key.
 
 Example:
-  dh secret ref openai-key .env.local OPENAI_API_KEY`,
+  dhd secret ref openai-key .env.local OPENAI_API_KEY`,
 	Args: cobra.ExactArgs(3),
 	RunE: runSecretRef,
 }
@@ -68,7 +68,7 @@ var secretUnrefCmd = &cobra.Command{
 The file is not modified — only the mapping is removed.
 
 Example:
-  dh secret unref openai-key .env.local`,
+  dhd secret unref openai-key .env.local`,
 	Args: cobra.ExactArgs(2),
 	RunE: runSecretUnref,
 }
@@ -79,7 +79,7 @@ var secretRenameCmd = &cobra.Command{
 	Long: `Rename a secret key. The value and all mappings are preserved.
 
 Example:
-  dh secret rename openai-key openai-prod-key`,
+  dhd secret rename openai-key openai-prod-key`,
 	Args: cobra.ExactArgs(2),
 	RunE: runSecretRename,
 }
@@ -151,7 +151,7 @@ func runSecretSet(cmd *cobra.Command, args []string) error {
 	}
 
 	if updatedCount > 0 {
-		fmt.Printf("%d file(s) marked dirty — run `dh sync` to push\n", updatedCount)
+		fmt.Printf("%d file(s) marked dirty — run `dhd sync` to push\n", updatedCount)
 	} else {
 		fmt.Printf("Stored secret: %s\n", name)
 	}
@@ -264,7 +264,7 @@ func runSecretRef(cmd *cobra.Command, args []string) error {
 	if err := vaultCommitPush(gitClient, vault, fmt.Sprintf("daemon-hound: ref %s → %s:%s", name, namespace, filePath), func(state *models.VaultState) error {
 		secret, ok := state.Secrets[name]
 		if !ok {
-			return fmt.Errorf("secret not found: %s (use `dh secret set %s` first)", name, name)
+			return fmt.Errorf("secret not found: %s (use `dhd secret set %s` first)", name, name)
 		}
 		found := false
 		for i, existing := range secret.Refs {
@@ -294,7 +294,7 @@ func runSecretRef(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Mapped: %s → %s:%s:%s\n", name, namespace, filePath, key)
-	fmt.Println("Run `dh sync` to push the updated file to the vault.")
+	fmt.Println("Run `dhd sync` to push the updated file to the vault.")
 	audit.Log("secret ref", fmt.Sprintf("%s → %s:%s:%s", name, namespace, filePath, key))
 	return nil
 }

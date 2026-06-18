@@ -32,7 +32,7 @@ WARNING: the export directory contains unencrypted secrets. Handle with care.`,
 }
 
 func init() {
-	exportCmd.Flags().StringVar(&exportDir, "dir", "", "Output directory (default: ./dh-export-<timestamp>)")
+	exportCmd.Flags().StringVar(&exportDir, "dir", "", "Output directory (default: ./dhd-export-<timestamp>)")
 	rootCmd.AddCommand(exportCmd)
 }
 
@@ -65,7 +65,7 @@ func runExport(cmd *cobra.Command, args []string) error {
 	vault := storage.NewVault(config.VaultPath(), identity)
 
 	if exportDir == "" {
-		exportDir = fmt.Sprintf("dh-export-%s", time.Now().UTC().Format("20060102-150405"))
+		exportDir = fmt.Sprintf("dhd-export-%s", time.Now().UTC().Format("20060102-150405"))
 	}
 
 	state, err := vault.LoadState()

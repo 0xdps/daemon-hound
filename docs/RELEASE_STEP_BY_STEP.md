@@ -101,32 +101,32 @@ builds:
 Building darwin/amd64
   GOOS=darwin GOARCH=amd64
   go build -ldflags "-X version=v1.1.0 -X commit=abc1234 ..."
-  → dist/daemon-hound_1.1.0_darwin_amd64/dh
+  → dist/daemon-hound_1.1.0_darwin_amd64/dhd
   ✓ Complete
 
 Building darwin/arm64 (M1/M2 Macs)
   GOOS=darwin GOARCH=arm64
-  → dist/daemon-hound_1.1.0_darwin_arm64/dh
+  → dist/daemon-hound_1.1.0_darwin_arm64/dhd
   ✓ Complete
 
 Building linux/amd64
   GOOS=linux GOARCH=amd64
-  → dist/daemon-hound_1.1.0_linux_amd64/dh
+  → dist/daemon-hound_1.1.0_linux_amd64/dhd
   ✓ Complete
 
 Building linux/arm64 (Raspberry Pi, ARM servers)
   GOOS=linux GOARCH=arm64
-  → dist/daemon-hound_1.1.0_linux_arm64/dh
+  → dist/daemon-hound_1.1.0_linux_arm64/dhd
   ✓ Complete
 
 Building windows/amd64
   GOOS=windows GOARCH=amd64
-  → dist/daemon-hound_1.1.0_windows_amd64/dh.exe
+  → dist/daemon-hound_1.1.0_windows_amd64/dhd.exe
   ✓ Complete
 
 Building freebsd/amd64
   GOOS=freebsd GOARCH=amd64
-  → dist/daemon-hound_1.1.0_freebsd_amd64/dh
+  → dist/daemon-hound_1.1.0_freebsd_amd64/dhd
   ✓ Complete
 
 Summary: 6 binaries built ✓
@@ -146,12 +146,12 @@ From binary files → Create OS-specific packages
 #### macOS Packaging
 
 ```
-Input: dist/daemon-hound_1.1.0_darwin_amd64/dh
-       dist/daemon-hound_1.1.0_darwin_arm64/dh
+Input: dist/daemon-hound_1.1.0_darwin_amd64/dhd
+  dist/daemon-hound_1.1.0_darwin_arm64/dhd
 
 Processing for .dmg creation:
   1. Create DaemonHound.app/ bundle structure
-  2. Copy dh binary to: Contents/MacOS/dh
+  2. Copy dhd binary to: Contents/MacOS/dhd
   3. Copy Info.plist to: Contents/Info.plist
   4. Copy AppIcon.icns to: Contents/Resources/AppIcon.icns
   5. Include: README.md, LICENSE, CHANGELOG.md
@@ -179,7 +179,7 @@ nfpms (not-fake package management system):
     daemon-hound_1.1.0_amd64.deb
     daemon-hound_1.1.0_arm64.deb
     (Dependencies: git)
-    (Installs to: /usr/bin/dh)
+    (Installs to: /usr/bin/dhd)
   
   Creating .rpm (RedHat/CentOS/Fedora):
     daemon-hound-1.1.0-1.x86_64.rpm
@@ -197,11 +197,11 @@ Output: 8 packages ✓
 #### Windows Packaging
 
 ```
-From: dist/daemon-hound_1.1.0_windows_amd64/dh.exe
+From: dist/daemon-hound_1.1.0_windows_amd64/dhd.exe
 
 Creating portable ZIP:
   daemon-hound_1.1.0_windows_x86_64.zip
-  └─ dh.exe
+  └─ dhd.exe
   └─ README.md
   └─ LICENSE
 
@@ -270,7 +270,7 @@ Homebrew repository: 0xdps/homebrew-packages
    └─ Version: v1.1.0
    └─ URL: GitHub Release download link
    └─ SHA256: checksum
-   └─ Install: bin.install "dh"
+   └─ Install: bin.install "dhd"
 
 2. Push to repository:
    git clone https://github.com/0xdps/homebrew-packages
@@ -384,7 +384,7 @@ What users see:
 $ brew install daemon-hound
 ✓ Installed daemon-hound v1.1.0
 
-$ dh --version
+$ dhd --version
 Daemon Hound v1.1.0
 ```
 
@@ -393,7 +393,7 @@ Daemon Hound v1.1.0
 $ sudo apt install daemon-hound_1.1.0_amd64.deb
 ✓ Setting up daemon-hound
 
-$ dh --version
+$ dhd --version
 Daemon Hound v1.1.0
 ```
 
@@ -402,7 +402,7 @@ Daemon Hound v1.1.0
 > scoop install daemon-hound
 Installing 'daemon-hound' (1.1.0) [100%]
 
-> dh --version
+> dhd --version
 Daemon Hound v1.1.0
 ```
 

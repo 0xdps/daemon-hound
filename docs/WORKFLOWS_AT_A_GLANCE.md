@@ -22,12 +22,12 @@ TEST JOB:
 └─ gofmt check                   (format validation)
     ↓
 BUILD JOBS (6 parallel):
-├─ darwin/amd64    → dh-darwin-amd64
-├─ darwin/arm64    → dh-darwin-arm64
-├─ linux/amd64     → dh-linux-amd64
-├─ linux/arm64     → dh-linux-arm64
-├─ windows/amd64   → dh-windows-amd64.exe
-└─ freebsd/amd64   → dh-freebsd-amd64
+├─ darwin/amd64    → dhd-darwin-amd64
+├─ darwin/arm64    → dhd-darwin-arm64
+├─ linux/amd64     → dhd-linux-amd64
+├─ linux/arm64     → dhd-linux-arm64
+├─ windows/amd64   → dhd-windows-amd64.exe
+└─ freebsd/amd64   → dhd-freebsd-amd64
     ↓
 DOCKER BUILD JOB:
 └─ Build Docker image
@@ -143,7 +143,7 @@ GitHub user: Downloads from Release page ✓
 ### Before (Just Binary)
 
 ```
-dh (executable)
+dhd (executable)
 └─ No metadata
    └─ macOS shows: "exec" icon + generic name
    └─ No version info embedded
@@ -156,7 +156,7 @@ DaemonHound.app/
 ├─ Contents/Info.plist
 │  ├─ CFBundleName: "Daemon Hound"
 │  └─ CFBundleVersion: "1.1.0"
-├─ Contents/MacOS/dh
+├─ Contents/MacOS/dhd
 │  └─ Binary with embedded version
 └─ Contents/Resources/AppIcon.icns
    └─ Your logo as app icon

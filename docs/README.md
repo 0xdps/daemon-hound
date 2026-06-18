@@ -113,7 +113,7 @@
 ```bash
 # Build regular binary
 make build
-./bin/dh --version
+./bin/dhd --version
 
 # Build macOS app bundle
 make build-macos
@@ -154,7 +154,7 @@ docker pull ghcr.io/0xdps/daemon-hound:latest
 Single Go Codebase (daemon-hound/)
         │
         ├─ Local Development (make build)
-        │  └─ bin/dh (single platform)
+        │  └─ bin/dhd (single platform)
         │
         ├─ macOS App Bundle (make build-macos)
         │  └─ DaemonHound.app/ (with icon + metadata)
@@ -224,7 +224,7 @@ vim internal/cmd/root.go
 # 3. Test locally
 make test
 make build
-./bin/dh --version
+./bin/dhd --version
 
 # 4. Push and create PR
 git push origin feature/my-change
@@ -285,7 +285,7 @@ docs/
 ## Key Files in Repository
 
 ### Source Code
-- `cmd/dh/main.go` - Entry point
+- `cmd/dhd/main.go` - Entry point
 - `internal/cmd/` - CLI commands
 - `internal/merge/` - Smart merge drivers
 - `internal/conflicts/` - Conflict management
@@ -301,7 +301,7 @@ docs/
 - `build/Info.plist` - macOS app metadata
 - `build/AppIcon.icns` - App icon
 - `build/DaemonHound.app/` - macOS app bundle
-- `bin/dh` - Regular binary
+- `bin/dhd` - Regular binary
 - `dist/` - Release artifacts (generated)
 
 ---

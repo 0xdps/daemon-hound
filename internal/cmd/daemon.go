@@ -72,7 +72,7 @@ var daemonStatusCmd = &cobra.Command{
 
 		if !installed {
 			fmt.Println("❌ Daemon not installed")
-			fmt.Println("   Run: dh init --remote <url>")
+			fmt.Println("   Run: dhd init --remote <url>")
 			return nil
 		}
 
@@ -95,7 +95,7 @@ var daemonStatusCmd = &cobra.Command{
 			// Try to start it
 			if err := sm.Install(); err != nil {
 				fmt.Printf("❌ Failed to start daemon: %v\n", err)
-				fmt.Println("   Run: dh daemon run (for manual testing)")
+				fmt.Println("   Run: dhd daemon run (for manual testing)")
 				return nil
 			}
 
@@ -120,7 +120,7 @@ var daemonLogsCmd = &cobra.Command{
 		if _, err := os.Stat(logPath); err != nil {
 			if os.IsNotExist(err) {
 				fmt.Printf("No logs yet. Daemon hasn't run.\n")
-				fmt.Println("Start daemon with: dh daemon run")
+				fmt.Println("Start daemon with: dhd daemon run")
 				return nil
 			}
 			return fmt.Errorf("failed to check log file: %w", err)

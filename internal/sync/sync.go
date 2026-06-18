@@ -200,7 +200,7 @@ func (s *Syncer) Push() ([]Result, error) {
 		if err := s.git.Push(); err != nil {
 			// Offline — mark pending so status and the next sync know to retry.
 			fmt.Fprintf(os.Stderr, "Warning: could not push to remote (offline?): %v\n", err)
-			fmt.Fprintf(os.Stderr, "Changes committed locally. Run `dh sync` again when online.\n")
+			fmt.Fprintf(os.Stderr, "Changes committed locally. Run `dhd sync` again when online.\n")
 			_ = s.config.SetPendingPush(true)
 			return results, nil
 		}

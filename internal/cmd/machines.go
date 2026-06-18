@@ -18,7 +18,7 @@ var machinesCmd = &cobra.Command{
 	Short: "List machines that have backup files in the vault",
 	Long: `List all machine UUIDs that have stored backup files in the vault.
 
-Each machine that has run 'dh track --mode backup' appears here. The current
+Each machine that has run 'dhd track --mode backup' appears here. The current
 machine is marked with '(this machine)'.`,
 	RunE: runMachines,
 }

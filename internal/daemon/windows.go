@@ -140,11 +140,11 @@ func (t *TaskSchedulerManager) IsInstalled() (bool, error) {
 
 // IsRunning checks if the daemon process is running.
 func (t *TaskSchedulerManager) IsRunning() (bool, error) {
-	cmd := exec.Command("tasklist", "/FI", "IMAGENAME eq dh.exe")
+	cmd := exec.Command("tasklist", "/FI", "IMAGENAME eq dhd.exe")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return false, err
 	}
 
-	return strings.Contains(string(output), "dh.exe"), nil
+	return strings.Contains(string(output), "dhd.exe"), nil
 }

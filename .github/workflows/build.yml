@@ -74,14 +74,14 @@ jobs:
           DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           go build \
             -ldflags "-s -w -X github.com/0xdps/daemon-hound/internal/cmd.version=${VERSION} -X github.com/0xdps/daemon-hound/internal/cmd.commit=${COMMIT:0:7} -X github.com/0xdps/daemon-hound/internal/cmd.date=${DATE}" \
-            -o dist/dh-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} \
-            ./cmd/dh
+            -o dist/dhd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} \
+            ./cmd/dhd
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dh-${{ matrix.os }}-${{ matrix.arch }}
-          path: dist/dh-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+          name: dhd-${{ matrix.os }}-${{ matrix.arch }}
+          path: dist/dhd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
           retention-days: 7
 
   docker:

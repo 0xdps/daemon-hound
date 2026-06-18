@@ -42,7 +42,7 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	// 1. Config
 	cfg := config.NewConfig()
 	if err := cfg.Load(); err != nil {
-		fmt.Println(output.Fail("Config not found — run `dh init` first"))
+		fmt.Println(output.Fail("Config not found — run `dhd init` first"))
 		fmt.Println("\n1 issue found.")
 		return nil
 	}

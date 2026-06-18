@@ -115,11 +115,11 @@ docker pull ghcr.io/0xdps/daemon-hound:latest
 docker pull ghcr.io/0xdps/daemon-hound:v0.1.0
 
 # Run
-docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest dh --help
+docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest dhd --help
 
 # With shell alias
-alias dh='docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest'
-dh status
+alias dhd='docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest'
+dhd status
 ```
 
 **Tags available**:
@@ -143,7 +143,7 @@ The script auto-detects your OS and architecture, downloads the correct binary, 
 ### 7. Go Install
 
 ```bash
-go install github.com/0xdps/daemon-hound/cmd/dh@latest
+go install github.com/0xdps/daemon-hound/cmd/dhd@latest
 ```
 
 Requires Go 1.26+ installed.
@@ -220,7 +220,7 @@ scoop install daemon-hound
 # Download from releases
 curl -LO https://github.com/0xdps/daemon-hound/releases/download/v0.1.0/daemon-hound_v0.1.0_FreeBSD_x86_64.tar.gz
 tar -xzf daemon-hound_v0.1.0_FreeBSD_x86_64.tar.gz
-sudo mv dh /usr/local/bin/
+sudo mv dhd /usr/local/bin/
 ```
 
 ---
@@ -363,7 +363,7 @@ gh repo create 0xdps/scoop-bucket --public \
 
 ## Troubleshooting
 
-### "command not found: dh" after installation
+### "command not found: dhd" after installation
 
 The binary directory is not in your PATH. Add it:
 
@@ -384,7 +384,7 @@ export PATH="$HOME/.local/bin:$PATH"
 The identity file was encrypted with a different password. If you've forgotten the password:
 1. Delete `~/.dh/identity.age`
 2. Delete `~/.dh/config.toml`
-3. Run `dh init` again
+3. Run `dhd init` again
 4. Re-clone your vault
 
 **Warning**: You will lose access to previously encrypted vault data unless you have the identity file backed up.
@@ -436,14 +436,14 @@ After installation, verify DaemonHound is working:
 
 ```bash
 # Check version
-dh --version
-# Expected: dh version v0.1.0 (commit: abc1234, built: 2026-06-12)
+dhd --version
+# Expected: dhd version v0.1.0 (commit: abc1234, built: 2026-06-12)
 
 # Check help
-dh --help
+dhd --help
 
 # Initialize (first time)
-dh init --remote git@github.com:you/vault.git
+dhd init --remote git@github.com:you/vault.git
 ```
 
 ---

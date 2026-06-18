@@ -4,7 +4,7 @@
 
 ### Local Development (macOS)
 ```bash
-make build              # Build binary: bin/dh
+make build              # Build binary: bin/dhd
 make build-macos        # Build app bundle: build/DaemonHound.app
 make install-macos      # Install to ~/Applications
 make test               # Run tests
@@ -40,7 +40,7 @@ make tag TAG=v1.1.0
 
 | Target | What it does | Output | Use when |
 |--------|-------------|--------|----------|
-| `make build` | Build single binary for current OS | `bin/dh` | Testing locally |
+| `make build` | Build single binary for current OS | `bin/dhd` | Testing locally |
 | `make build-macos` | Build app bundle with icon | `build/DaemonHound.app/` | macOS desktop distribution |
 | `make build-macos-icon` | Regenerate app icon | `build/AppIcon.icns` | Logo changed |
 | `make install-macos` | Install app to ~/Applications | Installed app | Ready to use |
@@ -97,7 +97,7 @@ For each platform (darwin/linux/windows) × architecture (amd64/arm64):
 ### 4. Creates Windows Artifacts
 ```
 ✓ daemon-hound_1.1.0_Windows_x86_64.zip
-✓ dh.exe (portable executable)
+✓ dhd.exe (portable executable)
 ```
 
 ### 5. Updates Package Managers
@@ -210,7 +210,7 @@ sudo apt install ./daemon-hound_1.1.0_amd64.deb
 
 # Or: Untar binary
 tar xzf daemon-hound_1.1.0_linux_x86_64.tar.gz
-sudo mv dh /usr/local/bin/
+sudo mv dhd /usr/local/bin/
 ```
 
 ### Windows User
@@ -225,7 +225,7 @@ Expand-Archive daemon-hound_1.1.0_Windows_x86_64.zip
 ### Docker User
 ```bash
 docker pull ghcr.io/0xdps/daemon-hound:latest
-docker run ghcr.io/0xdps/daemon-hound dh --version
+docker run ghcr.io/0xdps/daemon-hound dhd --version
 ```
 
 ---

@@ -26,9 +26,9 @@ DaemonHound reads the origin remote of the current Git repository to derive
 a namespace, encrypts the file, and stores it in the vault.
 
 Examples:
-  dh track .env.local              # sync mode (default)
-  dh track .env.test --mode sync   # explicit sync mode
-  dh track ~/.zshrc --mode backup  # backup mode (this machine only)`,
+  dhd track .env.local              # sync mode (default)
+  dhd track .env.test --mode sync   # explicit sync mode
+  dhd track ~/.zshrc --mode backup  # backup mode (this machine only)`,
 	Args: cobra.ExactArgs(1),
 	RunE: runTrack,
 }

@@ -25,8 +25,8 @@ var discoverCmd = &cobra.Command{
 any namespaces that already exist in the vault.
 
 Example:
-  dh discover           # scan current directory
-  dh discover ~/projects  # scan ~/projects`,
+  dhd discover           # scan current directory
+  dhd discover ~/projects  # scan ~/projects`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runDiscover,
 }

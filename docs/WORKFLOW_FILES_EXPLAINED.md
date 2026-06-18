@@ -109,8 +109,8 @@ build:
         -X github.com/0xdps/daemon-hound/internal/cmd.version=${VERSION} \
         -X github.com/0xdps/daemon-hound/internal/cmd.commit=${COMMIT:0:7} \
         -X github.com/0xdps/daemon-hound/internal/cmd.date=${DATE}" \
-      -o dist/dh-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} \
-      ./cmd/dh
+      -o dist/dhd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }} \
+      ./cmd/dhd
 ```
 
 **ldflags explained**:
@@ -123,12 +123,12 @@ build:
 
 **Result**: Binaries like:
 ```
-dist/dh-darwin-amd64
-dist/dh-darwin-arm64
-dist/dh-linux-amd64
-dist/dh-linux-arm64
-dist/dh-windows-amd64.exe
-dist/dh-freebsd-amd64
+dist/dhd-darwin-amd64
+dist/dhd-darwin-arm64
+dist/dhd-linux-amd64
+dist/dhd-linux-arm64
+dist/dhd-windows-amd64.exe
+dist/dhd-freebsd-amd64
 ```
 
 **Upload artifacts**:
@@ -136,8 +136,8 @@ dist/dh-freebsd-amd64
 - name: Upload artifact
   uses: actions/upload-artifact@v4
   with:
-    name: dh-${{ matrix.os }}-${{ matrix.arch }}
-    path: dist/dh-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
+    name: dhd-${{ matrix.os }}-${{ matrix.arch }}
+    path: dist/dhd-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.os == 'windows' && '.exe' || '' }}
     retention-days: 7          # Keep for 7 days
 ```
 

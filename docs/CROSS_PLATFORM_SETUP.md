@@ -88,7 +88,7 @@ Already configured in `.goreleaser.yaml`:
 ```
 Your Code (daemon-hound/)
         │
-        ├─ make build         → bin/dh (local OS)
+        ├─ make build         → bin/dhd (local OS)
         │                        • Use for testing
         │
         ├─ make build-macos   → build/DaemonHound.app (macOS only)
@@ -121,7 +121,7 @@ Your Code (daemon-hound/)
 
 ### Before (Single Binary)
 ```
-dh (executable)
+dhd (executable)
   └─ No metadata
      → macOS shows generic icon
      → Activity Monitor shows "exec"
@@ -135,7 +135,7 @@ DaemonHound.app/
   │   ├─ CFBundleDisplayName: "Daemon Hound"
   │   └─ CFBundleIconFile: "AppIcon"
   │
-  ├─ Contents/MacOS/dh (executable)
+  ├─ Contents/MacOS/dhd (executable)
   │
   └─ Contents/Resources/AppIcon.icns (your logo)
      └─ macOS reads this → shows icon + name
@@ -148,12 +148,12 @@ DaemonHound.app/
 
 ```
 daemon-hound/
-├─ cmd/dh/main.go           ← Source code
+├─ cmd/dhd/main.go           ← Source code
 ├─ internal/...             ← Implementation
 ├─ images/logo.png          ← Your logo (1254×1254)
 │
 ├─ Makefile                 ← Build targets
-│  ├─ make build                → bin/dh
+│  ├─ make build                → bin/dhd
 │  ├─ make build-macos          → build/DaemonHound.app
 │  ├─ make snapshot             → dist/ (all platforms)
 │  └─ make tag TAG=v1.1.0       → Release to GitHub
@@ -169,7 +169,7 @@ daemon-hound/
 │  └─ DaemonHound.app/     ← macOS app bundle
 │
 ├─ bin/                     ← Binary builds
-│  └─ dh (or dh.exe on Windows)
+│  └─ dhd (or dhd.exe on Windows)
 │
 ├─ dist/                    ← Release artifacts (snapshot/release)
 │  ├─ daemon-hound_1.1.0_macOS_x86_64.dmg
@@ -193,7 +193,7 @@ daemon-hound/
 ```bash
 # Build for current OS
 make build
-./bin/dh --version
+./bin/dhd --version
 
 # Build app bundle (macOS)
 make build-macos

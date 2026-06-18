@@ -70,7 +70,7 @@ func runSync(cmd *cobra.Command, args []string) error {
 	if len(results) == 0 {
 		fmt.Println("Everything is up to date.")
 		if cfg.PendingPush() {
-			fmt.Println(output.Yellow("Note: a previous push is still pending — run `dh sync` when online."))
+			fmt.Println(output.Yellow("Note: a previous push is still pending — run `dhd sync` when online."))
 		}
 		return nil
 	}
@@ -98,7 +98,7 @@ func runSync(cmd *cobra.Command, args []string) error {
 	fmt.Println(")")
 
 	if cfg.PendingPush() {
-		fmt.Println(output.Yellow("Note: push to remote is still pending — run `dh sync` when online."))
+		fmt.Println(output.Yellow("Note: push to remote is still pending — run `dhd sync` when online."))
 	}
 
 	audit.Log("sync", fmt.Sprintf("pushed:%d pulled:%d errors:%d", pushed, pulled, errors))

@@ -97,7 +97,7 @@ dhd version
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
-dh version
+dhd version
 ```
 
 ## Windows
@@ -157,23 +157,23 @@ systemctl --user cat daemon-hound.service
 systemctl --user status daemon-hound.service --no-pager
 ```
 
-If `ExecStart` points at a development checkout such as `.../daemon-hound/bin/dh`, reinstall or reinitialize from the installed `dh` path so the daemon uses the release binary.
+If `ExecStart` points at a development checkout such as `.../daemon-hound/bin/dhd`, reinstall or reinitialize from the installed `dhd` path so the daemon uses the release binary.
 
 ## Uninstalling
 
 Remove local DaemonHound state and the background daemon from the current machine:
 
 ```bash
-dh cleanup
+dhd cleanup
 ```
 
 Then remove the binary or package using the same method used for installation:
 
 ```bash
-sudo rm -f /usr/local/bin/dh
+sudo rm -f /usr/local/bin/dhd
 # or: brew uninstall daemon-hound
 # or: scoop uninstall daemon-hound
 # or your Linux package manager's remove command
 ```
 
-`dh cleanup` does not delete your remote vault repository.
+`dhd cleanup` does not delete your remote vault repository.

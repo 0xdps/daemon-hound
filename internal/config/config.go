@@ -38,7 +38,7 @@ func NewConfig() *Config {
 // Load reads the config from disk. Returns an error if the file doesn't exist.
 func (c *Config) Load() error {
 	if _, err := os.Stat(c.path); os.IsNotExist(err) {
-		return fmt.Errorf("config not found at %s: run `dh init` first", c.path)
+		return fmt.Errorf("config not found at %s: run `dhd init` first", c.path)
 	}
 	if _, err := toml.DecodeFile(c.path, &c.data); err != nil {
 		return fmt.Errorf("failed to parse config: %w", err)

@@ -17,7 +17,7 @@ var exportIdentityCmd = &cobra.Command{
 This is used when setting up DaemonHound on a new machine that should share
 the same vault. Copy the printed key and use it with:
 
-  dh init --remote <url> --age-key <key>
+  dhd init --remote <url> --age-key <key>
 
 on the new machine. Keep the key secret — anyone with it can decrypt your vault.`,
 	RunE: runExportIdentity,
@@ -54,6 +54,6 @@ func runExportIdentity(cmd *cobra.Command, args []string) error {
 	fmt.Println(string(identityBytes))
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "To use on a new machine:")
-	fmt.Fprintf(os.Stderr, "  dh init --remote %s --age-key <paste-key-above>\n", cfg.VaultRemote())
+	fmt.Fprintf(os.Stderr, "  dhd init --remote %s --age-key <paste-key-above>\n", cfg.VaultRemote())
 	return nil
 }

@@ -50,7 +50,7 @@ func (n *NoOpManager) IsRunning() (bool, error) {
 	return false, fmt.Errorf("daemon check not supported on %s", runtime.GOOS)
 }
 
-// GetDaemonPath returns the path to the dh executable.
+// GetDaemonPath returns the path to the dhd executable.
 func GetDaemonPath() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {

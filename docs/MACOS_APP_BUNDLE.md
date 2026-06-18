@@ -14,7 +14,7 @@ Daemon Hound is now properly configured to display as a native macOS application
 ### Build Regular Binary
 ```bash
 make build
-# Creates: bin/dh
+# Creates: bin/dhd
 ```
 
 ### Build macOS App Bundle
@@ -42,7 +42,7 @@ DaemonHound.app/
 ├── Contents/
 │   ├── Info.plist              # App metadata (name, icon, etc.)
 │   ├── MacOS/
-│   │   └── dh                  # Executable binary
+│   │   └── dhd                 # Executable binary
 │   └── Resources/
 │       └── AppIcon.icns        # App icon (1024x1024 + retina)
 ```
@@ -56,7 +56,7 @@ The `build/Info.plist` includes:
 | CFBundleName | Daemon Hound | Display name in Activity Monitor |
 | CFBundleDisplayName | Daemon Hound | Display name in menu bar |
 | CFBundleIdentifier | com.0xdps.daemon-hound | Unique app identifier |
-| CFBundleExecutable | dh | Binary name within MacOS/ |
+| CFBundleExecutable | dhd | Binary name within MacOS/ |
 | CFBundleIconFile | AppIcon | Icon file name (without .icns) |
 | LSBackgroundOnly | true | Run without dock icon |
 | NSHighResolutionCapable | true | Support retina displays |
@@ -76,7 +76,7 @@ All sizes are created and bundled into `AppIcon.icns`.
 
 ## Background Daemon Display
 
-When running `dh daemon` from the bundled app:
+When running `dhd daemon` from the bundled app:
 
 **Before (v1.0.0)**:
 ```
@@ -94,20 +94,20 @@ Running in background
 
 ### Start daemon from app bundle:
 ```bash
-~/Applications/DaemonHound.app/Contents/MacOS/dh daemon
+~/Applications/DaemonHound.app/Contents/MacOS/dhd daemon
 ```
 
 ### Or create an alias:
 ```bash
-alias dh-daemon="~/Applications/DaemonHound.app/Contents/MacOS/dh daemon"
-dh-daemon
+alias dhd-daemon="~/Applications/DaemonHound.app/Contents/MacOS/dhd daemon"
+dhd-daemon
 ```
 
 ### Keep the binary in PATH:
 ```bash
 # Regular install still works
-make install  # or make build -> bin/dh
-dh daemon
+make install  # or make build -> bin/dhd
+dhd daemon
 ```
 
 ## Rebuilding After Changes
@@ -148,5 +148,5 @@ rm -f build/AppIcon.icns
 - Restart daemon
 
 ### Binary not executable
-- Run: `chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dh`
+- Run: `chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dhd`
 - Or use: `make install-macos`

@@ -97,8 +97,8 @@ var conflictsShowCmd = &cobra.Command{
 			}
 
 			fmt.Println("To resolve this conflict, run:")
-			fmt.Printf("  dh conflicts resolve %s --strategy local   # Keep local changes\n", filePath)
-			fmt.Printf("  dh conflicts resolve %s --strategy remote  # Use remote changes\n", filePath)
+			fmt.Printf("  dhd conflicts resolve %s --strategy local   # Keep local changes\n", filePath)
+			fmt.Printf("  dhd conflicts resolve %s --strategy remote  # Use remote changes\n", filePath)
 		}
 
 		return nil
@@ -149,7 +149,7 @@ var conflictsResolveCmd = &cobra.Command{
 
 		// Note: Actual git resolution would happen in daemon next sync
 		fmt.Println("\nNote: The daemon will apply this resolution on the next sync cycle.")
-		fmt.Println("To re-sync immediately, run: dh sync")
+		fmt.Println("To re-sync immediately, run: dhd sync")
 
 		return nil
 	},

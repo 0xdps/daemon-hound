@@ -55,7 +55,7 @@ DaemonHound:
 6. Commits and pushes the vault immediately
 7. Writes an audit log entry to `~/.dh/audit.log`
 
-Re-running `dh track` on an already-tracked file is safe — it reports "already tracked" and exits.
+Re-running `dhd track` on an already-tracked file is safe — it reports "already tracked" and exits.
 
 ### Stop tracking files
 
@@ -95,7 +95,7 @@ dhd status
 #
 # ⚠ Pending push: local vault commits not yet pushed to remote
 
-dh status --namespace github.com/you/pingpong-api   # filter to one namespace
+dhd status --namespace github.com/you/pingpong-api   # filter to one namespace
 
 dhd status --output json   # machine-readable output
 ```
@@ -157,18 +157,18 @@ The master password protects `~/.dh/identity.age` locally. The shared age identi
 ```bash
 cd ~/work/pingpong-api
 
-dh sync
+dhd sync
 # → github.com/you/pingpong-api: 2 tracked files found in vault
 # →   .env.local   ✓ restored
 # →   .env.test    ✓ restored
 ```
 
-No need to run `dh track` again. The namespace is already registered from Machine 1.
+No need to run `dhd track` again. The namespace is already registered from Machine 1.
 
 ### Step 2b — Discover and sync all projects at once
 
 ```bash
-dh discover ~/work
+dhd discover ~/work
 # Scanning ~/work...
 #
 # github.com/you/pingpong-api   2 tracked files  ✓ synced
@@ -177,7 +177,7 @@ dh discover ~/work
 #
 # 2 namespaces restored, 1 skipped
 
-dh discover ~/work --output json   # machine-readable output
+dhd discover ~/work --output json   # machine-readable output
 ```
 
 ---
@@ -187,7 +187,7 @@ dh discover ~/work --output json   # machine-readable output
 ### Store a secret
 
 ```bash
-dh secret set openai-key
+dhd secret set openai-key
 # Enter value: ••••••••••••••
 # → Stored: openai-key
 ```
@@ -200,41 +200,41 @@ Each repo can use a different environment variable name for the same logical sec
 
 ```bash
 cd ~/projects/pingpong-api
-dh secret ref openai-key .env.local OPENAI_API_KEY
+dhd secret ref openai-key .env.local OPENAI_API_KEY
 # → Mapped: openai-key → github.com/you/pingpong-api:.env.local:OPENAI_API_KEY
 
 cd ~/projects/portfolio
-dh secret ref openai-key .env.local OPENAI_KEY
+dhd secret ref openai-key .env.local OPENAI_KEY
 # → Mapped: openai-key → github.com/you/portfolio:.env.local:OPENAI_KEY
 ```
 
-DaemonHound writes the secret value into each file at the mapped key and marks those files dirty. Run `dh sync` to push.
+DaemonHound writes the secret value into each file at the mapped key and marks those files dirty. Run `dhd sync` to push.
 
 ### List mappings
 
 ```bash
-dh secret list
+dhd secret list
 # openai-key
 #   github.com/you/pingpong-api   .env.local   OPENAI_API_KEY
 #   github.com/you/portfolio      .env.local   OPENAI_KEY
 
-dh secret list openai-key   # list mappings for one secret
+dhd secret list openai-key   # list mappings for one secret
 ```
 
 ### Retrieve the raw value
 
 ```bash
-dh secret get openai-key
+dhd secret get openai-key
 # → sk-proj-xxxxxxxxxxxx
 ```
 
 ### Rotate the secret
 
 ```bash
-dh secret set openai-key NEW_VALUE
+dhd secret set openai-key NEW_VALUE
 # → Updated .env.local in github.com/you/pingpong-api  (OPENAI_API_KEY)
 # → Updated .env.local in github.com/you/portfolio     (OPENAI_KEY)
-# → 2 files marked dirty — run `dh sync` to push
+# → 2 files marked dirty — run `dhd sync` to push
 ```
 
 All mapped files get the new value written to their respective keys automatically.
@@ -242,7 +242,7 @@ All mapped files get the new value written to their respective keys automaticall
 ### Rename a secret
 
 ```bash
-dh secret rename openai-key openai-prod-key
+dhd secret rename openai-key openai-prod-key
 # → Renamed secret: openai-key → openai-prod-key
 ```
 
@@ -251,14 +251,14 @@ The value and all mappings are preserved.
 ### Remove a mapping
 
 ```bash
-dh secret unref openai-key .env.local
+dhd secret unref openai-key .env.local
 # → Removed mapping: openai-key from .env.local in github.com/you/pingpong-api
 ```
 
 ### Delete a secret entirely
 
 ```bash
-dh secret delete openai-key
+dhd secret delete openai-key
 # → Deleted secret: openai-key
 # → Note: any files that contained this secret value were NOT modified.
 ```
@@ -268,7 +268,7 @@ dh secret delete openai-key
 ## Flow 7: Health Check and Repair
 
 ```bash
-dh doctor
+dhd doctor
 # ✓ Config loaded
 # ✓ Identity file exists
 # ✓ Vault directory exists
@@ -278,7 +278,7 @@ dh doctor
 # ✓ 2 binding(s) configured
 # ✓ No pending push
 
-dh doctor --fix
+dhd doctor --fix
 # Attempts to auto-repair: creates vault directory, initializes git repo,
 # adds the configured remote if missing.
 ```
@@ -288,13 +288,13 @@ dh doctor --fix
 ## Flow 8: Multi-Machine Backup Files
 
 ```bash
-dh machines
+dhd machines
 # Machine ID                                Note
 # ----------                                ----
 # a1b2c3d4-...                              (this machine)
 # e5f6g7h8-...
 
-dh machines --output json
+dhd machines --output json
 ```
 
 Each machine that has used `--mode backup` appears here. Backup files from decommissioned machines remain in the vault but are no longer updated.
@@ -304,7 +304,7 @@ Each machine that has used `--mode backup` appears here. Backup files from decom
 ## Flow 9: Change Master Password
 
 ```bash
-dh rekey
+dhd rekey
 # Enter current password: ••••••••
 # Enter new password: ••••••••••••
 # Confirm new password: ••••••••••••
@@ -320,15 +320,15 @@ The age identity is decrypted with the old password and re-encrypted with the ne
 To migrate away from DaemonHound or create a plaintext backup:
 
 ```bash
-dh export
+dhd export
 # ⚠ WARNING: This writes plaintext secrets to disk. Delete the export when done.
-# Exporting to dh-export-20260614-120000/
+# Exporting to dhd-export-20260614-120000/
 # → files/github.com/you/pingpong-api/.env.local
 # → files/github.com/you/portfolio/.env.local
 # → secrets.json
 # Done.
 
-dh export --dir /tmp/my-export   # custom output directory
+dhd export --dir /tmp/my-export   # custom output directory
 ```
 
 The export directory contains:
@@ -343,14 +343,14 @@ The export directory contains:
 
 When retiring a machine:
 
-1. Run `dh sync` to ensure all local changes are pushed
-2. Run `dh cleanup` to stop/uninstall the daemon, remove the cached keychain password, and delete local data under `~/.dh/`
+1. Run `dhd sync` to ensure all local changes are pushed
+2. Run `dhd cleanup` to stop/uninstall the daemon, remove the cached keychain password, and delete local data under `~/.dh/`
 3. Backup mode files for that machine UUID remain in the vault but will no longer be updated
 
 ```bash
-dh cleanup
+dhd cleanup
 # or, for automation:
-dh cleanup --force
+dhd cleanup --force
 ```
 
 Sync mode files are unaffected — other machines continue to use them normally.
@@ -359,27 +359,27 @@ Sync mode files are unaffected — other machines continue to use them normally.
 
 ## Flow 12: Background Daemon Operations
 
-`dh init` installs the daemon automatically when the platform supports user-level services. Manual `dh sync` remains available, but the daemon handles routine sync cycles.
+`dhd init` installs the daemon automatically when the platform supports user-level services. Manual `dhd sync` remains available, but the daemon handles routine sync cycles.
 
 ```bash
-dh daemon status
+dhd daemon status
 # ✓ Daemon service installed
 # ✓ Daemon is running
 
-dh daemon logs
-dh daemon logs -f
-dh daemon logs -n 100
+dhd daemon logs
+dhd daemon logs -f
+dhd daemon logs -n 100
 
-dh daemon errors
+dhd daemon errors
 
-dh daemon restart
-dh daemon stop
+dhd daemon restart
+dhd daemon stop
 ```
 
 For debugging or manual service setup, run the daemon in the foreground:
 
 ```bash
-dh daemon run
+dhd daemon run
 ```
 
 The daemon watches tracked file directories, watches the local vault clone, polls the remote every 30 seconds, rotates logs, and uses the same user permissions as the CLI.
@@ -391,18 +391,18 @@ The daemon watches tracked file directories, watches the local vault clone, poll
 Most encrypted vault conflicts are resolved automatically by the sync engine. When the daemon records a conflict for review:
 
 ```bash
-dh conflicts list
-dh conflicts show .env.local
+dhd conflicts list
+dhd conflicts show .env.local
 
-dh conflicts resolve .env.local --strategy local
+dhd conflicts resolve .env.local --strategy local
 # or:
-dh conflicts resolve .env.local --strategy remote
+dhd conflicts resolve .env.local --strategy remote
 
-dh sync
-dh conflicts clear
+dhd sync
+dhd conflicts clear
 ```
 
-`local` keeps this machine's version; `remote` accepts the remote version. `dh conflicts clear` only removes resolved conflict records.
+`local` keeps this machine's version; `remote` accepts the remote version. `dhd conflicts clear` only removes resolved conflict records.
 
 ---
 
@@ -422,36 +422,36 @@ Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/renam
 
 | Scenario                          | Command                                    |
 |-----------------------------------|--------------------------------------------|
-| First-time setup                  | `dh init --remote <url>`                   |
-| Re-initialize machine             | `dh init --force`                          |
-| Track a project file              | `dh track .env.local`                      |
-| Track a machine-only file         | `dh track ~/.zshrc --mode backup`          |
-| Remove from vault                 | `dh untrack <file>`                        |
-| Remove from this machine only     | `dh untrack --local <file>`                |
-| Remove missing local references   | `dh untrack --missing`                     |
-| Push/pull changes                 | `dh sync`                                  |
-| Preview changes                   | `dh sync --dry-run`                        |
-| Sync one namespace only           | `dh sync --namespace <ns>`                 |
-| Set up a new machine (one repo)   | `dh init` then `dh sync` in repo dir       |
-| Set up a new machine (all repos)  | `dh init` then `dh discover ~/`            |
-| Check sync status                 | `dh status`                                |
-| JSON status (scripting)           | `dh status --output json`                  |
-| Store a secret                    | `dh secret set <key>`                      |
-| Retrieve a secret                 | `dh secret get <key>`                      |
-| List secrets                      | `dh secret list [key]`                     |
-| Rotate a secret                   | `dh secret set <key>` (new value)          |
-| Rename a secret                   | `dh secret rename <old> <new>`             |
-| Map secret to a file              | `dh secret ref <key> <file> <ENV_VAR>`     |
-| Remove a secret mapping           | `dh secret unref <key> <file>`             |
-| Delete a secret                   | `dh secret delete <key>`                   |
-| Health check                      | `dh doctor`                                |
-| Auto-repair common issues         | `dh doctor --fix`                          |
-| List backup machines              | `dh machines`                              |
-| Change master password            | `dh rekey`                                 |
-| Export everything to plaintext    | `dh export`                                |
-| Export identity for new machine   | `dh export-identity`                       |
-| Check daemon                      | `dh daemon status`                         |
-| View daemon logs                  | `dh daemon logs`                           |
-| Resolve conflicts                 | `dh conflicts resolve <file>`              |
-| Remove cached password            | `dh logout`                                |
-| Remove local installation         | `dh cleanup`                               |
+| First-time setup                  | `dhd init --remote <url>`                   |
+| Re-initialize machine             | `dhd init --force`                          |
+| Track a project file              | `dhd track .env.local`                      |
+| Track a machine-only file         | `dhd track ~/.zshrc --mode backup`          |
+| Remove from vault                 | `dhd untrack <file>`                        |
+| Remove from this machine only     | `dhd untrack --local <file>`                |
+| Remove missing local references   | `dhd untrack --missing`                     |
+| Push/pull changes                 | `dhd sync`                                  |
+| Preview changes                   | `dhd sync --dry-run`                        |
+| Sync one namespace only           | `dhd sync --namespace <ns>`                 |
+| Set up a new machine (one repo)   | `dhd init` then `dhd sync` in repo dir       |
+| Set up a new machine (all repos)  | `dhd init` then `dhd discover ~/`            |
+| Check sync status                 | `dhd status`                                |
+| JSON status (scripting)           | `dhd status --output json`                  |
+| Store a secret                    | `dhd secret set <key>`                      |
+| Retrieve a secret                 | `dhd secret get <key>`                      |
+| List secrets                      | `dhd secret list [key]`                     |
+| Rotate a secret                   | `dhd secret set <key>` (new value)          |
+| Rename a secret                   | `dhd secret rename <old> <new>`             |
+| Map secret to a file              | `dhd secret ref <key> <file> <ENV_VAR>`     |
+| Remove a secret mapping           | `dhd secret unref <key> <file>`             |
+| Delete a secret                   | `dhd secret delete <key>`                   |
+| Health check                      | `dhd doctor`                                |
+| Auto-repair common issues         | `dhd doctor --fix`                          |
+| List backup machines              | `dhd machines`                              |
+| Change master password            | `dhd rekey`                                 |
+| Export everything to plaintext    | `dhd export`                                |
+| Export identity for new machine   | `dhd export-identity`                       |
+| Check daemon                      | `dhd daemon status`                         |
+| View daemon logs                  | `dhd daemon logs`                           |
+| Resolve conflicts                 | `dhd conflicts resolve <file>`              |
+| Remove cached password            | `dhd logout`                                |
+| Remove local installation         | `dhd cleanup`                               |

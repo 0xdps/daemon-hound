@@ -172,10 +172,10 @@ Daemon continues sync without user intervention
 ┌─────────────────────────────────────────────────────────────┐
 │ CLI Commands (internal/cmd/conflicts.go)                    │
 │                                                             │
-│  - dh conflicts list                                        │
-│  - dh conflicts show <file>                                 │
-│  - dh conflicts resolve <file> --strategy local|remote      │
-│  - dh conflicts clear                                       │
+│  - dhd conflicts list                                        │
+│  - dhd conflicts show <file>                                 │
+│  - dhd conflicts resolve <file> --strategy local|remote      │
+│  - dhd conflicts clear                                       │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -435,11 +435,11 @@ def main():
       │  └─ Log: "Sync completed successfully"
       │
       └─ YES
-         ├─ Log: "[WAITING] Some conflicts need manual resolution — dh conflicts list"
+         ├─ Log: "[WAITING] Some conflicts need manual resolution — dhd conflicts list"
          └─ Return early (no push, no commit)
 
 2. Next sync (30 seconds later)
-   └─ User may have resolved conflicts via: dh conflicts resolve
+   └─ User may have resolved conflicts via: dhd conflicts resolve
       └─ Daemon applies user's decision on next poll
 ```
 
@@ -467,7 +467,7 @@ Or with true conflict:
 [daemon] Merge conflicts detected
 [daemon] Conflicted files: [vault/sync/app/state.toml.age]
 [daemon] [conflict] True conflict in vault/sync/app/state.toml.age — user action required
-[daemon] [WAITING] Some conflicts need manual resolution — dh conflicts list
+[daemon] [WAITING] Some conflicts need manual resolution — dhd conflicts list
 ```
 
 ---
@@ -482,7 +482,7 @@ Or with true conflict:
 # Machine B commits: adds secret API_KEY to vault state
 # Next daemon poll: files and secrets are independent → auto-merged ✓
 
-$ dh daemon logs
+$ dhd daemon logs
 [daemon] Smart-merged vault/sync/proj/state.toml.age successfully
 ```
 
@@ -493,17 +493,17 @@ $ dh daemon logs
 ### Scenario 2: True Conflict (User Input Needed)
 
 ```bash
-# Machine A: dh track .env; edits DB_PASS=machine_a_pass
-# Machine B: dh track .env; edits DB_PASS=machine_b_pass
+# Machine A: dhd track .env; edits DB_PASS=machine_a_pass
+# Machine B: dhd track .env; edits DB_PASS=machine_b_pass
 # Next daemon poll: same env var changed differently → conflict
 
 # User reviews:
-$ dh conflicts list
+$ dhd conflicts list
 ⚠️  PENDING Conflicts:
 [1] vault/sync/myapp/.env.age
     Detected: 2026-06-15 13:30:45
 
-$ dh conflicts show vault/sync/myapp/.env.age
+$ dhd conflicts show vault/sync/myapp/.env.age
 Conflict: vault/sync/myapp/.env.age
 Status: ⚠️  PENDING RESOLUTION
 
@@ -522,11 +522,11 @@ DB_PASS=machine_b_password
 LOG_LEVEL=debug
 
 # User decides to use remote (they're the ops person with prod settings)
-$ dh conflicts resolve vault/sync/myapp/.env.age --strategy remote
+$ dhd conflicts resolve vault/sync/myapp/.env.age --strategy remote
 ✓ Conflict resolved with 'remote' strategy
 
 # Next daemon poll applies the decision
-$ dh daemon logs
+$ dhd daemon logs
 [daemon] Using user-selected strategy 'remote' for vault/sync/myapp/.env.age
 [daemon] Merged: replaced with remote version
 [daemon] Committed conflict resolution
@@ -650,9 +650,9 @@ Loop through each:
 Daemon sync pauses (unresolved conflicts remain)
 
 User:
-$ dh conflicts show database.yml          # Decide on YAML
-$ dh conflicts resolve database.yml --strategy remote
-$ dh conflicts show backup.tar.gz         # Binary file, manual only
+$ dhd conflicts show database.yml          # Decide on YAML
+$ dhd conflicts resolve database.yml --strategy remote
+$ dhd conflicts show backup.tar.gz         # Binary file, manual only
 $ # (must manually resolve binary file outside daemon)
 $ # Commit it manually: git add backup.tar.gz && git commit
 
@@ -783,14 +783,14 @@ File: `~/.dh/conflicts.json`
 
 1. **Configurable Merge Strategies**
    ```bash
-   dh config daemon.merge_strategy local  # default
-   dh config daemon.merge_strategy remote
-   dh config daemon.merge_strategy ask    # (interactive, not yet supported)
+   dhd config daemon.merge_strategy local  # default
+   dhd config daemon.merge_strategy remote
+   dhd config daemon.merge_strategy ask    # (interactive, not yet supported)
    ```
 
 2. **Partial Vault Sync**
    ```bash
-   dh daemon sync --namespace github.com/myorg/repo
+   dhd daemon sync --namespace github.com/myorg/repo
    ```
 
 3. **User Prompts for Conflicts** (not silent auto-record)
@@ -810,7 +810,7 @@ File: `~/.dh/conflicts.json`
 
 6. **Statistics & Reporting**
    ```bash
-   dh daemon stats
+   dhd daemon stats
    Total syncs: 1,234
    Auto-resolved: 892 (72%)
    True conflicts: 42 (3.4%)

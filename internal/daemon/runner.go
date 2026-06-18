@@ -211,7 +211,7 @@ func (r *Runner) performSync() error {
 	r.logger.Printf("Starting sync (vault: %s)", vaultRemote)
 
 	// Reload config from disk on every sync cycle so that bindings added by
-	// `dh track` or `dh discover` after the daemon started are picked up
+	// `dhd track` or `dhd discover` after the daemon started are picked up
 	// immediately rather than requiring a daemon restart.
 	freshCfg := config.NewConfig()
 	if err := freshCfg.Load(); err != nil {
@@ -347,7 +347,7 @@ func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string, conflictedFi
 
 		// Smart merge not possible — record for user
 		remoteHash := hashBytes(remoteBytes)
-		r.logger.Printf("[conflict] True conflict in %s — user action required: dh conflicts show %s", filePath, filePath)
+		r.logger.Printf("[conflict] True conflict in %s — user action required: dhd conflicts show %s", filePath, filePath)
 		r.recordConflict(store, storeErr, filePath, localHash, remoteHash)
 	}
 }
