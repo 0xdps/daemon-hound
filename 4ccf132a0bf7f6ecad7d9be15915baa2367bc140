@@ -1,0 +1,103 @@
+.github/workflows/build.yml
+  s_6c2b61eb5496bc::t_7a0b458aba33f1 107-110
+internal/tracker/tracker.go
+  s_6c2b61eb5496bc::t_4da6efe4a8e14c 7,71,73-82,205-214
+  s_6c2b61eb5496bc::t_b7deb403e4ffd5 124-128,179-204,215
+.goreleaser.yaml
+  s_6c2b61eb5496bc::t_11a56a40715728 136-138,153-155
+internal/storage/storage.go
+  s_6c2b61eb5496bc::t_d830217329ecfb 77,79-83,87-89,96-110,113-114,126-127,132-140,142,144-152,154-156
+internal/utils/utils.go
+  s_6c2b61eb5496bc::t_abb4b8ed0b9ffd 9
+  s_6c2b61eb5496bc::t_d2abe23ac1ff32 154-166
+internal/tracker/tracker_test.go
+  s_6c2b61eb5496bc::t_d537ee845fba61 181-231
+internal/sync/sync.go
+  s_6c2b61eb5496bc::t_a35a22d46d278e 185-189,191-201
+  s_6c2b61eb5496bc::t_4b6de28a562b67 81,127,233
+  s_6c2b61eb5496bc::t_8867403566248d 17-21,43-58
+  s_6c2b61eb5496bc::t_5abeab6ecb4353 24,29-30
+  s_6c2b61eb5496bc::t_961a0856da3c82 207-208,210-219,221-226,228,230-232,234-256
+internal/output/output.go
+  s_6c2b61eb5496bc::t_d1d99a1ead854e 1-68
+internal/cmd/export.go
+  s_6c2b61eb5496bc::t_fc76d0dc7844fa 1-111
+CHANGELOG.md
+  s_6c2b61eb5496bc::t_dbb63fef6a3eb4 49,63,68
+  s_6c2b61eb5496bc::t_9f59fcb30a84b1 12-13,23,47,50,69,77-78,84,88-89,98-108
+  s_6c2b61eb5496bc::t_24faeac8529d89 14-22,24-46,48,51-62,64-67,70-76,79-83,85-87,90-97
+internal/cmd/status.go
+  s_6c2b61eb5496bc::t_b6ed81bcc83aba 4,6,9,13-15,24-25,30,45,48-50,52-55,57,59,62-67,69-109,113
+Makefile
+  s_6c2b61eb5496bc::t_3a775143459521 45-55
+internal/cmd/track.go
+  s_6c2b61eb5496bc::t_c0bd29f5c29110 44,93,95-100,102-104
+  s_6c2b61eb5496bc::t_c09a9b0441044b 54-70
+  s_6c2b61eb5496bc::t_4a519d1cfcdf0c 7,42-43,92,94,101
+internal/cmd/logout.go
+  s_6c2b61eb5496bc::t_72f772b6aab228 25-30
+internal/cmd/sync.go
+  s_6c2b61eb5496bc::t_9f160ead84bed4 6,9,15,22-23,29,34-37,45-63,72-74,78,81-82,84-90,93-104
+  s_6c2b61eb5496bc::t_8b2ffb9516d81b 14,16,28
+internal/config/config_test.go
+  s_6c2b61eb5496bc::t_36695fb558c7d7 14,17-19
+  s_6c2b61eb5496bc::t_7852684de3832b 1-6,9-10,21,23-33,35-47,49-70,72-85,87-102,104-110,112-114,116-119
+  s_6c2b61eb5496bc::t_7471436d161d62 7-8,11-13,15-16,20,22,34,48,71,86,103,111,115
+internal/cmd/doctor.go
+  s_6c2b61eb5496bc::t_2d4c572031ed3e 10-11,14-127
+  s_6c2b61eb5496bc::t_66ea76a646e011 1-9,12-13
+internal/lock/lock.go
+  s_6c2b61eb5496bc::t_36b9235442d4c4 1-72
+internal/cmd/rekey.go
+  s_6c2b61eb5496bc::t_984e39dc80b969 1-98
+internal/cmd/untrack.go
+  s_6c2b61eb5496bc::t_9d7ebf54c6bb15 32,37-38,40,66,71-72
+  s_6c2b61eb5496bc::t_969b9fd017a355 6,31,77
+Dockerfile
+  s_6c2b61eb5496bc::t_e55d5aa1434488 9-11
+  s_6c2b61eb5496bc::t_4c074e12a62a48 1-8,12-27,32
+internal/cmd/discover.go
+  s_6c2b61eb5496bc::t_2da52b6a9187f7 132-139,151-154,159
+  s_6c2b61eb5496bc::t_a3848df1d3b25b 142-144,149
+  s_6c2b61eb5496bc::t_e177b8f58c5ff1 4,9,12,19,36,41,169-191,193-195,197
+  s_6c2b61eb5496bc::t_3206487dc49d96 168
+internal/cmd/init.go
+  s_6c2b61eb5496bc::t_b25b5f4b008ef0 16,33
+  s_6c2b61eb5496bc::t_018bc652c5cfdd 42-45,70-71,75,83-88
+  s_6c2b61eb5496bc::t_e2f62fdbbcdb2c 50-60,64-65
+internal/cmd/secret.go
+  s_6c2b61eb5496bc::t_4b2f7f585fdade 10,76-86,94,99,161,232,312,317,349
+  s_6c2b61eb5496bc::t_67408371f7943a 6,56-75,92-93,101,136,139-140,143,157-159,210-213,225-226,249,297,301-309,311,316,318-320,324-348,350-356,358-418,462-463,466,469,494
+  s_6c2b61eb5496bc::t_d21a6f8da0b787 357
+  s_6c2b61eb5496bc::t_86652ad9a62316 419-461
+USERFLOW.md
+  s_6c2b61eb5496bc::t_50662232a1014e 11,13-14,19-21,25-31,49-56,58-86,90,93-96,99-102,105,127,133,140-141,146,148,151-153,156-160,163-169,172,174,176-180,182-183,185,188-189,192,194-199,201,203,206-208,210-212,214-216,219,222-224,227-245,249,252-258,261-262,265,268-272,275-276,279,281,284-292,295-299,303,315-326,329-353
+internal/models/models.go
+  s_6c2b61eb5496bc::t_55328449ee261d 18
+internal/cmd/root.go
+  s_6c2b61eb5496bc::t_ea92929a48299e 7-8,22,26-37,43-55
+internal/config/config.go
+  s_6c2b61eb5496bc::t_98fa0148363893 49-50,55,82-95
+  s_6c2b61eb5496bc::t_4da6efe4a8e14c 135,137
+internal/cmd/machines.go
+  s_6c2b61eb5496bc::t_d09ce015080b76 4,10,13-81
+  s_6c2b61eb5496bc::t_7929ce9fffbb92 1-3,5-9,11-12
+internal/audit/audit.go
+  s_6c2b61eb5496bc::t_b3a2dc888d901c 1-24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4ccf132a0bf7f6ecad7d9be15915baa2367bc140",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
