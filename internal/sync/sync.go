@@ -3,6 +3,7 @@ package sync
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/0xdps/daemon-hound/internal/git"
@@ -336,9 +337,51 @@ func (s *Syncer) resolveLocalPath(file models.TrackedFile) (string, error) {
 		}
 		return fmt.Sprintf("%s/%s", home, file.RelPath), nil
 	}
-	root, ok := s.config.GetBinding(file.Namespace)
-	if !ok {
-		return "", fmt.Errorf("no local binding for namespace %s", file.Namespace)
+	if root, ok := s.config.GetBinding(file.Namespace); ok {
+		return fmt.Sprintf("%s/%s", root, file.RelPath), nil
 	}
+
+	root, err := discoverRepoRootForNamespace(file.Namespace)
+	if err != nil {
+		return "", fmt.Errorf("no local binding for namespace %s: %w", file.Namespace, err)
+	}
+	_ = s.config.SetBinding(file.Namespace, root)
 	return fmt.Sprintf("%s/%s", root, file.RelPath), nil
+}
+
+func discoverRepoRootForNamespace(namespace string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	var match string
+	err = filepath.WalkDir(home, func(path string, d os.DirEntry, err error) error {
+		if err != nil || match != "" {
+			return nil
+		}
+		if d.IsDir() && d.Name() == ".git" {
+			repoRoot := filepath.Dir(path)
+			origin, err := utils.GetGitOrigin(repoRoot)
+			if err != nil {
+				return nil
+			}
+			discovered, err := utils.DeriveNamespace(origin)
+			if err != nil {
+				return nil
+			}
+			if discovered == namespace {
+				match = repoRoot
+				return filepath.SkipDir
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if match == "" {
+		return "", fmt.Errorf("no repo root found for namespace %s", namespace)
+	}
+	return match, nil
 }

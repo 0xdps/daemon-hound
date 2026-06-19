@@ -176,11 +176,53 @@ func (t *Tracker) resolveLocalPath(file models.TrackedFile) (string, error) {
 		return filepath.Join(home, file.RelPath), nil
 	}
 
-	root, ok := t.config.GetBinding(file.Namespace)
-	if !ok {
-		return "", fmt.Errorf("no local binding for namespace %s", file.Namespace)
+	if root, ok := t.config.GetBinding(file.Namespace); ok {
+		return filepath.Join(root, file.RelPath), nil
 	}
+
+	root, err := t.discoverBinding(file.Namespace)
+	if err != nil {
+		return "", fmt.Errorf("no local binding for namespace %s: %w", file.Namespace, err)
+	}
+	_ = t.config.SetBinding(file.Namespace, root)
 	return filepath.Join(root, file.RelPath), nil
+}
+
+func (t *Tracker) discoverBinding(namespace string) (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	var match string
+	err = filepath.WalkDir(home, func(path string, d os.DirEntry, err error) error {
+		if err != nil || match != "" {
+			return nil
+		}
+		if d.IsDir() && d.Name() == ".git" {
+			repoRoot := filepath.Dir(path)
+			origin, err := utils.GetGitOrigin(repoRoot)
+			if err != nil {
+				return nil
+			}
+			discovered, err := utils.DeriveNamespace(origin)
+			if err != nil {
+				return nil
+			}
+			if discovered == namespace {
+				match = repoRoot
+				return filepath.SkipDir
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+	if match == "" {
+		return "", fmt.Errorf("no repo root found for namespace %s", namespace)
+	}
+	return match, nil
 }
 
 // ResolveKey determines the vault state key (namespace:relPath) for a local file path

@@ -9,6 +9,7 @@ import (
 
 	"github.com/0xdps/daemon-hound/internal/models"
 	"github.com/0xdps/daemon-hound/internal/storage"
+	"github.com/0xdps/daemon-hound/internal/utils"
 )
 
 type mockConfig struct {
@@ -177,6 +178,58 @@ func TestTrackerRestoreGlobal(t *testing.T) {
 	}
 	if string(content) != string(plaintext) {
 		t.Errorf("Restored content mismatch: got %q, want %q", content, plaintext)
+	}
+}
+
+func TestTrackerStatusFallsBackToRepoDiscovery(t *testing.T) {
+	tmpHome := t.TempDir()
+	t.Setenv("HOME", tmpHome)
+
+	repoRoot := filepath.Join(tmpHome, "personal", "0xdps", "pinboard-gpt-extension")
+	if err := os.MkdirAll(filepath.Join(repoRoot, ".git"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(repoRoot, ".git", "config"), []byte(`[remote "origin"]
+	url = https://github.com/0xdps/pinboard-gpt-extension.git
+`), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	filePath := filepath.Join(repoRoot, ".env.local")
+	if err := os.WriteFile(filePath, []byte("KEY=value"), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	checksum, err := calculateChecksum(filePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	identity, err := storage.GenerateIdentity()
+	if err != nil {
+		t.Fatalf("GenerateIdentity failed: %v", err)
+	}
+
+	vault := storage.NewVault(t.TempDir(), identity)
+	cfg := &mockConfig{machineID: "test-machine", bindings: map[string]string{}}
+	tr := NewTracker(vault, cfg)
+
+	namespace, err := utils.DeriveNamespace("https://github.com/0xdps/pinboard-gpt-extension.git")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	status, err := tr.Status(models.TrackedFile{
+		Namespace: namespace,
+		RelPath:   ".env.local",
+		Mode:      models.ModeSync,
+		Checksum:  checksum,
+	})
+	if err != nil {
+		t.Fatalf("Status failed: %v", err)
+	}
+	if status != models.StatusClean {
+		t.Fatalf("expected status clean, got %s", status)
 	}
 }
 
