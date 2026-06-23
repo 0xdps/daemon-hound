@@ -187,8 +187,13 @@ brew install daemon-hound
 
 **Linux**:
 ```bash
-# Debian/Ubuntu
-sudo apt install daemon-hound_1.1.0_amd64.deb
+# Debian/Ubuntu (APT Repository - Recommended)
+echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+sudo apt update
+sudo apt install daemon-hound
+
+# Or manually install .deb
+sudo dpkg -i daemon-hound_1.1.0_amd64.deb
 
 # Or any package manager (apt, rpm, apk, pacman)
 ```

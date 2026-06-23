@@ -177,7 +177,7 @@ daemon-hound (Go source code)
 ☐ Watch GitHub Actions workflow
 ☐ Verify all artifacts appear in Release
 ☐ Test installation on macOS (Homebrew)
-☐ Test installation on Linux (apt/rpm)
+☐ Test installation on Linux (APT repo + manual .deb)
 ☐ Test installation on Windows (Scoop)
 ☐ Verify Docker images published
 ```
@@ -206,7 +206,7 @@ brew install daemon-hound
 ### Linux User
 ```bash
 # Easiest: Package manager
-sudo apt install ./daemon-hound_1.1.0_amd64.deb
+sudo dpkg -i ./daemon-hound_1.1.0_amd64.deb
 
 # Or: Untar binary
 tar xzf daemon-hound_1.1.0_linux_x86_64.tar.gz

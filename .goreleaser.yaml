@@ -184,8 +184,15 @@ release:
     brew install daemon-hound
     ```
 
-    ### Linux (deb/rpm)
-    Download the `.deb` or `.rpm` from the assets below.
+    ### Linux (APT Repository - Debian/Ubuntu)
+    ```bash
+    echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+    sudo apt update
+    sudo apt install daemon-hound
+    ```
+
+    ### Linux (RPM - Fedora/RHEL/openSUSE)
+    Download the `.rpm` from the assets below.
 
     ### Windows (Scoop)
     ```powershell

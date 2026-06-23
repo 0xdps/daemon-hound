@@ -388,9 +388,17 @@ $ dhd --version
 Daemon Hound v1.1.0
 ```
 
-**Linux (Debian/Ubuntu)**:
+**Linux (Debian/Ubuntu - APT Repository)**:
 ```bash
-$ sudo apt install daemon-hound_1.1.0_amd64.deb
+# Add repository and install
+echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+sudo apt update
+sudo apt install daemon-hound
+```
+
+**Linux (Debian/Ubuntu - Manual .deb)**:
+```bash
+$ sudo dpkg -i daemon-hound_1.1.0_amd64.deb
 ✓ Setting up daemon-hound
 
 $ dhd --version

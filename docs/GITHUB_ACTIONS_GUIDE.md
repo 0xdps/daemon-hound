@@ -509,7 +509,8 @@ make tag TAG=v1.1.0
 # 4. Once complete, users can:
 brew install daemon-hound           # macOS
 scoop install daemon-hound          # Windows
-sudo apt install daemon-hound       # Linux
+echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+sudo apt update && sudo apt install daemon-hound   # Linux (Debian/Ubuntu)
 docker pull ghcr.io/...             # Docker
 ```
 

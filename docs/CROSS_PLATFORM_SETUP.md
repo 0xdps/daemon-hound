@@ -253,7 +253,7 @@ make tag TAG=v1.1.0
 
 4. **Users Install From**:
    - **macOS**: `brew install daemon-hound` or download DMG
-   - **Linux**: `sudo apt install daemon-hound` or download package
+   - **Linux**: APT repository (`apt install daemon-hound`), or download `.deb`/`.rpm` from GitHub Releases
    - **Windows**: `scoop install daemon-hound` or download ZIP
    - **Docker**: `docker pull ghcr.io/0xdps/daemon-hound`
 

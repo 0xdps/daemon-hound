@@ -227,7 +227,7 @@ Running in background
 
 ### Linux User (apt path):
 ```bash
-$ sudo apt install daemon-hound_1.1.0_amd64.deb
+$ sudo dpkg -i daemon-hound_1.1.0_amd64.deb
 Setting up daemon-hound (1.1.0)...
 Processing triggers for man-db (2.10.2-1)...
 

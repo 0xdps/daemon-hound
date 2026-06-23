@@ -23,9 +23,20 @@ dhd version
 
 Make sure the chosen directory is in `PATH`.
 
-### Debian / Ubuntu
+### Debian / Ubuntu (APT Repository)
 
-Download the `.deb` asset from the latest release, then install it:
+Add the DaemonHound APT repository and install:
+
+```bash
+# Add the repository
+echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+
+# Update and install
+sudo apt update
+sudo apt install daemon-hound
+```
+
+Or download and install the `.deb` manually:
 
 ```bash
 sudo dpkg -i daemon-hound_*_linux_amd64.deb

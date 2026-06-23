@@ -45,3 +45,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
+
+      - name: Install APT repo dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev gzip coreutils
+
+      - name: Update APT repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/update-apt-repo.sh
+          ./scripts/update-apt-repo.sh "${{ github.ref_name }}"

@@ -108,7 +108,21 @@ make install-macos
 
 ### Linux
 
-#### **Method 1: Package Manager (Recommended)**
+#### **Method 1: APT Repository (Debian/Ubuntu - Recommended)**
+
+```bash
+# Add the DaemonHound APT repository
+echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+
+# Update and install
+sudo apt update
+sudo apt install daemon-hound
+```
+
+✅ Auto-updates via `apt upgrade`
+✅ No manual download needed
+
+#### **Method 2: Manual Package Install**
 
 **Debian/Ubuntu**:
 ```bash
