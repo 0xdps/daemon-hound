@@ -1,0 +1,62 @@
+internal/cmd/status.go
+  h_7a2f4c8f0473b8 1
+  s_887a438d94799f::t_a2b650c65045d0 2-60
+internal/cmd/discover.go
+  s_887a438d94799f::t_39fc6b4680634f 1-153
+internal/config/config.go
+  s_887a438d94799f::t_112f8a4463c8b9 1-121
+internal/cmd/root.go
+  h_7a2f4c8f0473b8 1-19
+internal/tracker/tracker.go
+  s_887a438d94799f::t_dc77b5eb88e9e6 1-163
+internal/cmd/init.go
+  s_887a438d94799f::t_8884d01c754629 2-114
+internal/sync/sync.go
+  s_887a438d94799f::t_6f6f340c260bd9 1-200
+go.mod
+  s_887a438d94799f::t_284d04b1352a6e 6-15
+internal/cmd/track.go
+  h_7a2f4c8f0473b8 1
+  s_887a438d94799f::t_50a4a101196622 40
+  s_887a438d94799f::t_0702525a0772e6 2-39,41-101
+Makefile
+  h_7a2f4c8f0473b8 1-27
+internal/storage/storage.go
+  s_887a438d94799f::t_e09068e30bc65f 1-187
+internal/git/git.go
+  s_887a438d94799f::t_a5bbf722705aa2 1-122
+internal/cmd/secret.go
+  s_887a438d94799f::t_1735bb8b2aca93 1-294
+cmd/dh/main.go
+  h_7a2f4c8f0473b8 1-7
+internal/cmd/sync.go
+  h_7a2f4c8f0473b8 1
+  s_887a438d94799f::t_63db01d40b4623 2-52
+internal/models/models.go
+  s_887a438d94799f::t_ccda6edb3197e6 1-14,18-60
+  s_887a438d94799f::t_32031b23d7a4aa 15-17
+internal/utils/utils.go
+  h_7a2f4c8f0473b8 19
+  s_887a438d94799f::t_e931db4ec68fd3 1-18,20-152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c20b684e5191deaeb3b9f70d0bde55949656aba1",
+  "prompts": {},
+  "humans": {
+    "h_7a2f4c8f0473b8": {
+      "author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_887a438d94799f": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "04b1d953-d225-4731-906f-64ed6951af28",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

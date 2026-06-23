@@ -1,0 +1,21 @@
+internal/models/models.go
+  s_6c2b61eb5496bc::t_d067c9fdac48fc 17
+internal/cmd/export.go
+  s_6c2b61eb5496bc::t_d067c9fdac48fc 78-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c82a9e1912029bc16c24c8dd0b627f5c7e7cbc48",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+internal/daemon/logrotator.go
+  s_6c2b61eb5496bc::t_990bf73be3fa49 7
+  s_6c2b61eb5496bc::t_f0530dbf20d8a8 1-6,8-99,101-121
+  s_6c2b61eb5496bc::t_f6e9222d3979f6 100
+internal/models/models.go
+  s_6c2b61eb5496bc::t_629ea56b95d2bf 13-22,30
+internal/cmd/init.go
+  s_6c2b61eb5496bc::t_8dea69ca98e831 140-151
+  s_6c2b61eb5496bc::t_8852cd011e3726 8
+CHANGELOG.md
+  s_6c2b61eb5496bc::t_4c7de7c99e0cb2 10-81
+internal/daemon/systemd.go
+  s_6c2b61eb5496bc::t_aa7135925a3b70 1-157
+internal/daemon/service.go
+  s_6c2b61eb5496bc::t_60352cb709b47d 1-23,25,27-75
+  s_6c2b61eb5496bc::t_ed56df915fd6bc 24,26
+internal/git/git.go
+  s_6c2b61eb5496bc::t_b9c628533f8245 123-205
+internal/cmd/daemon.go
+  s_6c2b61eb5496bc::t_a0989fcb5d1b6d 1-26,29-291
+  s_6c2b61eb5496bc::t_b77a0bf2c82a55 27-28
+internal/daemon/runner.go
+  s_6c2b61eb5496bc::t_c0e2bbfe7c0e85 21-27
+  s_6c2b61eb5496bc::t_7e830b5151447b 60-65
+  s_6c2b61eb5496bc::t_30b82d89527ddc 195-198,203-206,240-263
+  s_6c2b61eb5496bc::t_eff3394cc44de7 100-103
+  s_6c2b61eb5496bc::t_ea1958a54837cd 31
+  s_6c2b61eb5496bc::t_b3f960c6636b44 146-150
+  s_6c2b61eb5496bc::t_1198fb6cc3ab54 202
+  s_6c2b61eb5496bc::t_9eb71d8c36de99 209-239
+internal/daemon/windows.go
+  s_6c2b61eb5496bc::t_ca0b14c07f79d5 1-4,6,9-10,12-13,15,111-112,114,127-128,130,139-140,142-143,150
+  s_6c2b61eb5496bc::t_ea324625ec3b59 5,7-8,11,14,16-110,113,115-126,129,131-138,141,144-149
+internal/daemon/launchd.go
+  s_6c2b61eb5496bc::t_9f8108176941f7 149
+  s_6c2b61eb5496bc::t_8a021fa4c5c86a 1-3,5-148,150-155
+  s_6c2b61eb5496bc::t_8b37d35f71bcab 4
+go.mod
+  s_6c2b61eb5496bc::t_70b40cd4688183 10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "110229a8096c2780515a606720f1eef88c2d5834",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}

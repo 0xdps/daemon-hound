@@ -1,0 +1,53 @@
+internal/merge/csv.go
+  s_6c2b61eb5496bc::t_7fe410f5f45384 1-228
+internal/merge/state.go
+  s_6c2b61eb5496bc::t_4b27c620c8d403 1-170
+internal/merge/text.go
+  s_6c2b61eb5496bc::t_f24a30bdc5ec61 1-225
+internal/cmd/conflicts.go
+  s_6c2b61eb5496bc::t_9cf4bba2e95131 84-85
+  s_6c2b61eb5496bc::t_93c792ffa2b6b6 1-83,86-205
+internal/git/git.go
+  s_6c2b61eb5496bc::t_33d04537705af9 206-251
+internal/daemon/runner.go
+  s_6c2b61eb5496bc::t_a6180b914e387c 275-354
+  s_6c2b61eb5496bc::t_9872415eb9fc49 5,16
+  s_6c2b61eb5496bc::t_77164465039e23 377,380-381,383,386,388,390
+  s_6c2b61eb5496bc::t_6bba325fd4de32 18-19,26,33,37-38,68,74,230,233-237
+  s_6c2b61eb5496bc::t_c99d73838b51aa 378-379,382,384-385,387,389
+  s_6c2b61eb5496bc::t_50da88461f7336 223,225,229
+internal/merge/driver.go
+  s_6c2b61eb5496bc::t_5f1880a0fe84d0 1-59
+internal/merge/env.go
+  s_6c2b61eb5496bc::t_7f17c9db276811 1-131
+internal/cmd/daemon.go
+  s_6c2b61eb5496bc::t_8675ce7f91993b 32-41
+docs/SMART_MERGE_ARCHITECTURE.md
+  s_6c2b61eb5496bc::t_7cb584d78382f8 1-844
+go.mod
+  s_6c2b61eb5496bc::t_22eb009d8c8528 6-7,11-19,21-26,28,31-40,42-43,45
+  s_6c2b61eb5496bc::t_de4d023e417b13 8-10
+internal/conflicts/tui.go
+  s_6c2b61eb5496bc::t_c3f869bd0594ba 146
+  s_6c2b61eb5496bc::t_a70bfd661f1f7e 1-145,147-186
+internal/merge/json.go
+  s_6c2b61eb5496bc::t_5a126af937243e 1-122
+internal/conflicts/conflicts.go
+  s_6c2b61eb5496bc::t_3b681b16b2aa7b 1-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c481c737ac61d44c7fed39daaf90165a0642f181",
+  "prompts": {},
+  "sessions": {
+    "s_6c2b61eb5496bc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "a4c906e6-1828-4425-b9ea-94c5fd565766",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap Singh <dps.manit@gmail.com>"
+    }
+  }
+}
