@@ -1,0 +1,14 @@
+Package: daemon-hound
+Version: 1.0.2
+Architecture: arm64
+Maintainer: 0xdps <0xdps@users.noreply.github.com>
+Filename: pool/main/daemon-hound_1.0.2_linux_arm64.deb
+Size: 2608298
+MD5sum: 71a2cab38e1c1518115bd4eec596d488
+SHA1: feb61e35d71e9f681abb3371665e95ed410b1e26
+SHA256: 4ed93922fec6cfbdcb61c80c9ed0a01dd2637be6cb7c0e041a4b62cec7ac1dfd
+Section: utils
+Priority: optional
+Depends: git
+Description: Opinionated local config and secret management for developers
+

@@ -1,0 +1,31 @@
+Origin: DaemonHound
+Label: DaemonHound APT Repository
+Suite: stable
+Codename: stable
+Version: 1.0
+Architectures: amd64 arm64
+Components: main
+Description: DaemonHound APT repository
+Date: Tue, 23 Jun 2026 16:44:15 +0000
+ 60a6428e0e8fa691bbdae28569cc8754 461 main/binary-amd64/Packages
+ 42aaef2bf8c51a0455ca663817100e67 363 main/binary-amd64/Packages.gz
+ 137c93bf9e2b6e5490b2a74b8b6289fd 461 main/binary-arm64/Packages
+ ab2097d904b1e9af92a38451784d9ee0 364 main/binary-arm64/Packages.gz
+
+MD5Sum:
+ 60a6428e0e8fa691bbdae28569cc8754 461 main/binary-amd64/Packages
+ 42aaef2bf8c51a0455ca663817100e67 363 main/binary-amd64/Packages.gz
+ 137c93bf9e2b6e5490b2a74b8b6289fd 461 main/binary-arm64/Packages
+ ab2097d904b1e9af92a38451784d9ee0 364 main/binary-arm64/Packages.gz
+
+SHA1:
+ 15ddc4c86de9b9bdfff9daa0cff930c47335ec51 461 main/binary-amd64/Packages
+ eea32365e15edc188745724ae27b3d8a12e464d7 363 main/binary-amd64/Packages.gz
+ d3d5a9e83fd2b2bea94f1d8f33bf1cc25fe0b8f5 461 main/binary-arm64/Packages
+ 1cfb1765536ce3e8b8b6bff4fc4ce8ecac71457f 364 main/binary-arm64/Packages.gz
+
+SHA256:
+ db9a509f827787ce9b156855f98ce437e5a50b3d72c3d1f49e852a9dcccb9383 461 main/binary-amd64/Packages
+ d19f2476b99b2f03a165d183e632fccf0849132b97a542a4eb6eedc3d33270ac 363 main/binary-amd64/Packages.gz
+ 41a0c3f0dcd6bd21573b5c2e31145141df3e34bb67e1f9d6ca9a5d43f59b58d1 461 main/binary-arm64/Packages
+ b7804692fb679514a1edc46808f0112b74ab093f99197bef66817f19b95fff49 364 main/binary-arm64/Packages.gz
