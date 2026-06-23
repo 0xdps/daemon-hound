@@ -1,0 +1,44 @@
+.github/workflows/release.yml
+  s_b6ffc618caeb3d::t_9c3e6e0cfe2a43 48-59
+docs/GITHUB_ACTIONS_GUIDE.md
+  s_b6ffc618caeb3d::t_de44a846789b2c 512-513
+docs/BUILD_AND_RELEASE.md
+  s_b6ffc618caeb3d::t_33858809423a9f 180
+  s_b6ffc618caeb3d::t_682aee9d9d8603 209
+docs/RELEASE_STEP_BY_STEP.md
+  s_b6ffc618caeb3d::t_59db5dc1be124d 391,393-399
+  s_b6ffc618caeb3d::t_f1c06a403c6ec4 401
+docs/RELEASE_WORKFLOW.md
+  s_b6ffc618caeb3d::t_beb23df39314d5 230
+docs/README.md
+  s_b6ffc618caeb3d::t_a3cf36c5db2984 190-195
+  s_b6ffc618caeb3d::t_591e8940649ee6 196
+docs/INSTALLATION_GUIDE.md
+  s_b6ffc618caeb3d::t_307e48996d6359 111-125
+.goreleaser.yaml
+  s_b6ffc618caeb3d::t_9bf5f7944a1888 187-195
+docs/CROSS_PLATFORM_SETUP.md
+  s_b6ffc618caeb3d::t_a966106475bf43 256
+docs/WORKFLOWS_AT_A_GLANCE.md
+  s_b6ffc618caeb3d::t_7aa0235e7664f2 133
+scripts/update-apt-repo.sh
+  s_b6ffc618caeb3d::t_ec5fa602d54a87 1-234
+INSTALL.md
+  s_b6ffc618caeb3d::t_85ca4efd284648 26,28-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.11",
+  "base_commit_sha": "b23ca1049fd80d19896e3db32a9e58036bd34529",
+  "prompts": {},
+  "sessions": {
+    "s_b6ffc618caeb3d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "16524af6-bffc-4598-9aa7-c84472ec074d",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
