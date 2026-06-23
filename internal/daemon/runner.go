@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -396,12 +398,43 @@ func (r *Runner) refreshTrackedWatches() {
 			}
 			localDir = filepath.Dir(filepath.Join(root, file.RelPath))
 		}
+		// Skip macOS protected folders that trigger unnecessary TCC prompts.
+		if runtime.GOOS == "darwin" && isMacOSProtectedDir(localDir) {
+			r.logger.Printf("Skipping watch for protected dir: %s", localDir)
+			continue
+		}
 		if _, err := os.Stat(localDir); err == nil {
 			if addErr := r.watcher.Add(localDir); addErr == nil {
 				r.logger.Printf("Watching tracked dir: %s", localDir)
 			}
 		}
 	}
+}
+
+// isMacOSProtectedDir returns true if the given directory is under a macOS
+// TCC-protected location (Downloads, Documents, Desktop, Music, Movies,
+// Pictures, etc.) that would trigger unnecessary permission prompts.
+func isMacOSProtectedDir(dir string) bool {
+	home, _ := os.UserHomeDir()
+	if home == "" {
+		return false
+	}
+	protected := []string{
+		"Downloads",
+		"Documents",
+		"Desktop",
+		"Music",
+		"Movies",
+		"Pictures",
+		"Library",
+	}
+	lowerDir := strings.ToLower(dir)
+	for _, p := range protected {
+		if strings.Contains(lowerDir, strings.ToLower(filepath.Join(home, p))) {
+			return true
+		}
+	}
+	return false
 }
 
 // containsPath checks if a path contains a given component

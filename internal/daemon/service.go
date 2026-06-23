@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/0xdps/daemon-hound/internal/config"
 )
@@ -51,12 +52,38 @@ func (n *NoOpManager) IsRunning() (bool, error) {
 }
 
 // GetDaemonPath returns the path to the dhd executable.
+// On macOS, if the binary is inside an app bundle, it returns the bundle's
+// MacOS/dhd path so that Activity Monitor shows the proper app name and icon.
 func GetDaemonPath() (string, error) {
 	exe, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("failed to get executable path: %w", err)
 	}
+	// If we're already inside an app bundle, return as-is.
+	if strings.Contains(exe, ".app/Contents/MacOS/") {
+		return exe, nil
+	}
+	// Otherwise, prefer the installed app bundle if it exists.
+	home, _ := os.UserHomeDir()
+	bundleExe := filepath.Join(home, "Applications", "DaemonHound.app", "Contents", "MacOS", "dhd")
+	if _, err := os.Stat(bundleExe); err == nil {
+		return bundleExe, nil
+	}
 	return exe, nil
+}
+
+// GetAppBundlePath returns the path to the dhd executable inside the macOS app
+// bundle, or an empty string if the bundle is not installed.
+func GetAppBundlePath() string {
+	if runtime.GOOS != "darwin" {
+		return ""
+	}
+	home, _ := os.UserHomeDir()
+	bundleExe := filepath.Join(home, "Applications", "DaemonHound.app", "Contents", "MacOS", "dhd")
+	if _, err := os.Stat(bundleExe); err == nil {
+		return bundleExe
+	}
+	return ""
 }
 
 // GetLogPath returns the path to the daemon log file.
