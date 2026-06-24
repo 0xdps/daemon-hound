@@ -130,7 +130,7 @@ GitHub: Detects tag
      8 min later...
          ↓
 macOS user: brew install daemon-hound ✓
-Linux user: `echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list && sudo apt update && sudo apt install daemon-hound` ✓
+Linux user: `curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg && echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list && sudo apt update && sudo apt install daemon-hound` ✓
 Windows user: scoop install daemon-hound ✓
 Docker user: docker pull ghcr.io/... ✓
 GitHub user: Downloads from Release page ✓

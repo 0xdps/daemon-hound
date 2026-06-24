@@ -28,8 +28,11 @@ Make sure the chosen directory is in `PATH`.
 Add the DaemonHound APT repository and install:
 
 ```bash
+# Import the GPG key
+curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg
+
 # Add the repository
-echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
 
 # Update and install
 sudo apt update

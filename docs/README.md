@@ -188,7 +188,8 @@ brew install daemon-hound
 **Linux**:
 ```bash
 # Debian/Ubuntu (APT Repository - Recommended)
-echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
 sudo apt update
 sudo apt install daemon-hound
 

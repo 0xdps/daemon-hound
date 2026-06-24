@@ -32,6 +32,13 @@ if [ -z "$GITHUB_TOKEN" ]; then
     exit 1
 fi
 
+# GPG key for signing the Release file.
+# Provide APT_GPG_KEY (ASCII-armored private key) as an env var.
+# If absent, the repo will use InRelease (inline clearsigned) without a
+# detached Release.gpg — still verifiable if the user trusts the public key.
+GPG_KEY="${APT_GPG_KEY:-}"
+GPG_KEY_ID=""
+
 echo "=== Building APT repo for ${TAG} ==="
 echo "    Output directory: ${OUT_DIR}"
 
@@ -81,7 +88,8 @@ a:hover { text-decoration: underline; }
 <body>
 <h2>DaemonHound APT Repository</h2>
 <p>Add this repository to your system:</p>
-<pre>echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+<pre>curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
 sudo apt update
 sudo apt install daemon-hound</pre>
 <p><a href="pool/">Package Pool</a></p>
@@ -200,12 +208,86 @@ for section in MD5Sum SHA1 SHA256; do
     done
 done
 
+# ---- GPG signing ----
+if [ -n "$GPG_KEY" ]; then
+    echo "Signing Release file with GPG..."
+    # Import the key into a temporary keyring
+    GNUPGHOME=$(mktemp -d)
+    export GNUPGHOME
+    echo "$GPG_KEY" | gpg --batch --import --no-tty
+    GPG_KEY_ID=$(gpg --list-secret-keys --with-colons 2>/dev/null | grep '^sec:' | cut -d: -f5 | head -1)
+
+    if [ -z "$GPG_KEY_ID" ]; then
+        echo "FATAL: GPG key imported but could not determine key ID — aborting"
+        exit 1
+    fi
+
+    # Sign each .deb individually (defense in depth)
+    echo "  Signing individual .deb packages..."
+    for deb_path in "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}/"*.deb; do
+        [ -f "$deb_path" ] || continue
+        gpg --batch --yes --no-tty --armor \
+            --detach-sign --output "${deb_path}.sig" "$deb_path"
+    done
+
+    # Sign the Release file (detached signature)
+    gpg --batch --yes --no-tty --armor \
+        --detach-sign --output "${RELEASE_FILE}.gpg" "$RELEASE_FILE"
+
+    # Generate InRelease (clearsigned inline — what modern APT checks first)
+    gpg --batch --yes --no-tty --armor \
+        --clearsign --output "${OUT_DIR}/${APT_DIR}/dists/${DIST}/InRelease" "$RELEASE_FILE"
+
+    echo "  Signed by GPG key: ${GPG_KEY_ID}"
+    echo "  - Each .deb has a .deb.sig detached signature"
+    echo "  - Release.gpg (detached)"
+    echo "  - InRelease (clearsigned)"
+
+    # Export public key for users to install
+    gpg --batch --yes --no-tty --armor --export "$GPG_KEY_ID" \
+        > "${OUT_DIR}/${APT_DIR}/daemon-hound-archive-keyring.gpg"
+
+    # Clean up temporary keyring (don't leave secrets on the runner)
+    rm -rf "$GNUPGHOME"
+    unset GNUPGHOME
+else
+    echo ""
+    echo "=============================================================="
+    echo "  FATAL: APT_GPG_KEY secret is not set."
+    echo ""
+    echo "  APT repositories MUST be signed to be secure. Generate a key:"
+    echo ""
+    echo "    gpg --quick-generate-key \"Your Name <you@example.com>\" rsa4096 sign"
+    echo "    gpg --armor --export-secret-keys you@example.com"
+    echo ""
+    echo "  Add the output as the APT_GPG_KEY secret in:"
+    echo "    Settings → Secrets and variables → Actions → New secret"
+    echo ""
+    echo "  Then publish your public key to keys.openpgp.org for"
+    echo "  external verification:"
+    echo ""
+    echo "    gpg --send-keys YOUR_KEY_ID --keyserver keys.openpgp.org"
+    echo "=============================================================="
+    exit 1
+fi
+
 echo ""
 echo "=== APT repository built in ${OUT_DIR}/ ==="
-echo "    Root:  ${OUT_DIR}/index.html"
-echo "    APT:   ${OUT_DIR}/${APT_DIR}/dists/${DIST}/Release"
+echo "    Root:    ${OUT_DIR}/index.html"
+echo "    APT:     ${OUT_DIR}/${APT_DIR}/dists/${DIST}/Release"
+echo "    Signed:  GPG key ${GPG_KEY_ID}"
 echo ""
 echo "Users can add it with:"
-echo "  echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list"
+echo ""
+echo "  # Option 1: Download key from keys.openpgp.org for external verification"
+echo "  sudo gpg --keyserver keys.openpgp.org --recv-keys ${GPG_KEY_ID}"
+echo "  sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg \\"
+echo "    /etc/apt/trusted.gpg.d/daemon-hound.gpg  # or wherever gpg puts it"
+echo ""
+echo "  # Option 2: Download key from the repository itself (trust bootstrap)"
+echo "  curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg"
+echo ""
+echo "  # Then add the repo source"
+echo "  echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list"
 echo "  sudo apt update"
 echo "  sudo apt install daemon-hound"

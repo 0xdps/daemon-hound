@@ -390,8 +390,9 @@ Daemon Hound v1.1.0
 
 **Linux (Debian/Ubuntu - APT Repository)**:
 ```bash
-# Add repository and install
-echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+# Add repository and install (with GPG verification)
+curl -fsSL https://0xdps.github.io/daemon-hound/apt/daemon-hound-archive-keyring.gpg | sudo gpg --dearmor -o /usr/share/keyrings/daemon-hound-archive-keyring.gpg
+echo 'deb [signed-by=/usr/share/keyrings/daemon-hound-archive-keyring.gpg] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
 sudo apt update
 sudo apt install daemon-hound
 ```

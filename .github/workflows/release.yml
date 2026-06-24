@@ -57,6 +57,7 @@ jobs:
       - name: Build APT repository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APT_GPG_KEY: ${{ secrets.APT_GPG_KEY }}
         run: |
           chmod +x scripts/update-apt-repo.sh
           ./scripts/update-apt-repo.sh "${{ github.ref_name }}" _site
