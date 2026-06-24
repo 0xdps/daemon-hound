@@ -1,0 +1,37 @@
+scripts/update-apt-repo.sh
+  h_95aea6b4aa8772 3-4,7,10,15-16,18-19,35-77,85,88-90,94-95,98,101,105-116,122-143,147-148,151,153-182,187-189,191
+internal/daemon/runner.go
+  s_b6ffc618caeb3d::t_1376daa30d7522 416,422-423,434-437
+internal/daemon/service.go
+  s_b6ffc618caeb3d::t_8c74392a1de5be 54-55,61-62,64-66
+.github/workflows/release.yml
+  h_95aea6b4aa8772 68
+  s_b6ffc618caeb3d::t_161e2f05566102 55,57,62-67,69-70
+  s_b6ffc618caeb3d::t_b642c47470a53c 11
+  s_b6ffc618caeb3d::t_c5394cba9218d9 12-13
+internal/daemon/launchd.go
+  s_b6ffc618caeb3d::t_a18484099b1074 140-144
+  s_b6ffc618caeb3d::t_beee907cd88624 180-184,199-211,215-218,227-229,232-246,249-250,301
+  s_b6ffc618caeb3d::t_949f49f8f2d197 6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.13",
+  "base_commit_sha": "aa82ffc196c062bdae698f55bfb24b265983f317",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_b6ffc618caeb3d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "16524af6-bffc-4598-9aa7-c84472ec074d",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
