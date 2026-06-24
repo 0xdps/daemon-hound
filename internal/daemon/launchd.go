@@ -3,6 +3,7 @@ package daemon
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -136,6 +137,11 @@ func (l *LaunchdManager) generatePlist(exePath string) (string, error) {
 	<key>ProcessType</key>
 	<string>Background</string>
 	
+	<key>AssociatedBundleIdentifiers</key>
+	<array>
+		<string>com.0xdps.daemon-hound</string>
+	</array>
+	
 	<key>AbandonProcessGroup</key>
 	<true/>
 	
@@ -171,9 +177,11 @@ func (l *LaunchdManager) generatePlist(exePath string) (string, error) {
 }
 
 // ensureAppBundle creates a minimal macOS app bundle at
-// ~/Applications/DaemonHound.app if it does not already exist.
-// It symlinks the real dhd binary into the bundle and writes an Info.plist
-// so that Activity Monitor shows "Daemon Hound" with the proper icon.
+// ~/Applications/DaemonHound.app if it does not already exist, or refreshes
+// the binary inside it if the source has changed.
+// It COPIES (not symlinks) the real dhd binary into the bundle so that
+// macOS TCC associates permissions with the bundle identifier
+// ("Daemon Hound" in Activity Monitor) instead of the raw binary.
 // Returns the path to the bundle's executable (MacOS/dhd).
 func ensureAppBundle(exePath string) (string, error) {
 	home, err := os.UserHomeDir()
@@ -188,11 +196,24 @@ func ensureAppBundle(exePath string) (string, error) {
 	bundleExe := filepath.Join(macOSDir, "dhd")
 	plistPath := filepath.Join(contentsDir, "Info.plist")
 
-	// Already exists and looks valid — nothing to do.
-	if info, err := os.Stat(bundleExe); err == nil && !info.IsDir() {
-		if _, err := os.Stat(plistPath); err == nil {
-			return bundleExe, nil
+	// Compare source and destination to decide if a refresh is needed.
+	srcInfo, srcErr := os.Stat(exePath)
+	if srcErr != nil {
+		return "", fmt.Errorf("source binary not accessible: %w", srcErr)
+	}
+	dstInfo, dstErr := os.Stat(bundleExe)
+
+	needsRefresh := true
+	if dstErr == nil && !dstInfo.IsDir() {
+		if dstInfo.Size() == srcInfo.Size() && dstInfo.ModTime().Equal(srcInfo.ModTime()) {
+			if _, err := os.Stat(plistPath); err == nil {
+				needsRefresh = false
+			}
 		}
+	}
+
+	if !needsRefresh {
+		return bundleExe, nil
 	}
 
 	// Create bundle directories.
@@ -203,13 +224,30 @@ func ensureAppBundle(exePath string) (string, error) {
 		return "", fmt.Errorf("failed to create Resources dir: %w", err)
 	}
 
-	// Remove any stale symlink / file at the bundle executable path.
+	// Remove previous binary (symlink or copy) and write a fresh copy.
+	// A copy (not a symlink) is required so macOS TCC treats the process
+	// as running from within the app bundle.
 	_ = os.Remove(bundleExe)
 
-	// Symlink the real binary into the bundle.
-	if err := os.Symlink(exePath, bundleExe); err != nil {
-		return "", fmt.Errorf("failed to symlink binary into bundle: %w", err)
+	srcFile, err := os.Open(exePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to open source binary: %w", err)
 	}
+	defer srcFile.Close()
+
+	dstFile, err := os.OpenFile(bundleExe, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return "", fmt.Errorf("failed to create bundle binary: %w", err)
+	}
+	defer dstFile.Close()
+
+	if _, err := io.Copy(dstFile, srcFile); err != nil {
+		_ = os.Remove(bundleExe)
+		return "", fmt.Errorf("failed to copy binary into bundle: %w", err)
+	}
+
+	// Preserve the same modification time so future comparisons work.
+	_ = os.Chtimes(bundleExe, srcInfo.ModTime(), srcInfo.ModTime())
 
 	// Write Info.plist.
 	infoPlist := `<?xml version="1.0" encoding="UTF-8"?>
@@ -228,6 +266,8 @@ func ensureAppBundle(exePath string) (string, error) {
     <string>Daemon Hound</string>
     <key>CFBundleDisplayName</key>
     <string>Daemon Hound</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
@@ -249,6 +289,15 @@ func ensureAppBundle(exePath string) (string, error) {
 `
 	if err := os.WriteFile(plistPath, []byte(infoPlist), 0644); err != nil {
 		return "", fmt.Errorf("failed to write Info.plist: %w", err)
+	}
+
+	// Register the app bundle with Launch Services so macOS System Settings
+	// and Activity Monitor show "Daemon Hound" with the proper name. Without
+	// this, the launchd agent appears as a generic process with no metadata.
+	lsregister := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
+	if _, statErr := os.Stat(lsregister); statErr == nil {
+		// -f forces re-registration even if already registered.
+		_ = exec.Command(lsregister, "-f", appDir).Run()
 	}
 
 	return bundleExe, nil

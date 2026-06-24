@@ -1,20 +1,22 @@
 #!/bin/bash
 # update-apt-repo.sh
-# Updates the APT repository on the gh-pages branch.
-# Run this after a new release is published to GitHub.
+# Builds the APT repository into a local directory.
+# Output goes to the first argument (default: _site/).
 #
 # Usage (local):
-#   GITHUB_TOKEN=xxx ./scripts/update-apt-repo.sh v1.1.0
+#   GITHUB_TOKEN=xxx ./scripts/update-apt-repo.sh v1.1.0 _site/
 #
 # Usage (CI):
-#   ./scripts/update-apt-repo.sh ${{ github.event.release.tag_name }}
+#   ./scripts/update-apt-repo.sh "${TAG}"
 
 set -euo pipefail
 
 TAG="${1:-}"
+OUT_DIR="${2:-_site}"
+
 if [ -z "$TAG" ]; then
-    echo "Usage: $0 <tag>"
-    echo "Example: $0 v1.1.0"
+    echo "Usage: $0 <tag> [output-dir]"
+    echo "Example: $0 v1.1.0 _site/"
     exit 1
 fi
 
@@ -24,211 +26,169 @@ ARCHITECTURES="amd64 arm64"
 COMPONENT="main"
 DIST="stable"
 
-# GitHub token for API access and git push
 GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_PAT:-}}"
 if [ -z "$GITHUB_TOKEN" ]; then
     echo "Error: GITHUB_TOKEN or GH_PAT must be set"
     exit 1
 fi
 
-echo "=== Updating APT repo for ${TAG} ==="
+echo "=== Building APT repo for ${TAG} ==="
+echo "    Output directory: ${OUT_DIR}"
 
-# Create temp workspace
-WORK_DIR=$(mktemp -d)
-trap 'rm -rf "$WORK_DIR"' EXIT
+rm -rf "$OUT_DIR"
+mkdir -p "${OUT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-amd64"
+mkdir -p "${OUT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-arm64"
+mkdir -p "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}"
 
-# Clone the gh-pages branch (or create if missing)
-REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
-GIT_DIR="${WORK_DIR}/repo"
+# ---- html pages ----
+python3 -c "
+import os
+base = os.environ['OUT_DIR']
+apt = os.path.join(base, os.environ['APT_DIR'])
+os.makedirs(apt, exist_ok=True)
+with open(os.path.join(base, 'index.html'), 'w') as f:
+    f.write('''<!DOCTYPE html>
+<html lang=\"en\">
+<head><meta charset=\"UTF-8\"><title>DaemonHound</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:700px;margin:60px auto;padding:0 20px;color:#333}h1{font-size:2em;margin-bottom:.2em}.subtitle{color:#666;margin-bottom:2em}a{color:#0366d6}</style>
+</head><body>
+<h1>DaemonHound</h1>
+<p class=\"subtitle\">Opinionated local config and secret management for developers</p>
+<ul><li><a href=\"https://github.com/0xdps/daemon-hound\">GitHub Repository</a></li>
+<li><a href=\"apt/\">APT Repository</a> &mdash; for Debian/Ubuntu users</li></ul>
+</body></html>''')
+with open(os.path.join(apt, 'index.html'), 'w') as f:
+    f.write('''<!DOCTYPE html>
+<html lang=\"en\">
+<head><meta charset=\"UTF-8\"><title>DaemonHound APT Repository</title>
+<style>body{font-family:monospace;max-width:700px;margin:60px auto;padding:0 20px;color:#333}h2{border-bottom:2px solid #eee;padding-bottom:6px}a{color:#0366d6;text-decoration:none}a:hover{text-decoration:underline}</style>
+</head><body>
+<h2>DaemonHound APT Repository</h2>
+<p>Add this repository to your system:</p>
+<pre>echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
+sudo apt update
+sudo apt install daemon-hound</pre>
+<p><a href=\"pool/\">Package Pool</a></p>
+<p><a href=\"dists/\">Distributions</a></p>
+<p><a href=\"..\">&larr; Back to DaemonHound</a></p>
+</body></html>''')
+"
 
-if git ls-remote --heads "$REPO_URL" gh-pages | grep -q gh-pages; then
-    echo "Cloning existing gh-pages branch..."
-    git clone --depth 1 --branch gh-pages "$REPO_URL" "$GIT_DIR"
-else
-    echo "Creating new gh-pages branch..."
-    git clone --depth 1 "$REPO_URL" "$GIT_DIR"
-    cd "$GIT_DIR"
-    git checkout --orphan gh-pages
-    git rm -rf . >/dev/null 2>&1 || true
-    cd - >/dev/null
-fi
-
-mkdir -p "${GIT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-amd64"
-mkdir -p "${GIT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-arm64"
-mkdir -p "${GIT_DIR}/${APT_DIR}/pool/${COMPONENT}"
-
-cd "$WORK_DIR"
-
-# Download .deb files from the release
+# ---- Download .deb files from the release ----
 echo "Downloading .deb files from release ${TAG}..."
 RELEASE_JSON=$(curl -fsSL -H "Authorization: token ${GITHUB_TOKEN}" \
     "https://api.github.com/repos/${REPO}/releases/tags/${TAG}")
 
-# Extract .deb download URLs
 DEB_URLS=$(echo "$RELEASE_JSON" | grep -o '"browser_download_url": "[^"]*\.deb"' | sed 's/.*"\(https:\/\/[^"]*\)".*/\1/')
 
 if [ -z "$DEB_URLS" ]; then
-    echo "Warning: No .deb files found in release ${TAG}"
-    exit 0
+    echo "Warning: No .deb files found in release ${TAG} -- APT repo will be empty"
 fi
+
+TMP_DOWNLOAD=$(mktemp -d)
+trap 'rm -rf "$TMP_DOWNLOAD"' EXIT
 
 for url in $DEB_URLS; do
     filename=$(basename "$url")
     echo "  Downloading ${filename}..."
-    curl -fsSL -L -H "Authorization: token ${GITHUB_TOKEN}" "$url" -o "${filename}"
-    cp "${filename}" "${GIT_DIR}/${APT_DIR}/pool/${COMPONENT}/"
+    curl -fsSL -L -H "Authorization: token ${GITHUB_TOKEN}" "$url" -o "${TMP_DOWNLOAD}/${filename}"
+    cp "${TMP_DOWNLOAD}/${filename}" "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}/"
 done
 
-cd "$GIT_DIR"
-
-# Generate Packages files for each architecture
+# ---- Generate Packages files ----
 echo "Generating Packages files..."
 for arch in $ARCHITECTURES; do
-    PKG_DIR="${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
+    PKG_DIR="${OUT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
     mkdir -p "$PKG_DIR"
     > "${PKG_DIR}/Packages"
 
-    for deb in ${APT_DIR}/pool/${COMPONENT}/*.deb; do
-        [ -f "$deb" ] || continue
-        # Extract control file info
-        control=$(dpkg-deb -f "$deb" 2>/dev/null || true)
-        if [ -z "$control" ]; then
-            continue
-        fi
+    for deb_path in "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}/"*.deb; do
+        [ -f "$deb_path" ] || continue
+        pkg_name=$(dpkg-deb -f "$deb_path" Package 2>/dev/null || true)
+        [ -z "$pkg_name" ] && continue
 
-        # Get package info
-        pkg_name=$(dpkg-deb -f "$deb" Package)
-        pkg_version=$(dpkg-deb -f "$deb" Version)
-        pkg_arch=$(dpkg-deb -f "$deb" Architecture)
-        pkg_maintainer=$(dpkg-deb -f "$deb" Maintainer)
-        pkg_description=$(dpkg-deb -f "$deb" Description)
-        pkg_depends=$(dpkg-deb -f "$deb" Depends 2>/dev/null || true)
-        pkg_section=$(dpkg-deb -f "$deb" Section 2>/dev/null || echo "utils")
-        pkg_priority=$(dpkg-deb -f "$deb" Priority 2>/dev/null || echo "optional")
+        pkg_version=$(dpkg-deb -f "$deb_path" Version)
+        pkg_arch=$(dpkg-deb -f "$deb_path" Architecture)
+        pkg_maintainer=$(dpkg-deb -f "$deb_path" Maintainer)
+        pkg_description=$(dpkg-deb -f "$deb_path" Description)
+        pkg_depends=$(dpkg-deb -f "$deb_path" Depends 2>/dev/null || true)
+        pkg_section=$(dpkg-deb -f "$deb_path" Section 2>/dev/null || echo "utils")
+        pkg_priority=$(dpkg-deb -f "$deb_path" Priority 2>/dev/null || echo "optional")
 
-        # Only include packages matching this architecture
         if [ "$pkg_arch" != "$arch" ] && [ "$pkg_arch" != "all" ]; then
             continue
         fi
 
-        deb_size=$(stat -f%z "$deb" 2>/dev/null || stat -c%s "$deb" 2>/dev/null)
-        deb_md5=$(md5sum "$deb" | cut -d' ' -f1)
-        deb_sha1=$(sha1sum "$deb" | cut -d' ' -f1)
-        deb_sha256=$(sha256sum "$deb" | cut -d' ' -f1)
-        deb_filename="pool/${COMPONENT}/$(basename "$deb")"
+        deb_size=$(stat -c%s "$deb_path")
+        deb_md5=$(md5sum "$deb_path" | cut -d' ' -f1)
+        deb_sha1=$(sha1sum "$deb_path" | cut -d' ' -f1)
+        deb_sha256=$(sha256sum "$deb_path" | cut -d' ' -f1)
+        deb_filename="pool/${COMPONENT}/$(basename "$deb_path")"
 
-        cat >> "${PKG_DIR}/Packages" <<EOF
-Package: ${pkg_name}
-Version: ${pkg_version}
-Architecture: ${pkg_arch}
-Maintainer: ${pkg_maintainer}
-Filename: ${deb_filename}
-Size: ${deb_size}
-MD5sum: ${deb_md5}
-SHA1: ${deb_sha1}
-SHA256: ${deb_sha256}
-Section: ${pkg_section}
-Priority: ${pkg_priority}
-EOF
-        if [ -n "$pkg_depends" ]; then
-            echo "Depends: ${pkg_depends}" >> "${PKG_DIR}/Packages"
-        fi
-        echo "Description: ${pkg_description}" >> "${PKG_DIR}/Packages"
-        echo "" >> "${PKG_DIR}/Packages"
+        {
+            echo "Package: ${pkg_name}"
+            echo "Version: ${pkg_version}"
+            echo "Architecture: ${pkg_arch}"
+            echo "Maintainer: ${pkg_maintainer}"
+            echo "Filename: ${deb_filename}"
+            echo "Size: ${deb_size}"
+            echo "MD5sum: ${deb_md5}"
+            echo "SHA1: ${deb_sha1}"
+            echo "SHA256: ${deb_sha256}"
+            echo "Section: ${pkg_section}"
+            echo "Priority: ${pkg_priority}"
+            [ -n "$pkg_depends" ] && echo "Depends: ${pkg_depends}"
+            echo "Description: ${pkg_description}"
+            echo ""
+        } >> "${PKG_DIR}/Packages"
     done
 
-    # Compress Packages file
     gzip -k -f "${PKG_DIR}/Packages" || true
-    echo "  ${arch}: $(grep -c '^Package:' "${PKG_DIR}/Packages" 2>/dev/null || echo 0) packages"
+    PKG_COUNT=$(grep -c '^Package:' "${PKG_DIR}/Packages" 2>/dev/null || echo 0)
+    echo "  ${arch}: ${PKG_COUNT} packages"
 done
 
-# Generate Release file
+# ---- Generate Release file ----
 echo "Generating Release file..."
-RELEASE_FILE="${APT_DIR}/dists/${DIST}/Release"
+RELEASE_FILE="${OUT_DIR}/${APT_DIR}/dists/${DIST}/Release"
 
-cat > "$RELEASE_FILE" <<EOF
-Origin: DaemonHound
-Label: DaemonHound APT Repository
-Suite: ${DIST}
-Codename: ${DIST}
-Version: 1.0
-Architectures: ${ARCHITECTURES}
-Components: ${COMPONENT}
-Description: DaemonHound APT repository
-Date: $(date -Ru)
-EOF
+{
+    echo "Origin: DaemonHound"
+    echo "Label: DaemonHound APT Repository"
+    echo "Suite: ${DIST}"
+    echo "Codename: ${DIST}"
+    echo "Version: 1.0"
+    echo "Architectures: ${ARCHITECTURES}"
+    echo "Components: ${COMPONENT}"
+    echo "Description: DaemonHound APT repository for Debian/Ubuntu"
+    echo "Date: $(date -Ru)"
+} > "$RELEASE_FILE"
 
-# Add hashes for each architecture
-for arch in $ARCHITECTURES; do
-    PKG_DIR="${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
-    for file in Packages Packages.gz; do
-        filepath="${PKG_DIR}/${file}"
-        if [ -f "$filepath" ]; then
-            size=$(stat -f%z "$filepath" 2>/dev/null || stat -c%s "$filepath" 2>/dev/null)
-            md5=$(md5sum "$filepath" | cut -d' ' -f1)
-            sha1=$(sha1sum "$filepath" | cut -d' ' -f1)
-            sha256=$(sha256sum "$filepath" | cut -d' ' -f1)
-            echo " ${md5} ${size} ${COMPONENT}/binary-${arch}/${file}" >> "$RELEASE_FILE"
-        fi
+for section in MD5Sum SHA1 SHA256; do
+    echo "" >> "$RELEASE_FILE"
+    echo "${section}:" >> "$RELEASE_FILE"
+    for arch in $ARCHITECTURES; do
+        dir="${OUT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
+        for f in Packages Packages.gz; do
+            fp="${dir}/${f}"
+            [ -f "$fp" ] || continue
+            sz=$(stat -c%s "$fp")
+            case "$section" in
+                MD5Sum) hsh=$(md5sum "$fp" | cut -d' ' -f1) ;;
+                SHA1)   hsh=$(sha1sum "$fp" | cut -d' ' -f1) ;;
+                SHA256) hsh=$(sha256sum "$fp" | cut -d' ' -f1) ;;
+            esac
+            echo " ${hsh} ${sz} ${COMPONENT}/binary-${arch}/${f}" >> "$RELEASE_FILE"
+        done
     done
 done
-
-# Add MD5Sum, SHA1, SHA256 sections properly
-echo "" >> "$RELEASE_FILE"
-echo "MD5Sum:" >> "$RELEASE_FILE"
-for arch in $ARCHITECTURES; do
-    PKG_DIR="${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
-    for file in Packages Packages.gz; do
-        filepath="${PKG_DIR}/${file}"
-        if [ -f "$filepath" ]; then
-            size=$(stat -f%z "$filepath" 2>/dev/null || stat -c%s "$filepath" 2>/dev/null)
-            md5=$(md5sum "$filepath" | cut -d' ' -f1)
-            echo " ${md5} ${size} ${COMPONENT}/binary-${arch}/${file}" >> "$RELEASE_FILE"
-        fi
-    done
-done
-
-echo "" >> "$RELEASE_FILE"
-echo "SHA1:" >> "$RELEASE_FILE"
-for arch in $ARCHITECTURES; do
-    PKG_DIR="${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
-    for file in Packages Packages.gz; do
-        filepath="${PKG_DIR}/${file}"
-        if [ -f "$filepath" ]; then
-            size=$(stat -f%z "$filepath" 2>/dev/null || stat -c%s "$filepath" 2>/dev/null)
-            sha1=$(sha1sum "$filepath" | cut -d' ' -f1)
-            echo " ${sha1} ${size} ${COMPONENT}/binary-${arch}/${file}" >> "$RELEASE_FILE"
-        fi
-    done
-done
-
-echo "" >> "$RELEASE_FILE"
-echo "SHA256:" >> "$RELEASE_FILE"
-for arch in $ARCHITECTURES; do
-    PKG_DIR="${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-${arch}"
-    for file in Packages Packages.gz; do
-        filepath="${PKG_DIR}/${file}"
-        if [ -f "$filepath" ]; then
-            size=$(stat -f%z "$filepath" 2>/dev/null || stat -c%s "$filepath" 2>/dev/null)
-            sha256=$(sha256sum "$filepath" | cut -d' ' -f1)
-            echo " ${sha256} ${size} ${COMPONENT}/binary-${arch}/${file}" >> "$RELEASE_FILE"
-        fi
-    done
-done
-
-# Commit and push to gh-pages
-echo "Committing and pushing to gh-pages..."
-git config user.email "bot@daemonhound.dev"
-git config user.name "DaemonHound Bot"
-git add -A
-git commit -m "Update APT repo for ${TAG}" || echo "No changes to commit"
-git push origin gh-pages
 
 echo ""
-echo "=== APT repository updated successfully ==="
-echo "Repository URL: https://0xdps.github.io/daemon-hound/apt"
+echo "=== APT repository built in ${OUT_DIR}/ ==="
+echo "    Root:  ${OUT_DIR}/index.html"
+echo "    APT:   ${OUT_DIR}/${APT_DIR}/dists/${DIST}/Release"
 echo ""
-echo "Users can now add it with:"
+echo "Users can add it with:"
 echo "  echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list"
 echo "  sudo apt update"
 echo "  sudo apt install daemon-hound"

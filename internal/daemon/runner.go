@@ -413,12 +413,14 @@ func (r *Runner) refreshTrackedWatches() {
 
 // isMacOSProtectedDir returns true if the given directory is under a macOS
 // TCC-protected location (Downloads, Documents, Desktop, Music, Movies,
-// Pictures, etc.) that would trigger unnecessary permission prompts.
+// Pictures) that would trigger unnecessary permission prompts.
 func isMacOSProtectedDir(dir string) bool {
 	home, _ := os.UserHomeDir()
 	if home == "" {
 		return false
 	}
+	// Only the TCC-prompted folders — not Library (which isn't TCC-prompted
+	// this way and would cause false positives).
 	protected := []string{
 		"Downloads",
 		"Documents",
@@ -426,11 +428,13 @@ func isMacOSProtectedDir(dir string) bool {
 		"Music",
 		"Movies",
 		"Pictures",
-		"Library",
 	}
 	lowerDir := strings.ToLower(dir)
 	for _, p := range protected {
-		if strings.Contains(lowerDir, strings.ToLower(filepath.Join(home, p))) {
+		expected := strings.ToLower(filepath.Join(home, p))
+		// Use HasPrefix on the clean path plus a trailing separator to avoid
+		// false matches like /Users/mac/projects/Documents-project.
+		if strings.HasPrefix(lowerDir, expected+"/") || lowerDir == expected {
 			return true
 		}
 	}

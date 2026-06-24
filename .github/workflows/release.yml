@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
   packages: write
+  pages: write
+  id-token: write
+  deployments: write
 
 jobs:
   release:
@@ -49,11 +52,19 @@ jobs:
       - name: Install APT repo dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev gzip coreutils
+          sudo apt-get install -y dpkg-dev gzip coreutils python3
 
-      - name: Update APT repository
+      - name: Build APT repository
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x scripts/update-apt-repo.sh
-          ./scripts/update-apt-repo.sh "${{ github.ref_name }}"
+          ./scripts/update-apt-repo.sh "${{ github.ref_name }}" _site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
