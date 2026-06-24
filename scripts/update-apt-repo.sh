@@ -41,38 +41,55 @@ mkdir -p "${OUT_DIR}/${APT_DIR}/dists/${DIST}/${COMPONENT}/binary-arm64"
 mkdir -p "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}"
 
 # ---- html pages ----
-python3 -c "
-import os
-base = os.environ['OUT_DIR']
-apt = os.path.join(base, os.environ['APT_DIR'])
-os.makedirs(apt, exist_ok=True)
-with open(os.path.join(base, 'index.html'), 'w') as f:
-    f.write('''<!DOCTYPE html>
-<html lang=\"en\">
-<head><meta charset=\"UTF-8\"><title>DaemonHound</title>
-<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:700px;margin:60px auto;padding:0 20px;color:#333}h1{font-size:2em;margin-bottom:.2em}.subtitle{color:#666;margin-bottom:2em}a{color:#0366d6}</style>
-</head><body>
+cat > "${OUT_DIR}/index.html" <<'PAGE_EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DaemonHound</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #333; }
+h1 { font-size: 2em; margin-bottom: 0.2em; }
+.subtitle { color: #666; margin-bottom: 2em; }
+a { color: #0366d6; }
+</style>
+</head>
+<body>
 <h1>DaemonHound</h1>
-<p class=\"subtitle\">Opinionated local config and secret management for developers</p>
-<ul><li><a href=\"https://github.com/0xdps/daemon-hound\">GitHub Repository</a></li>
-<li><a href=\"apt/\">APT Repository</a> &mdash; for Debian/Ubuntu users</li></ul>
-</body></html>''')
-with open(os.path.join(apt, 'index.html'), 'w') as f:
-    f.write('''<!DOCTYPE html>
-<html lang=\"en\">
-<head><meta charset=\"UTF-8\"><title>DaemonHound APT Repository</title>
-<style>body{font-family:monospace;max-width:700px;margin:60px auto;padding:0 20px;color:#333}h2{border-bottom:2px solid #eee;padding-bottom:6px}a{color:#0366d6;text-decoration:none}a:hover{text-decoration:underline}</style>
-</head><body>
+<p class="subtitle">Opinionated local config and secret management for developers</p>
+<ul>
+<li><a href="https://github.com/0xdps/daemon-hound">GitHub Repository</a></li>
+<li><a href="apt/">APT Repository</a> &mdash; for Debian/Ubuntu users</li>
+</ul>
+</body>
+</html>
+PAGE_EOF
+
+cat > "${OUT_DIR}/${APT_DIR}/index.html" <<'PAGE_EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DaemonHound APT Repository</title>
+<style>
+body { font-family: monospace; max-width: 700px; margin: 60px auto; padding: 0 20px; color: #333; }
+h2 { border-bottom: 2px solid #eee; padding-bottom: 6px; }
+a { color: #0366d6; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
 <h2>DaemonHound APT Repository</h2>
 <p>Add this repository to your system:</p>
 <pre>echo 'deb [trusted=yes] https://0xdps.github.io/daemon-hound/apt stable main' | sudo tee /etc/apt/sources.list.d/daemon-hound.list
 sudo apt update
 sudo apt install daemon-hound</pre>
-<p><a href=\"pool/\">Package Pool</a></p>
-<p><a href=\"dists/\">Distributions</a></p>
-<p><a href=\"..\">&larr; Back to DaemonHound</a></p>
-</body></html>''')
-"
+<p><a href="pool/">Package Pool</a></p>
+<p><a href="dists/">Distributions</a></p>
+<p><a href="..">&larr; Back to DaemonHound</a></p>
+</body>
+</html>
+PAGE_EOF
 
 # ---- Download .deb files from the release ----
 echo "Downloading .deb files from release ${TAG}..."

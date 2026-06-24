@@ -52,7 +52,7 @@ jobs:
       - name: Install APT repo dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev gzip coreutils python3
+          sudo apt-get install -y dpkg-dev gzip coreutils
 
       - name: Build APT repository
         env:
