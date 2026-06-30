@@ -10,7 +10,11 @@ import (
 
 // StateDriver merges decrypted state.toml content at the structural level.
 // Machine A adding a file + Machine B adding a different file → auto-merges.
-// Both machines changing the SAME secret/file → true conflict.
+// Both machines changing the SAME file → true conflict.
+//
+// Secrets are stored in separate per-secret files (secrets/<name>.toml.age)
+// and are merged by Git's standard file-level merge. This driver only
+// handles the Files map in state.toml.age.
 type StateDriver struct{}
 
 func (d *StateDriver) CanHandle(filename string) bool {
@@ -44,7 +48,7 @@ func (d *StateDriver) Merge(base, local, remote []byte) ([]byte, Result, error) 
 
 func decodeVaultState(data []byte, s *models.VaultState) error {
 	s.Files = make(map[string]models.TrackedFile)
-	s.Secrets = make(map[string]models.Secret)
+	s.Secrets = make(map[string]models.SecretIndex)
 	_, err := toml.Decode(string(data), s)
 	return err
 }
@@ -53,11 +57,11 @@ func mergeVaultState(base, local, remote *models.VaultState) (*models.VaultState
 	out := &models.VaultState{
 		Version: local.Version,
 		Files:   make(map[string]models.TrackedFile),
-		Secrets: make(map[string]models.Secret),
+		Secrets: make(map[string]models.SecretIndex),
 	}
 
 	// Merge Files map keyed by "namespace:relPath"
-	for key := range unionStringSet(keysOf(base.Files), keysOf(local.Files), keysOf(remote.Files)) {
+	for key := range unionStringSet(keysOfFiles(base.Files), keysOfFiles(local.Files), keysOfFiles(remote.Files)) {
 		bf, hasBase := base.Files[key]
 		lf, hasLocal := local.Files[key]
 		rf, hasRemote := remote.Files[key]
@@ -97,9 +101,8 @@ func mergeVaultState(base, local, remote *models.VaultState) (*models.VaultState
 		}
 	}
 
-	// Merge Secrets map keyed by secret name.
-	// Use UpdatedAt as proxy for "changed" — age re-encryption produces different bytes
-	// each time even for the same plaintext, so byte comparison is unreliable.
+	// Merge Secrets index map keyed by secret name.
+	// Use UpdatedAt as proxy for "changed".
 	for key := range unionStringSet(keysOfSecrets(base.Secrets), keysOfSecrets(local.Secrets), keysOfSecrets(remote.Secrets)) {
 		bs, hasBase := base.Secrets[key]
 		ls, hasLocal := local.Secrets[key]
@@ -143,7 +146,7 @@ func mergeVaultState(base, local, remote *models.VaultState) (*models.VaultState
 	return out, true
 }
 
-func keysOf(m map[string]models.TrackedFile) []string {
+func keysOfFiles(m map[string]models.TrackedFile) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
 		out = append(out, k)
@@ -151,7 +154,7 @@ func keysOf(m map[string]models.TrackedFile) []string {
 	return out
 }
 
-func keysOfSecrets(m map[string]models.Secret) []string {
+func keysOfSecrets(m map[string]models.SecretIndex) []string {
 	out := make([]string, 0, len(m))
 	for k := range m {
 		out = append(out, k)

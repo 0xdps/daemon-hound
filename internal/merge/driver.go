@@ -31,12 +31,29 @@ func NewRegistry() *Registry {
 	return &Registry{
 		drivers: []Driver{
 			&StateDriver{}, // state.toml.age — highest priority, special handling
-			&EnvDriver{},   // *.env, .env.*, .envrc
-			&JSONDriver{},  // *.json
-			&CSVDriver{},   // *.csv
-			&TextDriver{},  // generic text fallback
+			// SecretDriver is added dynamically by the caller (syncer/daemon)
+			// because it needs Encrypt/Decrypt functions from the vault.
+			&EnvDriver{},  // *.env, .env.*, .envrc
+			&JSONDriver{}, // *.json
+			&CSVDriver{},  // *.csv
+			&TextDriver{}, // generic text fallback
 		},
 	}
+}
+
+// WithSecretDriver returns a new Registry that includes SecretDriver with
+// the given encrypt/decrypt functions. Use this when a vault identity is available.
+func (r *Registry) WithSecretDriver(encrypt, decrypt func([]byte) ([]byte, error)) *Registry {
+	copy := &Registry{
+		drivers: make([]Driver, len(r.drivers)+1),
+	}
+	// Insert SecretDriver right after StateDriver (index 1).
+	copy.drivers[0] = r.drivers[0] // StateDriver
+	copy.drivers[1] = &SecretDriver{Encrypt: encrypt, Decrypt: decrypt}
+	for i := 1; i < len(r.drivers); i++ {
+		copy.drivers[i+1] = r.drivers[i]
+	}
+	return copy
 }
 
 // Resolve finds the appropriate driver for filename and attempts a 3-way merge.

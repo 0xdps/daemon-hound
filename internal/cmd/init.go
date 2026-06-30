@@ -153,6 +153,12 @@ func runInit(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Warning: failed to store password in keychain: %v\n", err)
 	}
 
+	// Configure Git for DaemonHound (merge driver, diff driver, filters, hooks, etc.)
+	gitClient := git.NewClient(vaultPath)
+	if err := configureGitSetup(gitClient); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to configure Git integration: %v\n", err)
+	}
+
 	// Install daemon service for background syncing
 	sm := daemon.NewServiceManager()
 	if err := sm.Install(); err != nil {
@@ -168,5 +174,40 @@ func runInit(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Machine ID: %s\n", cfg.MachineID())
 	fmt.Printf("Vault:      %s\n", vaultPath)
 	fmt.Printf("\n⚠️  Back up %s immediately. Without it, encrypted vault data cannot be recovered.\n", config.IdentityPath())
+	return nil
+}
+
+// configureGitSetup sets up the Git integration for the vault repository.
+// This is the same logic used by `dhd git setup` but without printing output.
+func configureGitSetup(gc *git.Client) error {
+	// Merge driver
+	_ = gc.SetMergeDriverName("dhd", "DaemonHound Merge Driver")
+	_ = gc.SetMergeDriver("dhd", "dhd merge %O %A %B %P")
+
+	// Diff driver
+	_ = gc.SetDiffDriverName("dhd", "DaemonHound Diff Driver")
+	_ = gc.SetDiffTextconv("dhd", "dhd diff --textconv")
+
+	// Clean/smudge filter
+	_ = gc.SetFilterName("dhd", "DaemonHound Filter")
+	_ = gc.SetFilterClean("dhd", "dhd encrypt")
+	_ = gc.SetFilterSmudge("dhd", "dhd decrypt")
+
+	// .gitattributes
+	if err := writeGitAttributes(gc); err != nil {
+		return fmt.Errorf(".gitattributes: %w", err)
+	}
+
+	// .gitignore
+	if err := writeGitIgnore(config.VaultPath()); err != nil {
+		return fmt.Errorf(".gitignore: %w", err)
+	}
+
+	// rerere
+	_ = gc.SetRerereEnabled(true)
+
+	// Hooks
+	_ = installAllHooks(gc)
+
 	return nil
 }

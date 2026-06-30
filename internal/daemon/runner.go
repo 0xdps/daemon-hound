@@ -69,6 +69,11 @@ func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) 
 
 	logger := log.New(logFile, "[daemon] ", log.LstdFlags)
 
+	merger := merge.NewRegistry()
+	if vault != nil {
+		merger = merger.WithSecretDriver(vault.Encrypt, vault.Decrypt)
+	}
+
 	return &Runner{
 		cfg:        cfg,
 		vault:      vault,
@@ -78,7 +83,7 @@ func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) 
 		watcher:    watcher,
 		stopCh:     make(chan struct{}),
 		logRotator: NewLogRotator(10, 5, 30), // 10MB, 5MB, 30 days default
-		merger:     merge.NewRegistry(),
+		merger:     merger,
 	}, nil
 }
 
@@ -227,7 +232,7 @@ func (r *Runner) performSync() error {
 		vaultPath := config.VaultPath()
 		gcSyncer := git.NewClient(vaultPath)
 		tr := tracker.NewTracker(r.vault, freshCfg)
-		syncer = dhsync.NewSyncer(r.vault, tr, gcSyncer, freshCfg)
+		syncer = dhsync.NewSyncer(r.vault, tr, gcSyncer, freshCfg).WithMerger(r.merger)
 	}
 
 	// Create git client for vault repository
@@ -235,15 +240,20 @@ func (r *Runner) performSync() error {
 	gc := git.NewClient(vaultPath)
 
 	// Pre-flight: recover from a stuck in-progress merge before doing anything.
-	// Vault files are encrypted binary blobs — take remote for all conflicts.
+	// Try smart merge first; fall back to remote for anything the drivers can't handle.
 	if gc.IsInMerge() {
 		if hasConflicts, _ := gc.HasConflicts(); hasConflicts {
-			r.logger.Println("Recovering from stuck merge — taking remote for all conflicted files")
-			if err := gc.ResolveConflictsRemote(); err != nil {
-				r.logger.Printf("Warning: conflict resolution failed: %v — aborting merge", err)
-				_ = gc.AbortMerge()
+			r.logger.Println("Recovering from stuck merge — attempting smart merge")
+			if err := r.resolveConflicts(gc, vaultPath); err != nil {
+				r.logger.Printf("Warning: smart merge failed: %v — falling back to remote", err)
+				if err := gc.ResolveConflictsRemote(); err != nil {
+					r.logger.Printf("Warning: conflict resolution failed: %v — aborting merge", err)
+					_ = gc.AbortMerge()
+				} else {
+					_ = gc.CommitAll("[daemon] Resolve vault merge conflicts")
+				}
 			} else {
-				_ = gc.CommitAll("[daemon] Resolve vault merge conflicts")
+				_ = gc.CommitAll("[daemon] Resolve vault merge conflicts [smart]")
 			}
 		} else {
 			_ = gc.CommitAll("[daemon] Complete in-progress merge")
@@ -293,7 +303,12 @@ func (r *Runner) performSync() error {
 // resolveConflicts attempts smart merge for each conflicted file.
 // Files that merge cleanly are staged automatically.
 // Files with true conflicts are recorded in the conflicts store for user review.
-func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string, conflictedFiles []string) {
+func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string) error {
+	conflictedFiles, err := gc.GetConflictedFiles()
+	if err != nil {
+		return fmt.Errorf("failed to list conflicted files: %w", err)
+	}
+
 	store, storeErr := conflicts.NewStore()
 
 	for _, filePath := range conflictedFiles {
@@ -306,45 +321,24 @@ func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string, conflictedFi
 			continue
 		}
 
-		// If vault identity is available, decrypt → merge → re-encrypt
-		if r.vault != nil {
-			decBase, err1 := r.vault.Decrypt(baseBytes)
-			decLocal, err2 := r.vault.Decrypt(localBytes)
-			decRemote, err3 := r.vault.Decrypt(remoteBytes)
+		merged, result, mergeErr := r.merger.Resolve(filePath, baseBytes, localBytes, remoteBytes)
+		if mergeErr != nil {
+			r.logger.Printf("[conflict] Merge error for %s: %v", filePath, mergeErr)
+			r.recordConflict(store, storeErr, filePath, localHash, "")
+			continue
+		}
 
-			if err1 != nil || err2 != nil || err3 != nil {
-				r.logger.Printf("[conflict] Decrypt failed for %s (base=%v local=%v remote=%v)", filePath, err1, err2, err3)
+		if result == merge.Merged {
+			if err := gc.StageFile(filePath, merged); err != nil {
+				r.logger.Printf("[conflict] Stage failed for %s: %v", filePath, err)
 				r.recordConflict(store, storeErr, filePath, localHash, "")
 				continue
 			}
-
-			merged, result, mergeErr := r.merger.Resolve(filePath, decBase, decLocal, decRemote)
-			if mergeErr != nil {
-				r.logger.Printf("[conflict] Merge error for %s: %v", filePath, mergeErr)
-				r.recordConflict(store, storeErr, filePath, localHash, "")
-				continue
+			r.logger.Printf("[conflict] Smart-merged %s successfully", filePath)
+			if store != nil {
+				_ = store.Delete(filePath)
 			}
-
-			if result == merge.Merged {
-				// Re-encrypt merged content and stage it
-				enc, err := r.vault.Encrypt(merged)
-				if err != nil {
-					r.logger.Printf("[conflict] Re-encrypt failed for %s: %v", filePath, err)
-					r.recordConflict(store, storeErr, filePath, localHash, "")
-					continue
-				}
-				if err := gc.StageFile(filePath, enc); err != nil {
-					r.logger.Printf("[conflict] Stage failed for %s: %v", filePath, err)
-					r.recordConflict(store, storeErr, filePath, localHash, "")
-					continue
-				}
-				r.logger.Printf("[conflict] Smart-merged %s successfully", filePath)
-				// Remove any stale conflict record for this file
-				if store != nil {
-					_ = store.Delete(filePath)
-				}
-				continue
-			}
+			continue
 		}
 
 		// Smart merge not possible — record for user
@@ -352,6 +346,8 @@ func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string, conflictedFi
 		r.logger.Printf("[conflict] True conflict in %s — user action required: dhd conflicts show %s", filePath, filePath)
 		r.recordConflict(store, storeErr, filePath, localHash, remoteHash)
 	}
+
+	return nil
 }
 
 // recordConflict saves conflict metadata to the store for user review.

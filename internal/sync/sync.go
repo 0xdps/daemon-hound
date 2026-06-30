@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/0xdps/daemon-hound/internal/git"
+	"github.com/0xdps/daemon-hound/internal/merge"
 	"github.com/0xdps/daemon-hound/internal/models"
 	"github.com/0xdps/daemon-hound/internal/storage"
 	"github.com/0xdps/daemon-hound/internal/tracker"
@@ -20,6 +21,7 @@ type Syncer struct {
 	git             *git.Client
 	config          ConfigReader
 	namespaceFilter string // if non-empty, only sync this namespace
+	merger          *merge.Registry
 }
 
 // ConfigReader provides read/write access to local config needed by the syncer.
@@ -39,7 +41,17 @@ func NewSyncer(vault *storage.Vault, tracker *tracker.Tracker, gitClient *git.Cl
 		tracker: tracker,
 		git:     gitClient,
 		config:  config,
+		merger:  merge.NewRegistry(),
 	}
+}
+
+// WithMerger returns a Syncer that uses the given merge registry for smart
+// conflict resolution. The registry should already include a SecretDriver
+// if vault identity is available.
+func (s *Syncer) WithMerger(merger *merge.Registry) *Syncer {
+	copy := *s
+	copy.merger = merger
+	return &copy
 }
 
 // WithNamespaceFilter returns a Syncer that only processes the given namespace.
@@ -97,6 +109,19 @@ func (s *Syncer) Pull() ([]Result, error) {
 			if _, ok := s.config.GetBinding(file.Namespace); !ok {
 				continue
 			}
+		}
+
+		// CRITICAL: If the local file has been modified since the last sync,
+		// it is newer than the vault content. Do NOT overwrite it.
+		// The next Push() will upload the local version.
+		status, err := s.tracker.Status(file)
+		if err != nil {
+			results = append(results, Result{File: file, Action: "error", Error: err})
+			continue
+		}
+		if status == models.StatusDirty || status == models.StatusNew {
+			results = append(results, Result{File: file, Action: "skipped", Error: nil})
+			continue
 		}
 
 		localPath, err := s.tracker.Restore(file)
@@ -256,13 +281,15 @@ func (s *Syncer) Sync() ([]Result, error) {
 	all := append(pullResults, pushResults...)
 	if pullErr != nil {
 		// Check if pull failed due to conflicts (remote deleted files we added).
-		// Resolve by taking remote, then push our own changes on top.
 		if hasConflicts, _ := s.git.HasConflicts(); hasConflicts {
-			fmt.Fprintln(os.Stderr, "Warning: merge conflict during pull — taking remote version of conflicted files")
-			if err := s.git.ResolveConflictsRemote(); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: conflict resolution failed: %v\n", err)
-				_ = s.config.SetPendingPush(true)
-				return all, nil
+			fmt.Fprintln(os.Stderr, "Warning: merge conflict during pull — attempting smart merge")
+			if err := s.resolveConflicts(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: smart merge failed: %v — falling back to remote\n", err)
+				if err := s.git.ResolveConflictsRemote(); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: conflict resolution failed: %v\n", err)
+					_ = s.config.SetPendingPush(true)
+					return all, nil
+				}
 			}
 			_ = s.git.CommitAll("daemon-hound: resolve vault merge conflicts [auto]")
 			// Fall through to Phase 3 to push local changes on top.
@@ -384,4 +411,51 @@ func discoverRepoRootForNamespace(namespace string) (string, error) {
 		return "", fmt.Errorf("no repo root found for namespace %s", namespace)
 	}
 	return match, nil
+}
+
+// resolveConflicts attempts smart merge for each conflicted file using the
+// configured merge registry. Files that merge cleanly are staged automatically.
+// Files with true conflicts fall back to ResolveConflictsRemote.
+func (s *Syncer) resolveConflicts() error {
+	conflictedFiles, err := s.git.GetConflictedFiles()
+	if err != nil {
+		return fmt.Errorf("failed to list conflicted files: %w", err)
+	}
+
+	var unresolved []string
+	for _, filePath := range conflictedFiles {
+		baseBytes, localBytes, remoteBytes, err := s.git.GetConflictVersions(filePath)
+		if err != nil {
+			unresolved = append(unresolved, filePath)
+			continue
+		}
+
+		merged, result, mergeErr := s.merger.Resolve(filePath, baseBytes, localBytes, remoteBytes)
+		if mergeErr != nil {
+			unresolved = append(unresolved, filePath)
+			continue
+		}
+
+		if result == merge.Merged {
+			if err := s.git.StageFile(filePath, merged); err != nil {
+				unresolved = append(unresolved, filePath)
+				continue
+			}
+			fmt.Fprintf(os.Stderr, "  ✓ Smart-merged %s\n", filePath)
+			continue
+		}
+
+		// Unsupported or HasConflict — fall back to remote for this file.
+		unresolved = append(unresolved, filePath)
+	}
+
+	// For any files the smart merge couldn't handle, take remote.
+	if len(unresolved) > 0 {
+		fmt.Fprintf(os.Stderr, "  %d file(s) fell back to remote: %v\n", len(unresolved), unresolved)
+		if err := s.git.ResolveConflictsRemote(); err != nil {
+			return fmt.Errorf("fallback remote resolution failed: %w", err)
+		}
+	}
+
+	return nil
 }

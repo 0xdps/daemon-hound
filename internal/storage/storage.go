@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"filippo.io/age"
 	"github.com/0xdps/daemon-hound/internal/models"
@@ -80,6 +81,16 @@ func (v *Vault) VaultStatePath() string {
 	return filepath.Join(v.path, "state.toml.age")
 }
 
+// SecretsDir returns the path to the secrets subdirectory.
+func (v *Vault) SecretsDir() string {
+	return filepath.Join(v.path, "secrets")
+}
+
+// SecretFilePath returns the path to a named secret's encrypted TOML file.
+func (v *Vault) SecretFilePath(name string) string {
+	return filepath.Join(v.SecretsDir(), name+".toml.age")
+}
+
 // legacyStatePath returns the old unencrypted state path (for migration).
 func (v *Vault) legacyStatePath() string {
 	return filepath.Join(v.path, "state.toml")
@@ -88,11 +99,13 @@ func (v *Vault) legacyStatePath() string {
 // LoadState reads and decrypts the vault state from disk.
 // Falls back to the legacy unencrypted state.toml for seamless migration.
 // Returns a fresh state if neither file is found.
+// If the state contains inline secrets (legacy format), they are automatically
+// migrated to per-secret files.
 func (v *Vault) LoadState() (*models.VaultState, error) {
 	state := &models.VaultState{
 		Version: "1",
 		Files:   make(map[string]models.TrackedFile),
-		Secrets: make(map[string]models.Secret),
+		Secrets: make(map[string]models.SecretIndex),
 	}
 
 	var data []byte
@@ -112,6 +125,24 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 		return state, nil
 	}
 
+	// Try legacy format first (may contain inline secrets).
+	var legacyState models.LegacyVaultState
+	legacyState.Files = make(map[string]models.TrackedFile)
+	legacyState.Secrets = make(map[string]models.LegacySecret)
+	if _, err := toml.Decode(string(data), &legacyState); err != nil {
+		return nil, fmt.Errorf("failed to decode vault state: %w", err)
+	}
+
+	// If legacy secrets exist, migrate them to per-secret files.
+	if len(legacyState.Secrets) > 0 {
+		if err := v.migrateLegacySecrets(&legacyState); err != nil {
+			return nil, fmt.Errorf("failed to migrate legacy secrets: %w", err)
+		}
+		// Re-read the state after migration (now in new format without secrets).
+		return v.LoadState()
+	}
+
+	// New format: lightweight secret index.
 	if _, err := toml.Decode(string(data), state); err != nil {
 		return nil, fmt.Errorf("failed to decode vault state: %w", err)
 	}
@@ -119,9 +150,51 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 		state.Files = make(map[string]models.TrackedFile)
 	}
 	if state.Secrets == nil {
-		state.Secrets = make(map[string]models.Secret)
+		state.Secrets = make(map[string]models.SecretIndex)
 	}
 	return state, nil
+}
+
+// migrateLegacySecrets converts old inline secrets to per-secret files.
+func (v *Vault) migrateLegacySecrets(legacy *models.LegacyVaultState) error {
+	for name, secret := range legacy.Secrets {
+		sf := &models.SecretFile{
+			Name:      name,
+			CreatedBy: "migrated",
+			CreatedAt: secret.UpdatedAt,
+			Latest:    "v1",
+			Versions: map[string]models.SecretVersion{
+				"v1": {
+					CreatedAt: secret.UpdatedAt,
+					Reason:    "Migrated from legacy storage",
+					Value:     secret.Value,
+				},
+			},
+			Refs: secret.Refs,
+		}
+		if err := v.SaveSecretFile(sf); err != nil {
+			return fmt.Errorf("migrate secret %s: %w", name, err)
+		}
+	}
+
+	// Write the state back with a lightweight secret index.
+	newState := &models.VaultState{
+		Version: legacy.Version,
+		Files:   legacy.Files,
+		Secrets: make(map[string]models.SecretIndex),
+	}
+	for name, secret := range legacy.Secrets {
+		newState.Secrets[name] = models.SecretIndex{
+			Latest:    "v1",
+			Versions:  1,
+			UpdatedAt: secret.UpdatedAt,
+		}
+	}
+	if err := v.SaveState(newState); err != nil {
+		return fmt.Errorf("save migrated state: %w", err)
+	}
+
+	return nil
 }
 
 // SaveState encrypts and writes the vault state to disk only when the content
@@ -171,6 +244,120 @@ func (v *Vault) SaveState(state *models.VaultState) error {
 	// Remove legacy plain state.toml if it still exists.
 	_ = os.Remove(v.legacyStatePath())
 	return nil
+}
+
+// LoadSecretFile reads and decrypts a per-secret TOML file from disk.
+func (v *Vault) LoadSecretFile(name string) (*models.SecretFile, error) {
+	path := v.SecretFilePath(name)
+	enc, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("secret not found: %s", name)
+		}
+		return nil, fmt.Errorf("failed to read secret file: %w", err)
+	}
+
+	plain, err := v.Decrypt(enc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt secret file: %w", err)
+	}
+
+	sf := &models.SecretFile{}
+	if _, err := toml.Decode(string(plain), sf); err != nil {
+		return nil, fmt.Errorf("failed to decode secret file: %w", err)
+	}
+	if sf.Versions == nil {
+		sf.Versions = make(map[string]models.SecretVersion)
+	}
+	return sf, nil
+}
+
+// SaveSecretFile encrypts and writes a per-secret TOML file to disk.
+func (v *Vault) SaveSecretFile(sf *models.SecretFile) error {
+	if err := os.MkdirAll(v.SecretsDir(), 0755); err != nil {
+		return fmt.Errorf("failed to create secrets directory: %w", err)
+	}
+
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(sf); err != nil {
+		return fmt.Errorf("failed to encode secret file: %w", err)
+	}
+
+	enc, err := v.Encrypt(buf.Bytes())
+	if err != nil {
+		return fmt.Errorf("failed to encrypt secret file: %w", err)
+	}
+
+	path := v.SecretFilePath(sf.Name)
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, enc, 0600); err != nil {
+		return fmt.Errorf("failed to write secret file: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		_ = os.Remove(tmp)
+		return fmt.Errorf("failed to commit secret file: %w", err)
+	}
+	return nil
+}
+
+// DeleteSecretFile removes a per-secret TOML file from disk.
+func (v *Vault) DeleteSecretFile(name string) error {
+	path := v.SecretFilePath(name)
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to delete secret file: %w", err)
+	}
+	return nil
+}
+
+// UpdateSecretIndex rebuilds the lightweight secret index in VaultState
+// from the actual per-secret files on disk. Call this after any secret
+// mutation (set, rotate, rollback, delete, rename) so the index stays
+// in sync with the files.
+func (v *Vault) UpdateSecretIndex(state *models.VaultState) error {
+	state.Secrets = make(map[string]models.SecretIndex)
+	names, err := v.ListSecretNames()
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		sf, err := v.LoadSecretFile(name)
+		if err != nil {
+			continue // skip unreadable files
+		}
+		updatedAt := sf.CreatedAt
+		if ver, ok := sf.Versions[sf.Latest]; ok {
+			updatedAt = ver.CreatedAt
+		}
+		state.Secrets[name] = models.SecretIndex{
+			Latest:    sf.Latest,
+			Versions:  len(sf.Versions),
+			UpdatedAt: updatedAt,
+		}
+	}
+	return nil
+}
+
+// ListSecretNames returns all secret names by listing the secrets directory.
+func (v *Vault) ListSecretNames() ([]string, error) {
+	entries, err := os.ReadDir(v.SecretsDir())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to list secrets: %w", err)
+	}
+
+	var names []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := entry.Name()
+		if strings.HasSuffix(name, ".toml.age") {
+			names = append(names, strings.TrimSuffix(name, ".toml.age"))
+		}
+	}
+	return names, nil
 }
 
 // StoreFile encrypts and writes a file into the vault layout.

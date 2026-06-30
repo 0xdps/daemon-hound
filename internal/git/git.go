@@ -290,3 +290,153 @@ func (c *Client) StageFile(filename string, content []byte) error {
 	}
 	return nil
 }
+
+// SetMergeDriver configures the git merge driver for this repository.
+func (c *Client) SetMergeDriver(name, driverCmd string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "merge."+name+".driver", driverCmd)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config merge driver failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// SetMergeDriverName sets the human-readable name for a merge driver.
+func (c *Client) SetMergeDriverName(name, displayName string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "merge."+name+".name", displayName)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config merge driver name failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// GetMergeDriver returns the configured merge driver command for the given name.
+// Returns empty string if not configured.
+func (c *Client) GetMergeDriver(name string) (string, error) {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "merge."+name+".driver")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", nil // not configured
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// HasGitAttributes reports whether a .gitattributes file exists in the vault.
+func (c *Client) HasGitAttributes() bool {
+	_, err := os.Stat(filepath.Join(c.vaultPath, ".gitattributes"))
+	return err == nil
+}
+
+// WriteGitAttributes creates or appends to .gitattributes in the vault.
+func (c *Client) WriteGitAttributes(content string) error {
+	path := filepath.Join(c.vaultPath, ".gitattributes")
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("open .gitattributes: %w", err)
+	}
+	defer f.Close()
+	if _, err := f.WriteString(content); err != nil {
+		return fmt.Errorf("write .gitattributes: %w", err)
+	}
+	return nil
+}
+
+// ReadGitAttributes returns the contents of .gitattributes, or empty if missing.
+func (c *Client) ReadGitAttributes() (string, error) {
+	path := filepath.Join(c.vaultPath, ".gitattributes")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("read .gitattributes: %w", err)
+	}
+	return string(data), nil
+}
+
+// SetDiffDriverName sets the human-readable name for a diff driver.
+func (c *Client) SetDiffDriverName(name, displayName string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "diff."+name+".name", displayName)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config diff driver name failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// SetDiffTextconv sets the textconv command for a diff driver.
+func (c *Client) SetDiffTextconv(name, command string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "diff."+name+".textconv", command)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config diff textconv failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// GetDiffDriver returns the configured diff textconv for the given name.
+func (c *Client) GetDiffDriver(name string) (string, error) {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "diff."+name+".textconv")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", nil // not configured
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// SetFilterName sets the human-readable name for a filter.
+func (c *Client) SetFilterName(name, displayName string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "filter."+name+".name", displayName)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config filter name failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// SetFilterClean sets the clean command for a filter.
+func (c *Client) SetFilterClean(name, command string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "filter."+name+".clean", command)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config filter clean failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// SetFilterSmudge sets the smudge command for a filter.
+func (c *Client) SetFilterSmudge(name, command string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "filter."+name+".smudge", command)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config filter smudge failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// GetFilterClean returns the configured clean command for the given filter name.
+func (c *Client) GetFilterClean(name string) (string, error) {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "filter."+name+".clean")
+	out, err := cmd.Output()
+	if err != nil {
+		return "", nil // not configured
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
+// SetRerereEnabled enables or disables git rerere in the repository.
+func (c *Client) SetRerereEnabled(enabled bool) error {
+	val := "false"
+	if enabled {
+		val = "true"
+	}
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "rerere.enabled", val)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git config rerere.enabled failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// GetRerereEnabled returns whether rerere is enabled in the repository.
+func (c *Client) GetRerereEnabled() (bool, error) {
+	cmd := exec.Command("git", "-C", c.vaultPath, "config", "--bool", "rerere.enabled")
+	out, err := cmd.Output()
+	if err != nil {
+		return false, nil // not configured = disabled
+	}
+	return strings.TrimSpace(string(out)) == "true", nil
+}

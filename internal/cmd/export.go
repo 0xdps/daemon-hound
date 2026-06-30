@@ -100,21 +100,39 @@ func runExport(cmd *cobra.Command, args []string) error {
 
 	// Export secrets.
 	type secretExport struct {
-		Name  string             `json:"name"`
-		Value string             `json:"value"`
-		Refs  []models.SecretRef `json:"refs,omitempty"`
+		Name     string             `json:"name"`
+		Latest   string             `json:"latest"`
+		Versions map[string]string  `json:"versions"` // version -> reason
+		Value    string             `json:"value"`
+		Refs     []models.SecretRef `json:"refs,omitempty"`
 	}
 	var secrets []secretExport
-	for name, secret := range state.Secrets {
-		val, err := vault.Decrypt(secret.Value)
+
+	names, err := vault.ListSecretNames()
+	if err != nil {
+		return fmt.Errorf("failed to list secrets: %w", err)
+	}
+	for _, name := range names {
+		sf, err := vault.LoadSecretFile(name)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "  error loading secret %s: %v\n", name, err)
+			continue
+		}
+		val, err := getLatestValue(vault, sf)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "  error decrypting secret %s: %v\n", name, err)
 			continue
 		}
+		versions := make(map[string]string)
+		for v, ver := range sf.Versions {
+			versions[v] = ver.Reason
+		}
 		secrets = append(secrets, secretExport{
-			Name:  name,
-			Value: string(val),
-			Refs:  secret.Refs,
+			Name:     name,
+			Latest:   sf.Latest,
+			Versions: versions,
+			Value:    string(val),
+			Refs:     sf.Refs,
 		})
 		fmt.Printf("  exported secret: %s\n", name)
 	}

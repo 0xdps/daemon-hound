@@ -45,15 +45,15 @@ type TrackedFile struct {
 type VaultState struct {
 	Version string                 `toml:"version"`
 	Files   map[string]TrackedFile `toml:"files"`   // key: "namespace:relPath"
-	Secrets map[string]Secret      `toml:"secrets"` // key: secret name
+	Secrets map[string]SecretIndex `toml:"secrets"` // key: secret name — lightweight index
 }
 
-// Secret is a named secret with its value encrypted via age.
-type Secret struct {
-	Name      string      `toml:"name"`
-	Value     []byte      `toml:"value"` // age-encrypted value
-	Refs      []SecretRef `toml:"refs"`  // where this secret is mapped
-	UpdatedAt time.Time   `toml:"updated_at"`
+// SecretIndex is a lightweight pointer to a per-secret file.
+// The actual values live in vault/secrets/<name>.toml.age.
+type SecretIndex struct {
+	Latest    string    `toml:"latest"`
+	Versions  int       `toml:"versions"`
+	UpdatedAt time.Time `toml:"updated_at"`
 }
 
 // SecretRef maps a secret to a specific file and env-var key within a namespace.
@@ -61,6 +61,41 @@ type SecretRef struct {
 	Namespace string `toml:"namespace"`
 	File      string `toml:"file"` // relative path inside namespace
 	Key       string `toml:"key"`  // env var name
+}
+
+// SecretFile is the per-secret encrypted TOML document stored at
+// vault/secrets/<name>.toml.age. It holds all versions, metadata, and refs.
+type SecretFile struct {
+	Name      string                   `toml:"name"`
+	CreatedBy string                   `toml:"created_by"`
+	CreatedAt time.Time                `toml:"created_at"`
+	Latest    string                   `toml:"latest"`
+	Versions  map[string]SecretVersion `toml:"versions"`
+	Refs      []SecretRef              `toml:"refs"`
+}
+
+// SecretVersion is an immutable snapshot of a secret value.
+type SecretVersion struct {
+	CreatedAt time.Time `toml:"created_at"`
+	Reason    string    `toml:"reason"`
+	Value     []byte    `toml:"value"` // age-encrypted value
+}
+
+// LegacySecret is the old inline secret format from VaultState.Secrets.
+// Kept for migration only.
+type LegacySecret struct {
+	Name      string      `toml:"name"`
+	Value     []byte      `toml:"value"`
+	Refs      []SecretRef `toml:"refs"`
+	UpdatedAt time.Time   `toml:"updated_at"`
+}
+
+// LegacyVaultState is used to detect and migrate old state files that
+// contain secrets inline.
+type LegacyVaultState struct {
+	Version string                  `toml:"version"`
+	Files   map[string]TrackedFile  `toml:"files"`
+	Secrets map[string]LegacySecret `toml:"secrets"`
 }
 
 // DirtyStatus describes the local state of a tracked file relative to the vault.
