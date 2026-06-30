@@ -1,0 +1,84 @@
+internal/cmd/helpers.go
+  s_99e13b7428c3b7::t_051a15f99c7fe0 1-41
+internal/merge/state.go
+  s_99e13b7428c3b7::t_d853555f3dd8d6 149,157
+  s_99e13b7428c3b7::t_9b3c88b101150f 51,60,64,104-105
+  s_99e13b7428c3b7::t_f49bdbc63b922e 13-17
+internal/merge/secret.go
+  s_99e13b7428c3b7::t_2650668ffbb5c1 1-201
+internal/cmd/diff.go
+  s_99e13b7428c3b7::t_cf976510e8bd53 1-158
+internal/cmd/filter.go
+  s_99e13b7428c3b7::t_45b6c40d5cc354 1-96
+internal/merge/driver.go
+  s_99e13b7428c3b7::t_b4c69879acd20d 34-39,44-56
+  s_99e13b7428c3b7::t_48a0241987bb4a 57-58
+internal/cmd/git.go
+  s_99e13b7428c3b7::t_3a42271e9d8a06 1-285,287-423
+  s_99e13b7428c3b7::t_d333a07004271b 286
+internal/cmd/init.go
+  s_99e13b7428c3b7::t_4d4ae92c1d8bb9 157,160-161,179,190,199-200,204,211
+  s_99e13b7428c3b7::t_995ce097d95a10 156,158-159,180-189,191-198,201-203,205-210
+  s_99e13b7428c3b7::t_68520abf008a22 212-213
+internal/cmd/export.go
+  s_99e13b7428c3b7::t_3b7ae84d4c9120 103-107,110-121,126-129,131-135
+internal/models/models.go
+  s_99e13b7428c3b7::t_14f77518a19bbb 66-99
+  s_99e13b7428c3b7::t_1001c31a58dce3 48,51-56
+  s_99e13b7428c3b7::t_fef24f810bfab0 100
+internal/cmd/secret.go
+  s_99e13b7428c3b7::t_c7975cc2721597 238-244,265,333-334,336,342-343,399,525-530,583-591,647-656
+  h_95aea6b4aa8772 4,15,23,29-32,38,40-45,90,98-141,152-155,159-186,212-226,228-237,251-256,258,260,262,266-268,270-271,277,279,290,295-297,300,318-320,322-323,327,335,337,385-386,390,392,398,400-401,404,434-435,474-476,478,480,490-491,512-513,516,519-524,541-582,592-646,657-768
+internal/storage/storage.go
+  s_99e13b7428c3b7::t_02b84ef5e18b46 84-93
+  s_99e13b7428c3b7::t_a41835adf7a764 312-339,361
+  s_99e13b7428c3b7::t_4ac0175b239359 9
+  s_99e13b7428c3b7::t_0810b62a0b4dda 108,145,153,180,184-191
+  s_99e13b7428c3b7::t_8163a1e56a4d81 102-103,128-144,158-179,181-183,192-199,249-311,340-360
+  s_99e13b7428c3b7::t_336eb77950f94a 362
+internal/cmd/doctor.go
+  s_99e13b7428c3b7::t_cf466f6b58fd67 118-155,164,167,171-224,229,232,248,256,270
+  s_99e13b7428c3b7::t_4a1451a79b9c6c 8
+  s_99e13b7428c3b7::t_fdc96d28c0b2b2 26
+  s_99e13b7428c3b7::t_6c14dad71cca66 27-32
+  s_99e13b7428c3b7::t_88bbe916792353 100-117,156-163,165-166,168-170,225-228,230-231
+internal/daemon/runner.go
+  s_99e13b7428c3b7::t_73c5c3c2b35651 72-76,86
+  s_99e13b7428c3b7::t_3c6ba0d55efd56 306-311,324-329,331-333,337-339,341,349-350
+  s_99e13b7428c3b7::t_d9ed82c81febf8 243,246-254,256
+  s_99e13b7428c3b7::t_10fa6dea3712b7 235
+internal/git/git.go
+  s_99e13b7428c3b7::t_f8010a21d52383 355-442
+  s_99e13b7428c3b7::t_7297217ceb552e 293-354
+internal/sync/sync.go
+  s_99e13b7428c3b7::t_a699a0ef5cf434 55,415-461
+  s_99e13b7428c3b7::t_afa57af305c91d 114-126
+  s_99e13b7428c3b7::t_80610b461d5358 10,24,44,48-53
+  s_99e13b7428c3b7::t_f84517cf2de8bc 285-292
+  s_99e13b7428c3b7::t_601f031f29e66e 54
+  s_99e13b7428c3b7::t_4255be9d149f9d 56
+internal/cmd/merge.go
+  s_99e13b7428c3b7::t_57c16cc7c1f808 1-152,154,156-158
+  s_99e13b7428c3b7::t_10af6a0ee63f58 153,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "88eac62e52d8832074236fd348e57464738ffbf0",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_99e13b7428c3b7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3f4e086a-b54f-4356-8ea5-f62e303cb268",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
