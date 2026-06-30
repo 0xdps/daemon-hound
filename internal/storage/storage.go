@@ -81,6 +81,11 @@ func (v *Vault) VaultStatePath() string {
 	return filepath.Join(v.path, "state.toml.age")
 }
 
+// Path returns the vault root directory.
+func (v *Vault) Path() string {
+	return v.path
+}
+
 // SecretsDir returns the path to the secrets subdirectory.
 func (v *Vault) SecretsDir() string {
 	return filepath.Join(v.path, "secrets")

@@ -30,6 +30,77 @@ func Clone(remoteURL, vaultPath string) error {
 	return nil
 }
 
+// CloneSparse clones a remote repository with blob:none filter and sparse checkout.
+// Only the specified paths are checked out; everything else stays absent.
+func CloneSparse(remoteURL, vaultPath string, paths []string) error {
+	if err := os.MkdirAll(filepath.Dir(vaultPath), 0755); err != nil {
+		return fmt.Errorf("failed to create vault parent directory: %w", err)
+	}
+	cmd := exec.Command("git", "clone", "--filter=blob:none", "--sparse", remoteURL, vaultPath)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git sparse clone failed: %w\n%s", err, string(out))
+	}
+	if len(paths) > 0 {
+		gc := NewClient(vaultPath)
+		if err := gc.SparseCheckoutSet(paths...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SparseCheckoutSet sets the sparse-checkout paths, replacing any existing ones.
+func (c *Client) SparseCheckoutSet(paths ...string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "set")
+	cmd.Args = append(cmd.Args, paths...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git sparse-checkout set failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// SparseCheckoutAdd adds paths to the existing sparse-checkout set.
+func (c *Client) SparseCheckoutAdd(paths ...string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "add")
+	cmd.Args = append(cmd.Args, paths...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git sparse-checkout add failed: %w\n%s", err, string(out))
+	}
+	return nil
+}
+
+// PullFile fetches a single file from the remote on demand using sparse-checkout.
+// The file path must be relative to the repository root.
+func (c *Client) PullFile(filePath string) error {
+	// Add to sparse-checkout — this triggers a fetch of the file content
+	if err := c.SparseCheckoutAdd(filePath); err != nil {
+		return err
+	}
+	// Ensure the file is actually present
+	fullPath := filepath.Join(c.vaultPath, filePath)
+	if _, err := os.Stat(fullPath); err != nil {
+		return fmt.Errorf("file not available after sparse-checkout: %s", filePath)
+	}
+	return nil
+}
+
+// SparseCheckoutList returns the currently checked-out sparse paths.
+func (c *Client) SparseCheckoutList() ([]string, error) {
+	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "list")
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git sparse-checkout list failed: %w", err)
+	}
+	var paths []string
+	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			paths = append(paths, line)
+		}
+	}
+	return paths, nil
+}
+
 // Init initializes a new git repository at the vault path.
 func Init(vaultPath string) error {
 	if err := os.MkdirAll(vaultPath, 0755); err != nil {

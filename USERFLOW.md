@@ -182,6 +182,64 @@ dhd discover ~/work --output json   # machine-readable output
 
 ---
 
+## Flow 5b: Lightweight Vault Access (Clone and Read)
+
+You need to access vault contents on a machine without full DaemonHound initialization — no `~/.dh/` directory, no daemon, no tracked file bindings. This is useful for CI pipelines, temporary environments, or quick secret retrieval.
+
+### Clone the vault (empty, index-only)
+
+```bash
+dhd clone git@github.com:you/my-vault.git
+# → Cloned to ./my-vault/
+# → Working tree contains only state.toml.age (the vault index)
+```
+
+The clone uses Git partial clone with `--filter=blob:none` so only the index downloads initially. No file contents are fetched yet.
+
+Options:
+- `--directory <dir>` — clone into a specific directory instead of deriving from the repo name
+- `--identity <path>` — use an existing age identity file instead of generating one
+- `--namespace <ns>` — pre-fetch a namespace's tracked files (optional)
+- `--secret <name>` — pre-fetch a specific secret file (optional)
+
+### Read files on demand
+
+```bash
+cd my-vault
+
+# Read a tracked file — pulled automatically on first access
+dhd read github.com/you/pingpong-api:.env.local
+# → Pulling sync/github.com/you/pingpong-api/.env.local.age...
+# → (decrypted content printed to stdout)
+
+# Read a secret — pulled automatically on first access
+dhd read secret:openai-key
+# → Pulling secrets/openai-key.toml.age...
+# → sk-proj-xxxxxxxxxxxx
+```
+
+Files and secrets are fetched lazily via `git sparse-checkout add`, which triggers a network fetch only for the requested path. Subsequent reads use the cached local copy.
+
+### Read a specific secret version
+
+```bash
+dhd read secret:openai-key@v2
+# → (version 2 value printed)
+```
+
+### How it differs from `dhd init` + `dhd sync`
+
+| Aspect | `dhd init` + `dhd sync` | `dhd clone` + `dhd read` |
+|--------|--------------------------|--------------------------|
+| Config directory | Creates `~/.dh/` | None |
+| Daemon | Installed and running | None |
+| File bindings | Restores files to project directories | Prints to stdout |
+| Machine identity | Generates machine UUID | No machine UUID |
+| Backup mode | Supported | Not supported |
+| Use case | Daily development machine | CI, temporary access, quick reads |
+
+---
+
 ## Flow 6: Secret Management
 
 ### Store a secret
@@ -434,6 +492,9 @@ Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/renam
 | Sync one namespace only           | `dhd sync --namespace <ns>`                 |
 | Set up a new machine (one repo)   | `dhd init` then `dhd sync` in repo dir       |
 | Set up a new machine (all repos)  | `dhd init` then `dhd discover ~/`            |
+| Lightweight vault clone           | `dhd clone <git-url>`                      |
+| Read a file without init          | `dhd read <namespace>:<relPath>`           |
+| Read a secret without init        | `dhd read secret:<name>`                    |
 | Check sync status                 | `dhd status`                                |
 | JSON status (scripting)           | `dhd status --output json`                  |
 | Store a secret                    | `dhd secret set <key>`                      |
