@@ -30,75 +30,51 @@ func Clone(remoteURL, vaultPath string) error {
 	return nil
 }
 
-// CloneSparse clones a remote repository with blob:none filter and sparse checkout.
-// Only the specified paths are checked out; everything else stays absent.
+// CloneSparse clones a remote repository with blob:none filter and checks out
+// only the specified paths. Everything else stays absent and is fetched lazily
+// on demand via PullFile.
+//
+// Uses 'git checkout HEAD -- <path>' instead of sparse-checkout because
+// sparse-checkout set + checkout HEAD with --filter=blob:none fetches the
+// entire root tree object and may materialize all blobs.
 func CloneSparse(remoteURL, vaultPath string, paths []string) error {
 	if err := os.MkdirAll(filepath.Dir(vaultPath), 0755); err != nil {
 		return fmt.Errorf("failed to create vault parent directory: %w", err)
 	}
-	cmd := exec.Command("git", "clone", "--filter=blob:none", "--sparse", remoteURL, vaultPath)
+
+	// Clone with blob:none + no-checkout — only git metadata downloads.
+	// No file content is fetched yet.
+	cmd := exec.Command("git", "clone", "--filter=blob:none", "--no-checkout", remoteURL, vaultPath)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git sparse clone failed: %w\n%s", err, string(out))
 	}
-	if len(paths) > 0 {
-		gc := NewClient(vaultPath)
-		if err := gc.SparseCheckoutSet(paths...); err != nil {
-			return err
-		}
+
+	// Always include state.toml.age so the vault index is available.
+	checkoutPaths := append([]string{"state.toml.age"}, paths...)
+
+	// Checkout exactly those paths. With --filter=blob:none, Git fetches only
+	// the blobs for these specific files — nothing else materializes.
+	checkoutCmd := exec.Command("git", "-C", vaultPath, "checkout", "HEAD", "--")
+	checkoutCmd.Args = append(checkoutCmd.Args, checkoutPaths...)
+	if out, err := checkoutCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout failed: %w\n%s", err, string(out))
 	}
+
 	return nil
 }
 
-// SparseCheckoutSet sets the sparse-checkout paths, replacing any existing ones.
-func (c *Client) SparseCheckoutSet(paths ...string) error {
-	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "set")
-	cmd.Args = append(cmd.Args, paths...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("git sparse-checkout set failed: %w\n%s", err, string(out))
-	}
-	return nil
-}
-
-// SparseCheckoutAdd adds paths to the existing sparse-checkout set.
-func (c *Client) SparseCheckoutAdd(paths ...string) error {
-	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "add")
-	cmd.Args = append(cmd.Args, paths...)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("git sparse-checkout add failed: %w\n%s", err, string(out))
-	}
-	return nil
-}
-
-// PullFile fetches a single file from the remote on demand using sparse-checkout.
+// PullFile fetches a single file from the remote on demand.
+// Uses 'git checkout HEAD -- <path>' to fetch exactly one blob from a partial
+// clone, without materializing sibling files (unlike sparse-checkout add which
+// fetches the entire parent tree and may materialize all blobs in that tree).
+//
 // The file path must be relative to the repository root.
 func (c *Client) PullFile(filePath string) error {
-	// Add to sparse-checkout — this triggers a fetch of the file content
-	if err := c.SparseCheckoutAdd(filePath); err != nil {
-		return err
-	}
-	// Ensure the file is actually present
-	fullPath := filepath.Join(c.vaultPath, filePath)
-	if _, err := os.Stat(fullPath); err != nil {
-		return fmt.Errorf("file not available after sparse-checkout: %s", filePath)
+	cmd := exec.Command("git", "-C", c.vaultPath, "checkout", "HEAD", "--", filePath)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout %s failed: %w\n%s", filePath, err, string(out))
 	}
 	return nil
-}
-
-// SparseCheckoutList returns the currently checked-out sparse paths.
-func (c *Client) SparseCheckoutList() ([]string, error) {
-	cmd := exec.Command("git", "-C", c.vaultPath, "sparse-checkout", "list")
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("git sparse-checkout list failed: %w", err)
-	}
-	var paths []string
-	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			paths = append(paths, line)
-		}
-	}
-	return paths, nil
 }
 
 // Init initializes a new git repository at the vault path.
@@ -205,6 +181,41 @@ func (c *Client) EnsureGitDir() error {
 func (c *Client) IsInMerge() bool {
 	_, err := os.Stat(filepath.Join(c.vaultPath, ".git", "MERGE_HEAD"))
 	return err == nil
+}
+
+// VaultPath returns the path this client operates on.
+func (c *Client) VaultPath() string {
+	return c.vaultPath
+}
+
+// CheckoutTheirs resolves a single conflicted file by taking the remote (theirs)
+// version. Unlike ResolveConflictsRemote which touches all files, this is scoped
+// to one path so successfully smart-merged files are not overwritten.
+func (c *Client) CheckoutTheirs(filePath string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "checkout", "--theirs", "--", filePath)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout --theirs %s failed: %w\n%s", filePath, err, string(out))
+	}
+	return nil
+}
+
+// CheckoutOurs resolves a single conflicted file by keeping the local (ours)
+// version. Scoped to one path so other files are not affected.
+func (c *Client) CheckoutOurs(filePath string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "checkout", "--ours", "--", filePath)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git checkout --ours %s failed: %w\n%s", filePath, err, string(out))
+	}
+	return nil
+}
+
+// StageOnly stages a single file (git add <path>) without touching any other files.
+func (c *Client) StageOnly(filePath string) error {
+	cmd := exec.Command("git", "-C", c.vaultPath, "add", "--", filePath)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("git add %s failed: %w\n%s", filePath, err, string(out))
+	}
+	return nil
 }
 
 // AbortMerge aborts an in-progress merge, restoring the working tree to the

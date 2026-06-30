@@ -5,7 +5,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/conflicts"
+	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -136,20 +138,39 @@ var conflictsResolveCmd = &cobra.Command{
 			return nil
 		}
 
-		// Mark as resolved
+		// Apply the resolution immediately in git.
+		gc := git.NewClient(config.VaultPath())
+		if gc.IsInMerge() {
+			switch strategy {
+			case "local":
+				if err := gc.CheckoutOurs(filePath); err != nil {
+					return fmt.Errorf("apply local resolution: %w", err)
+				}
+			case "remote":
+				if err := gc.CheckoutTheirs(filePath); err != nil {
+					return fmt.Errorf("apply remote resolution: %w", err)
+				}
+			}
+			if err := gc.StageOnly(filePath); err != nil {
+				return fmt.Errorf("stage resolved file: %w", err)
+			}
+			if err := gc.CommitAll(fmt.Sprintf("daemon-hound: resolve conflict in %s [%s]", filePath, strategy)); err != nil {
+				return fmt.Errorf("commit resolution: %w", err)
+			}
+			fmt.Printf("✓ Applied '%s' resolution and committed\n", strategy)
+		} else {
+			// Not in a merge — the vault is clean, just record the preference.
+			fmt.Printf("✓ Conflict preference recorded as '%s'\n", strategy)
+			fmt.Println("  (No active merge — preference will be applied on next conflict.")
+		}
+
+		// Mark as resolved in the store.
 		now := time.Now()
 		conflict.ResolvedAt = &now
 		conflict.ResolutionStrategy = strategy
-
 		if err := store.Add(conflict); err != nil {
 			return fmt.Errorf("failed to save resolution: %w", err)
 		}
-
-		fmt.Printf("✓ Conflict resolved with '%s' strategy\n", strategy)
-
-		// Note: Actual git resolution would happen in daemon next sync
-		fmt.Println("\nNote: The daemon will apply this resolution on the next sync cycle.")
-		fmt.Println("To re-sync immediately, run: dhd sync")
 
 		return nil
 	},

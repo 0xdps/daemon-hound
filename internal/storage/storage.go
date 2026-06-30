@@ -102,10 +102,11 @@ func (v *Vault) legacyStatePath() string {
 }
 
 // LoadState reads and decrypts the vault state from disk.
-// Falls back to the legacy unencrypted state.toml for seamless migration.
+// Falls back to the legacy unencrypted state.toml for seamless reading.
 // Returns a fresh state if neither file is found.
-// If the state contains inline secrets (legacy format), they are automatically
-// migrated to per-secret files.
+//
+// LoadState does NOT migrate legacy secrets. Call MigrateIfNeeded first
+// when running in a context that can commit and push (i.e. the CLI commands).
 func (v *Vault) LoadState() (*models.VaultState, error) {
 	state := &models.VaultState{
 		Version: "1",
@@ -123,31 +124,16 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 		}
 		data = plain
 	} else if plain, legacyErr := os.ReadFile(v.legacyStatePath()); legacyErr == nil {
-		// Legacy unencrypted state.toml — will be migrated on next SaveState.
+		// Legacy unencrypted state.toml — readable as-is.
 		data = plain
 	} else {
 		// No state file yet — return empty state.
 		return state, nil
 	}
 
-	// Try legacy format first (may contain inline secrets).
-	var legacyState models.LegacyVaultState
-	legacyState.Files = make(map[string]models.TrackedFile)
-	legacyState.Secrets = make(map[string]models.LegacySecret)
-	if _, err := toml.Decode(string(data), &legacyState); err != nil {
-		return nil, fmt.Errorf("failed to decode vault state: %w", err)
-	}
-
-	// If legacy secrets exist, migrate them to per-secret files.
-	if len(legacyState.Secrets) > 0 {
-		if err := v.migrateLegacySecrets(&legacyState); err != nil {
-			return nil, fmt.Errorf("failed to migrate legacy secrets: %w", err)
-		}
-		// Re-read the state after migration (now in new format without secrets).
-		return v.LoadState()
-	}
-
-	// New format: lightweight secret index.
+	// Decode as new format. Legacy format fields (value, refs inline) are simply
+	// ignored by the TOML decoder when missing from VaultState — the Secrets map
+	// will have SecretIndex entries with only the index fields populated.
 	if _, err := toml.Decode(string(data), state); err != nil {
 		return nil, fmt.Errorf("failed to decode vault state: %w", err)
 	}
@@ -160,9 +146,85 @@ func (v *Vault) LoadState() (*models.VaultState, error) {
 	return state, nil
 }
 
-// migrateLegacySecrets converts old inline secrets to per-secret files.
-func (v *Vault) migrateLegacySecrets(legacy *models.LegacyVaultState) error {
+// HasLegacySecrets reports whether the on-disk vault state contains inline
+// secrets (legacy format). Returns false if the state cannot be read.
+func (v *Vault) HasLegacySecrets() bool {
+	data, err := v.rawStateBytes()
+	if err != nil {
+		return false
+	}
+	var legacy models.LegacyVaultState
+	legacy.Secrets = make(map[string]models.LegacySecret)
+	if _, err := toml.Decode(string(data), &legacy); err != nil {
+		return false
+	}
+	for _, s := range legacy.Secrets {
+		if len(s.Value) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// rawStateBytes decrypts and returns the raw TOML bytes of the state file.
+func (v *Vault) rawStateBytes() ([]byte, error) {
+	if enc, err := os.ReadFile(v.VaultStatePath()); err == nil {
+		plain, decErr := v.Decrypt(enc)
+		if decErr != nil {
+			return nil, decErr
+		}
+		return plain, nil
+	}
+	if plain, err := os.ReadFile(v.legacyStatePath()); err == nil {
+		return plain, nil
+	}
+	return nil, fmt.Errorf("no state file found")
+}
+
+// MigrateIfNeeded checks whether the vault state is in legacy format and, if so,
+// migrates all inline secrets to per-secret files and rewrites state.toml.age.
+//
+// Migration is atomic in the sense that:
+//   - Per-secret files are written before state.toml.age is updated.
+//   - If a per-secret file already exists (from a previous partial migration),
+//     it is not overwritten — the existing file is kept as-is.
+//   - state.toml.age is only updated after ALL per-secret files are written.
+//
+// Returns (true, nil) if migration was performed, (false, nil) if not needed.
+func (v *Vault) MigrateIfNeeded() (bool, error) {
+	data, err := v.rawStateBytes()
+	if err != nil {
+		return false, nil // no state to migrate
+	}
+
+	var legacy models.LegacyVaultState
+	legacy.Files = make(map[string]models.TrackedFile)
+	legacy.Secrets = make(map[string]models.LegacySecret)
+	if _, err := toml.Decode(string(data), &legacy); err != nil {
+		return false, fmt.Errorf("decode state for migration: %w", err)
+	}
+
+	// Check if any secret has an inline value.
+	hasLegacy := false
+	for _, s := range legacy.Secrets {
+		if len(s.Value) > 0 {
+			hasLegacy = true
+			break
+		}
+	}
+	if !hasLegacy {
+		return false, nil
+	}
+
+	// Write per-secret files. Skip any that already exist (idempotent).
 	for name, secret := range legacy.Secrets {
+		if len(secret.Value) == 0 {
+			continue // no inline value — already migrated or empty
+		}
+		path := v.SecretFilePath(name)
+		if _, err := os.Stat(path); err == nil {
+			continue // already exists — skip to avoid overwriting
+		}
 		sf := &models.SecretFile{
 			Name:      name,
 			CreatedBy: "migrated",
@@ -172,21 +234,24 @@ func (v *Vault) migrateLegacySecrets(legacy *models.LegacyVaultState) error {
 				"v1": {
 					CreatedAt: secret.UpdatedAt,
 					Reason:    "Migrated from legacy storage",
-					Value:     secret.Value,
+					Value:     secret.Value, // already inner-encrypted
 				},
 			},
 			Refs: secret.Refs,
 		}
 		if err := v.SaveSecretFile(sf); err != nil {
-			return fmt.Errorf("migrate secret %s: %w", name, err)
+			return false, fmt.Errorf("migrate secret %s: %w", name, err)
 		}
 	}
 
-	// Write the state back with a lightweight secret index.
+	// All per-secret files written — now rewrite state.toml.age without inline secrets.
 	newState := &models.VaultState{
 		Version: legacy.Version,
 		Files:   legacy.Files,
 		Secrets: make(map[string]models.SecretIndex),
+	}
+	if newState.Files == nil {
+		newState.Files = make(map[string]models.TrackedFile)
 	}
 	for name, secret := range legacy.Secrets {
 		newState.Secrets[name] = models.SecretIndex{
@@ -196,10 +261,10 @@ func (v *Vault) migrateLegacySecrets(legacy *models.LegacyVaultState) error {
 		}
 	}
 	if err := v.SaveState(newState); err != nil {
-		return fmt.Errorf("save migrated state: %w", err)
+		return false, fmt.Errorf("save state after migration: %w", err)
 	}
 
-	return nil
+	return true, nil
 }
 
 // SaveState encrypts and writes the vault state to disk only when the content
@@ -340,6 +405,33 @@ func (v *Vault) UpdateSecretIndex(state *models.VaultState) error {
 		}
 	}
 	return nil
+}
+
+// ReadLegacySecret decrypts and returns the value of a secret stored inline in
+// state.toml.age (legacy format). Returns (nil, nil) if the secret is not found
+// in legacy format, or an error if decryption fails.
+func (v *Vault) ReadLegacySecret(name string) ([]byte, error) {
+	enc, err := os.ReadFile(v.VaultStatePath())
+	if err != nil {
+		return nil, fmt.Errorf("read vault state: %w", err)
+	}
+	plain, err := v.Decrypt(enc)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt vault state: %w", err)
+	}
+
+	// Decode as legacy format to get inline secret values.
+	var legacyState models.LegacyVaultState
+	legacyState.Secrets = make(map[string]models.LegacySecret)
+	if _, err := toml.Decode(string(plain), &legacyState); err != nil {
+		return nil, fmt.Errorf("decode vault state: %w", err)
+	}
+	s, ok := legacyState.Secrets[name]
+	if !ok || len(s.Value) == 0 {
+		return nil, nil // not in legacy format
+	}
+	// The value is age-encrypted; decrypt it.
+	return v.Decrypt(s.Value)
 }
 
 // ListSecretNames returns all secret names by listing the secrets directory.

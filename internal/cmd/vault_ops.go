@@ -11,11 +11,12 @@ import (
 
 // vaultCommitPush is the standard write pattern for all vault mutations:
 //  1. Pull the latest remote state (so we start from the freshest version)
-//  2. Load the decrypted state
-//  3. Apply the caller's mutation via fn
-//  4. Save (re-encrypt) the state
-//  5. Commit
-//  6. Push — if rejected because remote moved ahead, pull and retry once
+//  2. Migrate legacy inline secrets to per-secret files if needed (once, then commit+push)
+//  3. Load the decrypted state
+//  4. Apply the caller's mutation via fn
+//  5. Save (re-encrypt) the state
+//  6. Commit
+//  7. Push — if rejected because remote moved ahead, pull and retry once
 //
 // This prevents the "local changes would be overwritten" abort and the
 // "non-fast-forward rejected" push error that occur when the daemon or
@@ -27,7 +28,25 @@ func vaultCommitPush(gc *git.Client, vault *storage.Vault, commitMsg string, fn 
 		fmt.Fprintf(os.Stderr, "Warning: could not pull before write (offline?): %v\n", err)
 	}
 
-	// Step 2+3: load and mutate.
+	// Step 2: migrate legacy inline secrets if this vault hasn't been migrated yet.
+	// This writes per-secret files + updates state.toml.age, then commits and pushes
+	// the migration as a separate commit before proceeding with the actual mutation.
+	migrated, err := vault.MigrateIfNeeded()
+	if err != nil {
+		return fmt.Errorf("secret migration failed: %w", err)
+	}
+	if migrated {
+		fmt.Fprintln(os.Stderr, "→ Migrated inline secrets to per-secret files")
+		if err := gc.CommitAll("daemon-hound: migrate secrets to per-secret files"); err != nil {
+			return fmt.Errorf("commit migration: %w", err)
+		}
+		if err := gc.Push(); err != nil {
+			// Non-fatal — migration is on disk; it will be pushed with the next commit.
+			fmt.Fprintf(os.Stderr, "Warning: could not push migration (will retry on next operation): %v\n", err)
+		}
+	}
+
+	// Step 3+4: load and mutate.
 	state, err := vault.LoadState()
 	if err != nil {
 		return fmt.Errorf("failed to load vault state: %w", err)
@@ -36,17 +55,17 @@ func vaultCommitPush(gc *git.Client, vault *storage.Vault, commitMsg string, fn 
 		return err
 	}
 
-	// Step 4: save.
+	// Step 5: save.
 	if err := vault.SaveState(state); err != nil {
 		return fmt.Errorf("failed to save vault state: %w", err)
 	}
 
-	// Step 5: commit.
+	// Step 6: commit.
 	if err := gc.CommitAll(commitMsg); err != nil {
 		return fmt.Errorf("failed to commit: %w", err)
 	}
 
-	// Step 6: push with one pull-and-retry on non-fast-forward rejection.
+	// Step 7: push with one pull-and-retry on non-fast-forward rejection.
 	if err := gc.Push(); err != nil {
 		// Pull to integrate remote changes and retry.
 		if pullErr := gc.Pull(); pullErr != nil {

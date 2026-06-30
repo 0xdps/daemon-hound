@@ -11,12 +11,12 @@ import (
 type TextDriver struct{}
 
 func (d *TextDriver) CanHandle(filename string) bool {
-	// Match everything except known binary extensions
+	// Reject known binary extensions — they cannot be line-merged.
 	binary := []string{".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico",
 		".pdf", ".zip", ".tar", ".gz", ".exe", ".bin", ".so", ".dylib"}
 	for _, ext := range binary {
 		if strings.HasSuffix(filename, ext) {
-			return true // will fall through to binary (unsupported)
+			return false // binary file — let caller handle as Unsupported
 		}
 	}
 	return true // catch-all for text files

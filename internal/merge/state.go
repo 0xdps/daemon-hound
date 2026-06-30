@@ -12,18 +12,43 @@ import (
 // Machine A adding a file + Machine B adding a different file → auto-merges.
 // Both machines changing the SAME file → true conflict.
 //
-// Secrets are stored in separate per-secret files (secrets/<name>.toml.age)
-// and are merged by Git's standard file-level merge. This driver only
-// handles the Files map in state.toml.age.
-type StateDriver struct{}
+// When Encrypt/Decrypt are provided (injected via WithSecretDriver), the driver
+// handles encrypted state.toml.age bytes from the git driver path: it decrypts
+// all three versions before merging and re-encrypts the result.
+//
+// When Encrypt/Decrypt are nil (used in the in-process sync fallback path),
+// the driver expects plaintext TOML bytes (already decrypted by the caller).
+type StateDriver struct {
+	Encrypt func(plaintext []byte) ([]byte, error)
+	Decrypt func(ciphertext []byte) ([]byte, error)
+}
 
 func (d *StateDriver) CanHandle(filename string) bool {
 	return filename == "state.toml.age" || filename == "state.toml"
 }
 
 func (d *StateDriver) Merge(base, local, remote []byte) ([]byte, Result, error) {
-	var baseS, localS, remoteS models.VaultState
+	// If decrypt/encrypt are available, unwrap the encryption layer first.
+	isEncrypted := d.Decrypt != nil && d.Encrypt != nil
+	if isEncrypted {
+		var err error
+		if len(base) > 0 {
+			base, err = d.Decrypt(base)
+			if err != nil {
+				return nil, HasConflict, fmt.Errorf("decrypt base state: %w", err)
+			}
+		}
+		local, err = d.Decrypt(local)
+		if err != nil {
+			return nil, HasConflict, fmt.Errorf("decrypt local state: %w", err)
+		}
+		remote, err = d.Decrypt(remote)
+		if err != nil {
+			return nil, HasConflict, fmt.Errorf("decrypt remote state: %w", err)
+		}
+	}
 
+	var baseS, localS, remoteS models.VaultState
 	if err := decodeVaultState(base, &baseS); err != nil {
 		return nil, HasConflict, fmt.Errorf("decode base state: %w", err)
 	}
@@ -43,7 +68,16 @@ func (d *StateDriver) Merge(base, local, remote []byte) ([]byte, Result, error) 
 	if err := toml.NewEncoder(&buf).Encode(merged); err != nil {
 		return nil, HasConflict, fmt.Errorf("encode merged state: %w", err)
 	}
-	return buf.Bytes(), Merged, nil
+	plainResult := buf.Bytes()
+
+	if isEncrypted {
+		enc, err := d.Encrypt(plainResult)
+		if err != nil {
+			return nil, HasConflict, fmt.Errorf("re-encrypt merged state: %w", err)
+		}
+		return enc, Merged, nil
+	}
+	return plainResult, Merged, nil
 }
 
 func decodeVaultState(data []byte, s *models.VaultState) error {

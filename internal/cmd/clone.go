@@ -79,21 +79,14 @@ func runClone(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("resolve target directory: %w", err)
 	}
 
-	// Determine clone mode: full or sparse
-	sparsePaths := buildSparsePaths(cloneNamespaces, cloneSecrets)
-	isPartial := len(sparsePaths) > 0
+	// Clone with blob:none partial clone. Only the vault index downloads
+	// initially. All other files pull on demand via 'dhd read'.
+	initialPaths := buildInitialPaths(cloneNamespaces, cloneSecrets)
 
-	// Clone the repository
 	fmt.Fprintf(os.Stderr, "Cloning %s into %s...\n", remoteURL, absDir)
-	if isPartial {
-		fmt.Fprintln(os.Stderr, "  (partial clone — sparse checkout)")
-		if err := git.CloneSparse(remoteURL, absDir, sparsePaths); err != nil {
-			return fmt.Errorf("sparse clone failed: %w", err)
-		}
-	} else {
-		if err := git.Clone(remoteURL, absDir); err != nil {
-			return fmt.Errorf("clone failed: %w", err)
-		}
+	fmt.Fprintln(os.Stderr, "  (partial clone — on-demand fetch)")
+	if err := git.CloneSparse(remoteURL, absDir, initialPaths); err != nil {
+		return fmt.Errorf("clone failed: %w", err)
 	}
 	fmt.Fprintln(os.Stderr, "✓ Clone complete")
 
@@ -130,7 +123,9 @@ func runClone(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "✓ Identity saved to %s\n", identityPath)
 	}
 
-	// Verify the identity can decrypt the vault state
+	// Verify the identity can decrypt the vault state.
+	// Use a raw decrypt instead of vault.LoadState() to avoid triggering
+	// legacy secret migration, which would write all secret files to disk.
 	identityBytes, err := os.ReadFile(identityPath)
 	if err != nil {
 		return fmt.Errorf("read identity: %w", err)
@@ -140,8 +135,12 @@ func runClone(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("parse identity: %w", err)
 	}
 
+	enc, err := os.ReadFile(filepath.Join(absDir, "state.toml.age"))
+	if err != nil {
+		return fmt.Errorf("read vault state: %w", err)
+	}
 	vault := storage.NewVault(absDir, identity)
-	if _, err := vault.LoadState(); err != nil {
+	if _, err := vault.Decrypt(enc); err != nil {
 		return fmt.Errorf("cannot decrypt vault state — wrong identity? %w", err)
 	}
 	fmt.Fprintln(os.Stderr, "✓ Vault state decrypted successfully")
@@ -231,12 +230,11 @@ func openClonedVault(ctx *CloneContext) (*storage.Vault, error) {
 	return storage.NewVault(ctx.VaultPath, identity), nil
 }
 
-// buildSparsePaths converts namespace and secret flags into git sparse-checkout paths.
+// buildInitialPaths converts namespace and secret flags into git checkout paths.
 // Namespaces map to sync/ directories; secrets map to secrets/*.toml.age files.
-// Always includes state.toml.age so the vault index is available.
-func buildSparsePaths(namespaces, secrets []string) []string {
+// Note: CloneSparse always includes state.toml.age, so it's not needed here.
+func buildInitialPaths(namespaces, secrets []string) []string {
 	var paths []string
-	paths = append(paths, "state.toml.age")
 	for _, ns := range namespaces {
 		paths = append(paths, filepath.Join("sync", ns)+"/")
 	}

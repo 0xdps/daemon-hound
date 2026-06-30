@@ -121,14 +121,35 @@ func readSecret(vault *storage.Vault, arg string) error {
 		name = name[:idx]
 	}
 
-	// If secret file doesn't exist locally, pull it on demand
+	var value []byte
+
+	// Try per-secret file first (new format).
 	secretPath := filepath.Join("secrets", name+".toml.age")
 	fullPath := filepath.Join(vault.Path(), secretPath)
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+		// File not on disk — try pulling from git.
 		gc := git.NewClient(vault.Path())
 		fmt.Fprintf(os.Stderr, "Pulling %s...\n", secretPath)
-		if err := gc.PullFile(secretPath); err != nil {
-			return fmt.Errorf("pull secret: %w", err)
+		pullErr := gc.PullFile(secretPath)
+		if pullErr != nil {
+			// Per-secret file not in git. Fall back to legacy inline format:
+			// the secret value lives inside state.toml.age itself.
+			if version != "" {
+				return fmt.Errorf("versioned secrets require per-secret files (not available in legacy format)")
+			}
+			v, legacyErr := vault.ReadLegacySecret(name)
+			if legacyErr != nil {
+				return fmt.Errorf("read secret: %w", legacyErr)
+			}
+			if v == nil {
+				return fmt.Errorf("secret not found: %s", name)
+			}
+			value = v
+			os.Stdout.Write(value)
+			if len(value) > 0 && value[len(value)-1] != '\n' {
+				fmt.Println()
+			}
+			return nil
 		}
 	}
 
@@ -137,7 +158,6 @@ func readSecret(vault *storage.Vault, arg string) error {
 		return fmt.Errorf("load secret: %w", err)
 	}
 
-	var value []byte
 	if version != "" {
 		value, err = getVersionValue(vault, sf, version)
 		if err != nil {

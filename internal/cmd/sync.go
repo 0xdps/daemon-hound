@@ -5,7 +5,9 @@ import (
 
 	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
+	conflictspkg "github.com/0xdps/daemon-hound/internal/conflicts"
 	"github.com/0xdps/daemon-hound/internal/git"
+	mergeregistrypkg "github.com/0xdps/daemon-hound/internal/merge"
 	"github.com/0xdps/daemon-hound/internal/output"
 	"github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/spf13/cobra"
@@ -41,7 +43,19 @@ func runSync(cmd *cobra.Command, args []string) error {
 	}
 
 	gitClient := git.NewClient(config.VaultPath())
-	syncer := sync.NewSyncer(vault, tr, gitClient, cfg)
+
+	// Build merge registry with SecretDriver so encrypted files are decrypted
+	// before merging and re-encrypted after.
+	merger := mergeregistrypkg.NewRegistry().WithSecretDriver(vault.Encrypt, vault.Decrypt)
+
+	// Attach conflict store so true conflicts are recorded for `dhd conflicts list`.
+	cs, _ := conflictspkg.NewStore()
+
+	syncer := sync.NewSyncer(vault, tr, gitClient, cfg).
+		WithMerger(merger)
+	if cs != nil {
+		syncer = syncer.WithConflictStore(cs)
+	}
 	if syncNamespace != "" {
 		syncer = syncer.WithNamespaceFilter(syncNamespace)
 	}

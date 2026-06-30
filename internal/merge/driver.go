@@ -42,14 +42,18 @@ func NewRegistry() *Registry {
 }
 
 // WithSecretDriver returns a new Registry that includes SecretDriver with
-// the given encrypt/decrypt functions. Use this when a vault identity is available.
+// the given encrypt/decrypt functions, and also injects those functions into
+// StateDriver so it can handle encrypted state.toml.age bytes from the git
+// driver path. Use this when a vault identity is available.
 func (r *Registry) WithSecretDriver(encrypt, decrypt func([]byte) ([]byte, error)) *Registry {
 	copy := &Registry{
 		drivers: make([]Driver, len(r.drivers)+1),
 	}
-	// Insert SecretDriver right after StateDriver (index 1).
-	copy.drivers[0] = r.drivers[0] // StateDriver
+	// Replace StateDriver at index 0 with a decrypt-aware version.
+	copy.drivers[0] = &StateDriver{Encrypt: encrypt, Decrypt: decrypt}
+	// Insert SecretDriver at index 1.
 	copy.drivers[1] = &SecretDriver{Encrypt: encrypt, Decrypt: decrypt}
+	// Copy remaining drivers (EnvDriver, JSONDriver, CSVDriver, TextDriver).
 	for i := 1; i < len(r.drivers); i++ {
 		copy.drivers[i+1] = r.drivers[i]
 	}

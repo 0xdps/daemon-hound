@@ -1,11 +1,13 @@
 package sync
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"github.com/0xdps/daemon-hound/internal/conflicts"
 	"github.com/0xdps/daemon-hound/internal/git"
 	"github.com/0xdps/daemon-hound/internal/merge"
 	"github.com/0xdps/daemon-hound/internal/models"
@@ -22,6 +24,7 @@ type Syncer struct {
 	config          ConfigReader
 	namespaceFilter string // if non-empty, only sync this namespace
 	merger          *merge.Registry
+	conflictStore   *conflicts.Store // optional; records true conflicts for dhd conflicts list
 }
 
 // ConfigReader provides read/write access to local config needed by the syncer.
@@ -51,6 +54,14 @@ func NewSyncer(vault *storage.Vault, tracker *tracker.Tracker, gitClient *git.Cl
 func (s *Syncer) WithMerger(merger *merge.Registry) *Syncer {
 	copy := *s
 	copy.merger = merger
+	return &copy
+}
+
+// WithConflictStore attaches a conflict store so that true merge conflicts are
+// recorded for the user to review with `dhd conflicts list`.
+func (s *Syncer) WithConflictStore(cs *conflicts.Store) *Syncer {
+	copy := *s
+	copy.conflictStore = cs
 	return &copy
 }
 
@@ -413,49 +424,117 @@ func discoverRepoRootForNamespace(namespace string) (string, error) {
 	return match, nil
 }
 
-// resolveConflicts attempts smart merge for each conflicted file using the
-// configured merge registry. Files that merge cleanly are staged automatically.
-// Files with true conflicts fall back to ResolveConflictsRemote.
+// resolveConflicts attempts smart merge for each conflicted file.
+//
+// For encrypted vault files (.age), the bytes are decrypted before the merge
+// driver sees them and the result is re-encrypted before staging — so drivers
+// work on plaintext TOML/env/JSON, not binary ciphertext.
+//
+// Files that merge cleanly are staged individually. Files with true conflicts
+// are resolved file-by-file using 'git checkout --theirs <file>' so that
+// successfully merged files are never overwritten by a global --theirs.
+// True conflicts are also written to the conflict store for user review.
 func (s *Syncer) resolveConflicts() error {
 	conflictedFiles, err := s.git.GetConflictedFiles()
 	if err != nil {
 		return fmt.Errorf("failed to list conflicted files: %w", err)
 	}
 
-	var unresolved []string
 	for _, filePath := range conflictedFiles {
-		baseBytes, localBytes, remoteBytes, err := s.git.GetConflictVersions(filePath)
+		baseEnc, localEnc, remoteEnc, err := s.git.GetConflictVersions(filePath)
 		if err != nil {
-			unresolved = append(unresolved, filePath)
+			fmt.Fprintf(os.Stderr, "  ! could not read versions of %s — taking remote\n", filePath)
+			s.resolveOneRemote(filePath)
 			continue
 		}
 
-		merged, result, mergeErr := s.merger.Resolve(filePath, baseBytes, localBytes, remoteBytes)
-		if mergeErr != nil {
-			unresolved = append(unresolved, filePath)
-			continue
-		}
-
-		if result == merge.Merged {
-			if err := s.git.StageFile(filePath, merged); err != nil {
-				unresolved = append(unresolved, filePath)
+		// For encrypted files, decrypt before merging and re-encrypt after.
+		base, local, remote := baseEnc, localEnc, remoteEnc
+		isEncrypted := isAgeFile(filePath)
+		if isEncrypted {
+			base, err = s.vault.Decrypt(baseEnc)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  ! decrypt base %s failed — taking remote\n", filePath)
+				s.resolveOneRemote(filePath)
 				continue
 			}
-			fmt.Fprintf(os.Stderr, "  ✓ Smart-merged %s\n", filePath)
+			local, err = s.vault.Decrypt(localEnc)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  ! decrypt local %s failed — taking remote\n", filePath)
+				s.resolveOneRemote(filePath)
+				continue
+			}
+			remote, err = s.vault.Decrypt(remoteEnc)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  ! decrypt remote %s failed — taking remote\n", filePath)
+				s.resolveOneRemote(filePath)
+				continue
+			}
+		}
+
+		merged, result, mergeErr := s.merger.Resolve(filePath, base, local, remote)
+		if mergeErr != nil || result != merge.Merged {
+			// True conflict or unsupported — record for user, take remote.
+			if result == merge.HasConflict {
+				s.recordConflict(filePath, local, remote)
+			}
+			fmt.Fprintf(os.Stderr, "  ! conflict in %s — taking remote\n", filePath)
+			s.resolveOneRemote(filePath)
 			continue
 		}
 
-		// Unsupported or HasConflict — fall back to remote for this file.
-		unresolved = append(unresolved, filePath)
-	}
-
-	// For any files the smart merge couldn't handle, take remote.
-	if len(unresolved) > 0 {
-		fmt.Fprintf(os.Stderr, "  %d file(s) fell back to remote: %v\n", len(unresolved), unresolved)
-		if err := s.git.ResolveConflictsRemote(); err != nil {
-			return fmt.Errorf("fallback remote resolution failed: %w", err)
+		// Re-encrypt the merged plaintext before staging.
+		toStage := merged
+		if isEncrypted {
+			toStage, err = s.vault.Encrypt(merged)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "  ! re-encrypt %s failed — taking remote\n", filePath)
+				s.resolveOneRemote(filePath)
+				continue
+			}
 		}
+
+		if err := s.git.StageFile(filePath, toStage); err != nil {
+			fmt.Fprintf(os.Stderr, "  ! stage %s failed — taking remote\n", filePath)
+			s.resolveOneRemote(filePath)
+			continue
+		}
+		fmt.Fprintf(os.Stderr, "  ✓ Smart-merged %s\n", filePath)
 	}
 
 	return nil
+}
+
+// resolveOneRemote takes the remote (theirs) version of a single conflicted file.
+// Unlike ResolveConflictsRemote() (which runs `git checkout --theirs .` on ALL files),
+// this only touches the specified path — preserving any files already smart-merged.
+func (s *Syncer) resolveOneRemote(filePath string) {
+	cmd := fmt.Sprintf("git -C %q checkout --theirs -- %q", s.git.VaultPath(), filePath)
+	_ = cmd // executed via git client below
+	if err := s.git.CheckoutTheirs(filePath); err != nil {
+		fmt.Fprintf(os.Stderr, "  ! take-remote failed for %s: %v\n", filePath, err)
+	}
+	if err := s.git.StageOnly(filePath); err != nil {
+		fmt.Fprintf(os.Stderr, "  ! stage failed for %s: %v\n", filePath, err)
+	}
+}
+
+// recordConflict writes a true conflict to the conflict store if one is attached.
+func (s *Syncer) recordConflict(filePath string, local, remote []byte) {
+	if s.conflictStore == nil {
+		return
+	}
+	localHash := fmt.Sprintf("%x", sha256.Sum256(local))
+	remoteHash := fmt.Sprintf("%x", sha256.Sum256(remote))
+	_ = s.conflictStore.Add(&conflicts.Conflict{
+		FilePath:   filePath,
+		LocalHash:  localHash,
+		RemoteHash: remoteHash,
+		DetectedAt: time.Now(),
+	})
+}
+
+// isAgeFile reports whether the vault-relative path is an age-encrypted file.
+func isAgeFile(filePath string) bool {
+	return len(filePath) > 4 && filePath[len(filePath)-4:] == ".age"
 }
