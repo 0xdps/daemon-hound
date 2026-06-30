@@ -1,0 +1,56 @@
+internal/merge/driver.go
+  s_99e13b7428c3b7::t_7b1aa2d417415a 45-47,52-54,56
+internal/storage/storage.go
+  s_99e13b7428c3b7::t_ef4d7e9618d7e9 105,107-109,127,134-136,149-219,221-227,237,243,247,253-255,264,267
+  s_99e13b7428c3b7::t_2df50e87faccb8 410-436
+internal/git/git.go
+  s_99e13b7428c3b7::t_9d7ab69f55966a 66-70,73-75
+  s_99e13b7428c3b7::t_542232c2187460 186-190,211-220
+  s_99e13b7428c3b7::t_173aa3fc32249c 45,47,59
+  s_99e13b7428c3b7::t_42a3c21ab40bb2 44
+  s_99e13b7428c3b7::t_ef6f375bd41e6b 53,62
+  s_99e13b7428c3b7::t_eaddeebfaa5bb1 33-39,46,52,55-58,60
+  s_99e13b7428c3b7::t_433151e8961995 191-210
+internal/cmd/vault_ops.go
+  s_99e13b7428c3b7::t_ef4d7e9618d7e9 14-19,31-49,58,63,68
+internal/cmd/read.go
+  s_99e13b7428c3b7::t_2df50e87faccb8 124-126,130,133-152
+internal/merge/text.go
+  s_99e13b7428c3b7::t_7109feb64b0c57 14,19
+internal/cmd/conflicts.go
+  s_99e13b7428c3b7::t_ce616871a819d0 8,10,141-167
+internal/merge/state.go
+  s_99e13b7428c3b7::t_7b1aa2d417415a 15-24,31-49,51,71-80
+internal/cmd/clone.go
+  s_99e13b7428c3b7::t_afa14ba41e91e3 233,236
+  s_99e13b7428c3b7::t_e1fec4dc79b672 126-128,138-141,143
+  s_99e13b7428c3b7::t_0121282f039810 82-84,87-88
+  s_99e13b7428c3b7::t_3d088a7b1a807c 89
+  s_99e13b7428c3b7::t_b8e997b1679c23 235
+internal/cmd/sync.go
+  s_99e13b7428c3b7::t_542232c2187460 46-58
+  s_99e13b7428c3b7::t_fd75efc6c36186 8,10
+internal/sync/sync.go
+  s_99e13b7428c3b7::t_7109feb64b0c57 4,10,27,60-67,427-436,444,446-447,451-482,486-492,495-499,502-506,508-518,520,522-525,527-535,537-539
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.6",
+  "base_commit_sha": "987b9ef2e5ee2f4af0ddf389e62c52df7e0bb91d",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_99e13b7428c3b7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3f4e086a-b54f-4356-8ea5-f62e303cb268",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
