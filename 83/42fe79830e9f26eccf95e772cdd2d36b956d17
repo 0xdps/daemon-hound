@@ -1,0 +1,44 @@
+internal/storage/storage.go
+  s_99e13b7428c3b7::t_2a35987162c401 84-88
+USERFLOW.md
+  s_99e13b7428c3b7::t_4c11a1d91d3067 185-242
+  s_99e13b7428c3b7::t_d874a73f7d3859 495-497
+internal/cmd/clone.go
+  s_99e13b7428c3b7::t_04ead1e41aeb6c 137
+  s_99e13b7428c3b7::t_7cef9bb330bd6d 1-16,19-30,34-37,39,45-51,55-81,86-87,97-132,134-136,139-232
+  h_95aea6b4aa8772 52,133,138
+  s_99e13b7428c3b7::t_27a14178093ede 233-247
+  s_99e13b7428c3b7::t_f895248d52c3a5 17-18,31-33,40-44,53-54
+  s_99e13b7428c3b7::t_2a3c215377c31a 82-85,88-96
+  s_99e13b7428c3b7::t_dd7996ba54b1a1 38
+internal/cmd/read.go
+  s_99e13b7428c3b7::t_dcacf31290d5a4 124-134
+  s_99e13b7428c3b7::t_d95b03347f349e 6,9,84-94,96,98-101
+  s_99e13b7428c3b7::t_a5f0abd93e740a 1-5,7-8,11-83,102-123,135-158
+  s_99e13b7428c3b7::t_e5eb417f8e230e 10
+  s_99e13b7428c3b7::t_603956bd68d0e2 95,97
+internal/git/git.go
+  s_99e13b7428c3b7::t_d95b03347f349e 72-86
+  s_99e13b7428c3b7::t_151d8ef10d0331 33-71,87-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.5",
+  "base_commit_sha": "8342fe79830e9f26eccf95e772cdd2d36b956d17",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_99e13b7428c3b7": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "3f4e086a-b54f-4356-8ea5-f62e303cb268",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
