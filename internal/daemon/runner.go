@@ -36,6 +36,7 @@ type Runner struct {
 	syncOnce   sync.Mutex
 	logRotator *LogRotator
 	merger     *merge.Registry
+	halted     bool // true when suspended waiting for conflict resolution
 }
 
 // NewRunner creates a new daemon runner.
@@ -125,6 +126,15 @@ func (r *Runner) Run(ctx context.Context) error {
 	// Watch tracked file directories so local edits trigger an immediate sync.
 	r.refreshTrackedWatches()
 
+	// Restore halt state from a previous run — if the sentinel file exists
+	// the user hasn't resolved conflicts yet; start in halted mode.
+	if IsHalted() {
+		reason := ReadHaltReason()
+		r.halted = true
+		r.logger.Printf("Daemon starting in halted state: %s", reason)
+		r.logger.Println("Resolve conflicts with: dhd conflicts list")
+	}
+
 	// Initial sync
 	r.logger.Println("Performing initial sync...")
 	if err := r.performSync(); err != nil {
@@ -154,6 +164,10 @@ func (r *Runner) Run(ctx context.Context) error {
 				return fmt.Errorf("watcher events channel closed")
 			}
 			if r.isRelevantChange(event.Name) {
+				if r.halted {
+					r.logger.Printf("Change detected but sync halted (unresolved conflicts): %s", event.Name)
+					continue
+				}
 				r.logger.Printf("Detected local change: %s (%s)", event.Name, event.Op)
 				r.triggerSync()
 			}
@@ -165,6 +179,13 @@ func (r *Runner) Run(ctx context.Context) error {
 			fmt.Fprintf(r.errFile, "[watcher] %v\n", err)
 
 		case <-pollTicker.C:
+			// If the daemon is halted due to unresolved conflicts, skip sync
+			// entirely — re-running will just hit the same conflict and waste
+			// compute and network. Wait for user to run `dhd conflicts resolve`.
+			if r.halted {
+				r.logger.Println("Sync skipped: daemon halted (unresolved conflicts — run: dhd conflicts list)")
+				continue
+			}
 			r.logger.Println("Running scheduled poll...")
 			if err := r.performSync(); err != nil {
 				r.logger.Printf("Scheduled poll failed: %v", err)
@@ -351,6 +372,7 @@ func (r *Runner) resolveConflicts(gc *git.Client, vaultPath string) error {
 }
 
 // recordConflict saves conflict metadata to the store for user review.
+// If any true conflict is recorded, the daemon halts sync until the user resolves it.
 func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath, localHash, remoteHash string) {
 	if storeErr != nil || store == nil {
 		return
@@ -363,6 +385,18 @@ func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath
 	}
 	if err := store.Add(c); err != nil {
 		r.logger.Printf("Warning: failed to record conflict %s: %v", filePath, err)
+		return
+	}
+	// Halt the daemon so it stops burning CPU/network on a conflict it can't fix.
+	if !r.halted {
+		reason := fmt.Sprintf("unresolved conflict in %s — run: dhd conflicts list", filePath)
+		if err := WriteHalt(reason); err != nil {
+			r.logger.Printf("Warning: could not write halt sentinel: %v", err)
+		}
+		r.halted = true
+		r.logger.Printf("⚠ Daemon halted: %s", reason)
+		r.logger.Println("  Resolve with: dhd conflicts list && dhd conflicts resolve <file> --strategy local|remote")
+		r.logger.Println("  Then resume with: dhd daemon resume")
 	}
 }
 

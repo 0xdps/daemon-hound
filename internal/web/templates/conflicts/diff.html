@@ -1,0 +1,99 @@
+{{define "content"}}
+<section class="resolver-shell">
+  <section class="panel hero">
+    <div class="panel-body">
+      <div class="page-kicker">Resolver workspace</div>
+      <div class="page-head" style="padding-bottom:0;border-bottom:none">
+        <div>
+          <h2 class="page-title is-compact mono">{{.FilePath}}</h2>
+          <p class="page-subtitle">Choose a winning side for the full file, or auto-merge when the content can be reconciled safely.</p>
+        </div>
+        <div class="header-actions">
+          <form action="/conflicts/resolve" method="POST" hx-post="/conflicts/resolve" hx-target=".main" hx-swap="innerHTML show:top">
+            <input type="hidden" name="file" value="{{.FilePath}}"/>
+            <input type="hidden" name="strategy" value="local"/>
+            <button type="submit" class="btn btn-secondary btn-sm">← Use local</button>
+          </form>
+          {{if .IsKV}}
+          <form action="/conflicts/resolve" method="POST" hx-post="/conflicts/resolve" hx-target=".main" hx-swap="innerHTML show:top">
+            <input type="hidden" name="file" value="{{.FilePath}}"/>
+            <input type="hidden" name="strategy" value="merged"/>
+            <button type="submit" class="btn btn-primary btn-sm">Auto-merge</button>
+          </form>
+          {{end}}
+          <form action="/conflicts/resolve" method="POST" hx-post="/conflicts/resolve" hx-target=".main" hx-swap="innerHTML show:top">
+            <input type="hidden" name="file" value="{{.FilePath}}"/>
+            <input type="hidden" name="strategy" value="remote"/>
+            <button type="submit" class="btn btn-secondary btn-sm">Use remote →</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {{if .IsKV}}
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Key-level comparison</div>
+        <div class="panel-subtitle">Values are grouped by conflict state for `.env` or TOML-like files</div>
+      </div>
+    </div>
+    <div class="panel-body" style="padding:0">
+      <table class="kv-table">
+        <thead>
+          <tr>
+            <th style="color:var(--info)">Local</th>
+            <th style="text-align:center">Key</th>
+            <th style="text-align:right;color:var(--warning)">Remote</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .KeyDiffs}}
+          <tr class="{{if eq .Status "conflict"}}kv-conflict{{end}}{{if eq .Status "local-only"}} kv-local-only{{end}}{{if eq .Status "remote-only"}} kv-remote-only{{end}}">
+            <td class="mono dense-cell" style="color:{{if eq .Status "conflict"}}var(--info){{else}}var(--text-secondary){{end}}">{{if .LocalValue}}{{.LocalValue}}{{else}}<span style="color:var(--text-dim);font-style:italic">(deleted)</span>{{end}}</td>
+            <td style="text-align:center">
+              <span class="kv-key">{{.Key}}</span>
+              <div class="micro-copy">{{if eq .Status "conflict"}}conflict{{else if eq .Status "local-only"}}local change{{else if eq .Status "remote-only"}}remote change{{else}}aligned{{end}}</div>
+            </td>
+            <td class="mono dense-cell" style="text-align:right;color:{{if eq .Status "conflict"}}var(--warning){{else}}var(--text-secondary){{end}}">{{if .RemoteValue}}{{.RemoteValue}}{{else}}<span style="color:var(--text-dim);font-style:italic">(deleted)</span>{{end}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {{else}}
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Three-way compare</div>
+        <div class="panel-subtitle">Use local, base, and remote together to decide the safest winning side.</div>
+      </div>
+      <span class="badge badge-neutral">dense view</span>
+    </div>
+    <div class="panel-body" style="padding-top:14px">
+      <div class="diff-grid">
+        <section class="panel diff-panel panel-local">
+          <div class="panel-head">Local (yours)</div>
+          <div class="panel-body">{{range $i, $l := .LocalLines}}{{if $l}}{{$l}}{{else}} {{end}}
+{{end}}</div>
+        </section>
+        <section class="panel diff-panel panel-base">
+          <div class="panel-head">Base (ancestor)</div>
+          <div class="panel-body" style="color:var(--text-muted)">{{range $i, $l := .BaseLines}}{{if $l}}{{$l}}{{else}} {{end}}
+{{end}}</div>
+        </section>
+        <section class="panel diff-panel panel-remote">
+          <div class="panel-head">Remote (theirs)</div>
+          <div class="panel-body">{{range $i, $l := .RemoteLines}}{{if $l}}{{$l}}{{else}} {{end}}
+{{end}}</div>
+        </section>
+      </div>
+    </div>
+  </section>
+  {{end}}
+
+  <div class="hint-banner">Use <strong>Use local</strong> or <strong>Use remote</strong> when one full side is clearly correct. Use <strong>Auto-merge</strong> only when this key-value diff can safely combine both changes.</div>
+</section>
+{{end}}

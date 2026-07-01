@@ -1,0 +1,31 @@
+{{define "content"}}
+<section class="inspector-shell">
+  <section class="panel hero">
+    <div class="panel-body">
+      <div class="page-kicker">File preview</div>
+      <h2 class="page-title is-compact mono">{{.File.Namespace}} / {{.File.RelPath}}</h2>
+      <p class="page-subtitle">Current mode: {{.File.Mode}}</p>
+    </div>
+  </section>
+
+  {{if .Error}}
+  <div class="notice notice-danger">
+    <div class="notice-icon">⚠</div>
+    <div><strong>Preview failed.</strong> {{.Error}}</div>
+  </div>
+  {{else}}
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Plaintext content</div>
+        <div class="panel-subtitle">Rendered directly from the vault for inspection</div>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" data-copy-button data-copy-target="[data-file-copy-source]">Copy content</button>
+    </div>
+    <div class="code-frame">
+      <pre data-file-copy-source>{{.Content}}</pre>
+    </div>
+  </section>
+  {{end}}
+</section>
+{{end}}

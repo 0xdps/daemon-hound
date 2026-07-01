@@ -1,0 +1,78 @@
+{{define "content"}}
+<section class="page-shell">
+  <div class="page-head">
+    <div>
+      <div class="page-kicker">System controls</div>
+      <h1 class="page-title">Manage what the daemon guards.</h1>
+      <p class="page-subtitle">Use settings for administrative actions only. The main destructive path here is untracking a file, which removes the encrypted file from the vault as well.</p>
+    </div>
+  </div>
+
+  <div class="split-grid">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Tracked file controls</div>
+          <div class="panel-subtitle">Administrative list of every managed file</div>
+        </div>
+      </div>
+      {{if not .Files}}
+      <div class="empty-state">
+        <div class="empty-icon">⚙</div>
+        <div class="empty-title">Nothing is being managed yet</div>
+        <div class="empty-desc">Add a file from the CLI with <code class="mono">dhd track &lt;file&gt;</code>, then come back here for removal controls.</div>
+      </div>
+      {{else}}
+      <div class="panel-body list-wrap">
+        {{range .Files}}
+        <div class="list-item">
+          <div class="list-main">
+            <div class="list-title mono truncate">{{.File.RelPath}}</div>
+            <div class="list-meta">{{.File.Namespace}} · {{.File.Mode}}</div>
+          </div>
+          <form hx-post="/settings/untrack"
+                hx-target=".main"
+                hx-swap="innerHTML show:top"
+                hx-confirm="Remove {{.File.RelPath}} from vault? The encrypted file will be deleted.">
+            <input type="hidden" name="key" value="{{.Key}}"/>
+            <button type="submit" class="btn btn-danger btn-sm">Untrack</button>
+          </form>
+        </div>
+        {{end}}
+      </div>
+      {{end}}
+    </section>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Danger zone</div>
+            <div class="panel-subtitle">Untracking is destructive to the encrypted inventory</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="notice notice-warning">
+            <div class="notice-icon">⚠</div>
+            <div>Removing a tracked file here deletes the encrypted file from the vault and removes it from state tracking.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">CLI reference</div>
+            <div class="panel-subtitle">Keep the web UI aligned with the command workflow</div>
+          </div>
+        </div>
+        <div class="panel-body detail-list mono">
+          <div class="detail-row"><span>$</span><strong>dhd track &lt;file&gt;</strong></div>
+          <div class="detail-row"><span>$</span><strong>dhd untrack &lt;file&gt;</strong></div>
+          <div class="detail-row"><span>$</span><strong>dhd sync</strong></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>
+{{end}}

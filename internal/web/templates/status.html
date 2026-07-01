@@ -1,0 +1,99 @@
+{{define "content"}}
+<section class="page-shell">
+  <div class="page-head">
+    <div>
+      <div class="page-kicker">Live daemon telemetry</div>
+      <h1 class="page-title">Watch the daemon in real time.</h1>
+      <p class="page-subtitle">This is the operational stream: use it to confirm healthy sync behaviour, catch repeated failures, and pivot straight into conflict resolution when the daemon halts.</p>
+    </div>
+    <div class="header-actions">
+      {{if .Halted}}
+      <span class="badge badge-danger">halted</span>
+      {{else}}
+      <span class="badge badge-success"><span class="dot"></span>streaming</span>
+      {{end}}
+      <span class="badge badge-neutral mono">{{.LogPath}}</span>
+    </div>
+  </div>
+
+  {{if .Halted}}
+  <div class="notice notice-danger">
+    <div class="notice-icon">⛔</div>
+    <div>
+      <strong>Sync is suspended.</strong> {{.HaltReason}}
+      <div class="action-row" style="margin-top:12px">
+        <a href="/conflicts" class="btn btn-danger btn-sm" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open conflict triage</a>
+      </div>
+    </div>
+  </div>
+  {{end}}
+
+  <div class="split-grid">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Activity stream</div>
+          <div class="panel-subtitle">Recent events continue to append without polling</div>
+        </div>
+        {{if .Halted}}
+        <span class="badge badge-danger">attention required</span>
+        {{else}}
+        <span class="badge badge-success">tailing log</span>
+        {{end}}
+      </div>
+      <div id="log-output"
+           class="log-console"
+           hx-ext="sse"
+           sse-connect="/status/stream"
+           sse-swap="log">
+        {{range .RecentLogs}}
+        <div class="log-line">{{.}}</div>
+        {{else}}
+        <div class="log-line" style="color:var(--text-muted)">No log entries yet. Waiting for daemon activity…</div>
+        {{end}}
+      </div>
+    </section>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Log source</div>
+            <div class="panel-subtitle">Current file target</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="hint-banner mono">{{.LogPath}}</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">How to read this view</div>
+            <div class="panel-subtitle">Use the stream as an operator, not a passive viewer</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="detail-list">
+            <div class="detail-row"><span>Stream</span><strong>{{if .Halted}}Stopped under guard{{else}}Open and healthy{{end}}</strong></div>
+            <div class="detail-row"><span>Primary action</span><strong>{{if .Halted}}Resolve conflicts{{else}}Audit recent events{{end}}</strong></div>
+            <div class="detail-row"><span>Use when</span><strong>Debugging sync, merge, or daemon startup behaviour</strong></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>
+
+<script>
+(function(){
+  var el = document.getElementById('log-output');
+  if (el) {
+    var obs = new MutationObserver(function(){ el.scrollTop = el.scrollHeight; });
+    obs.observe(el, {childList: true, subtree: true});
+    el.scrollTop = el.scrollHeight;
+  }
+})();
+</script>
+{{end}}

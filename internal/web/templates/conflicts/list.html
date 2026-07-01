@@ -1,0 +1,128 @@
+{{define "content"}}
+<section class="page-shell">
+  <div class="page-head">
+    <div>
+      <div class="page-kicker">Conflict triage</div>
+      <h1 class="page-title">Resolve merge pressure before it spreads.</h1>
+      <p class="page-subtitle">Each conflict is a case file. Review what drifted, choose the winning side or auto-merge where possible, and return the daemon to a healthy sync path.</p>
+    </div>
+    <div class="header-actions">
+      {{if .Halted}}
+      <span class="badge badge-danger">sync halted</span>
+      {{else}}
+      <span class="badge badge-warning">review queue</span>
+      {{end}}
+    </div>
+  </div>
+
+  {{if not .Conflicts}}
+  <section class="panel">
+    <div class="empty-state">
+      <div class="empty-icon">✓</div>
+      <div class="empty-title">No active conflict cases</div>
+      <div class="empty-desc">All vault files are aligned across machines. Return to the dashboard or watch the live status stream for the next change.</div>
+      <div class="action-row">
+        <a href="/" class="btn btn-primary btn-sm" hx-get="/" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Back to dashboard</a>
+      </div>
+    </div>
+  </section>
+  {{else}}
+  <div class="inspector-grid">
+    <section class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Case queue</div>
+            <div class="panel-subtitle">Open unresolved conflicts first, then review resolved history</div>
+          </div>
+          <div class="pill-row" style="margin-top:0">
+            <span class="badge badge-warning">{{len .Pending}} pending</span>
+            {{if .Resolved}}<span class="badge badge-success">{{len .Resolved}} resolved</span>{{end}}
+          </div>
+        </div>
+        <div class="panel-body case-list">
+          {{if .Pending}}
+          <div class="section-split">
+            <div>
+              <div class="panel-title">Active cases</div>
+              <div class="panel-subtitle">These items are still blocking or at risk.</div>
+            </div>
+          </div>
+          {{range .Pending}}
+          <article class="case-card">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div class="list-main">
+                <div class="case-title mono">{{.FilePath}}</div>
+                <div class="case-meta">Detected {{formatTime .DetectedAt}}</div>
+                <div class="pill-row">
+                  <span class="badge badge-warning">pending resolution</span>
+                  <span class="tiny-pill mono">local {{truncate .LocalHash 12}}</span>
+                  <span class="tiny-pill mono">remote {{truncate .RemoteHash 12}}</span>
+                </div>
+              </div>
+              <a href="/conflicts/diff?file={{.FilePath}}"
+                 class="btn btn-primary btn-sm"
+                 hx-get="/conflicts/diff?file={{.FilePath}}"
+                 hx-target="#diff-panel"
+                 hx-swap="innerHTML show:top"
+                 hx-on:before-request="document.getElementById('diff-panel').innerHTML = document.getElementById('resolver-loading-template').innerHTML">
+                Open resolver
+              </a>
+            </div>
+          </article>
+          {{end}}
+          {{end}}
+
+          {{if .Resolved}}
+          <div class="section-split">
+            <div>
+              <div class="panel-title">Resolved history</div>
+              <div class="panel-subtitle">Recently cleared cases and chosen strategies.</div>
+            </div>
+          </div>
+          {{range .Resolved}}
+          <article class="case-card is-muted">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+              <div class="list-main">
+                <div class="case-title mono">{{.FilePath}}</div>
+                <div class="case-meta">Detected {{formatTime .DetectedAt}} · Resolved {{formatTime .ResolvedAt}}</div>
+                <div class="pill-row">
+                  <span class="badge badge-success">resolved {{.ResolutionStrategy}}</span>
+                  <span class="tiny-pill mono">local {{truncate .LocalHash 12}}</span>
+                  <span class="tiny-pill mono">remote {{truncate .RemoteHash 12}}</span>
+                </div>
+              </div>
+            </div>
+          </article>
+          {{end}}
+          {{end}}
+        </div>
+      </section>
+    </section>
+
+    <div id="diff-panel" class="stack">
+      <section class="panel">
+        <div class="empty-state">
+          <div class="empty-icon">⚡</div>
+          <div class="empty-title">Select a conflict case</div>
+          <div class="empty-desc">Load the resolver workspace here to compare local, base, and remote content without leaving the queue.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <template id="resolver-loading-template">
+    <section class="panel">
+      <div class="panel-body stack">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line short"></div>
+        <div class="split-grid">
+          <div class="skeleton-panel"></div>
+          <div class="skeleton-panel"></div>
+        </div>
+      </div>
+    </section>
+  </template>
+  {{end}}
+</section>
+{{end}}

@@ -12,7 +12,7 @@ run:
 
 .PHONY: build
 build:
-	go build -ldflags "$(LDFLAGS)" -o bin/dhd ./cmd/dhd
+	PAGER=cat BAT_PAGER=cat go build -ldflags "$(LDFLAGS)" -o bin/dhd ./cmd/dhd
 
 .PHONY: build-macos
 build-macos: build-macos-icon

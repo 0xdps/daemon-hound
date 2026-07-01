@@ -1,0 +1,283 @@
+package web
+
+import (
+	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"embed"
+	"encoding/hex"
+	"fmt"
+	"html/template"
+	"io/fs"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/0xdps/daemon-hound/internal/conflicts"
+	"github.com/0xdps/daemon-hound/internal/storage"
+)
+
+//go:embed templates
+var templateFS embed.FS
+
+//go:embed static
+var staticFS embed.FS
+
+// Server is the DaemonHound web UI server.
+type Server struct {
+	vault      *storage.Vault
+	sessionKey []byte // random 32-byte HMAC key per process lifetime
+	mu         sync.RWMutex
+	sessions   map[string]time.Time // token → expiry
+	mux        *http.ServeMux
+	port       int
+}
+
+// NewServer creates a web UI server backed by the given vault.
+func NewServer(vault *storage.Vault) (*Server, error) {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		return nil, fmt.Errorf("generate session key: %w", err)
+	}
+	s := &Server{
+		vault:      vault,
+		sessionKey: key,
+		sessions:   make(map[string]time.Time),
+	}
+	s.registerRoutes()
+	return s, nil
+}
+
+// ListenAndServe starts the HTTP server on the first available port in the
+// preferred range and returns the URL it is listening on.
+func (s *Server) ListenAndServe(ctx context.Context) (string, error) {
+	ln, err := findFreePort(7734, 7800)
+	if err != nil {
+		return "", fmt.Errorf("no free port: %w", err)
+	}
+	s.port = ln.Addr().(*net.TCPAddr).Port
+	url := fmt.Sprintf("http://localhost:%d", s.port)
+
+	srv := &http.Server{Handler: s.mux}
+	go func() {
+		<-ctx.Done()
+		_ = srv.Shutdown(context.Background())
+	}()
+	go func() { _ = srv.Serve(ln) }()
+	return url, nil
+}
+
+// Port returns the port the server is listening on.
+func (s *Server) Port() int { return s.port }
+
+// ─── routing ───────────────────────────────────────────────────────────────
+
+func (s *Server) registerRoutes() {
+	mux := http.NewServeMux()
+
+	// Static assets (favicon, etc.)
+	staticSub, _ := fs.Sub(staticFS, "static")
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
+
+	// Favicon
+	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/logo.png", http.StatusMovedPermanently)
+	})
+
+	// Auth
+	mux.HandleFunc("GET /login", s.handleLoginPage)
+	mux.HandleFunc("POST /login", s.handleLoginSubmit)
+	mux.HandleFunc("POST /logout", s.requireAuth(s.handleLogout))
+
+	// Dashboard
+	mux.HandleFunc("GET /", s.requireAuth(s.handleDashboard))
+
+	// Conflicts
+	mux.HandleFunc("GET /conflicts", s.requireAuth(s.handleConflictList))
+	mux.HandleFunc("GET /conflicts/diff", s.requireAuth(s.handleConflictDiff))
+	mux.HandleFunc("POST /conflicts/resolve", s.requireAuth(s.handleConflictResolve))
+
+	// Files
+	mux.HandleFunc("GET /files", s.requireAuth(s.handleFileList))
+	mux.HandleFunc("GET /files/view", s.requireAuth(s.handleFileView))
+
+	// Secrets
+	mux.HandleFunc("GET /secrets", s.requireAuth(s.handleSecretList))
+	mux.HandleFunc("GET /secrets/view", s.requireAuth(s.handleSecretView))
+	mux.HandleFunc("POST /secrets/rotate", s.requireAuth(s.handleSecretRotate))
+
+	// Status (SSE)
+	mux.HandleFunc("GET /status", s.requireAuth(s.handleStatus))
+	mux.HandleFunc("GET /status/stream", s.requireAuth(s.handleStatusStream))
+
+	// Settings
+	mux.HandleFunc("GET /settings", s.requireAuth(s.handleSettings))
+	mux.HandleFunc("POST /settings/untrack", s.requireAuth(s.handleUntrack))
+
+	s.mux = mux
+}
+
+// ─── auth middleware ────────────────────────────────────────────────────────
+
+const sessionCookie = "dhd_session"
+const sessionTTL = 12 * time.Hour
+
+func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !s.isAuthenticated(r) {
+			if isHTMX(r) {
+				w.Header().Set("HX-Redirect", "/login")
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			http.Redirect(w, r, "/login?next="+r.URL.Path, http.StatusFound)
+			return
+		}
+		next(w, r)
+	}
+}
+
+func (s *Server) isAuthenticated(r *http.Request) bool {
+	c, err := r.Cookie(sessionCookie)
+	if err != nil {
+		return false
+	}
+	s.mu.RLock()
+	expiry, ok := s.sessions[c.Value]
+	s.mu.RUnlock()
+	return ok && time.Now().Before(expiry)
+}
+
+func (s *Server) issueSession(w http.ResponseWriter) {
+	token := make([]byte, 24)
+	_, _ = rand.Read(token)
+	mac := hmac.New(sha256.New, s.sessionKey)
+	mac.Write(token)
+	signed := hex.EncodeToString(token) + "." + hex.EncodeToString(mac.Sum(nil))
+
+	s.mu.Lock()
+	s.sessions[signed] = time.Now().Add(sessionTTL)
+	s.mu.Unlock()
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookie,
+		Value:    signed,
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   int(sessionTTL.Seconds()),
+	})
+}
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+type pageData struct {
+	Active       string // "dashboard", "status", "conflicts", "files", "secrets", "settings"
+	PendingCount int
+	Data         any
+}
+
+func (s *Server) pageData(active string) pageData {
+	pd := pageData{Active: active}
+	store, err := conflicts.NewStore()
+	if err == nil {
+		if pending, err := store.Pending(); err == nil {
+			pd.PendingCount = len(pending)
+		}
+	}
+	return pd
+}
+
+func isHTMX(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true"
+}
+
+func setHXToast(w http.ResponseWriter, kind, message string) {
+	if message == "" {
+		return
+	}
+	w.Header().Set("HX-Trigger", fmt.Sprintf(`{"app:toast":{"kind":%q,"message":%q}}`, kind, message))
+}
+
+func (s *Server) render(w http.ResponseWriter, active, name string, data any) {
+	pd := s.pageData(active)
+	pd.Data = data
+	tmpl, err := s.loadTemplate(name)
+	if err != nil {
+		http.Error(w, "template error: "+err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "base", pd); err != nil {
+		// Already wrote headers — log only
+		fmt.Fprintf(os.Stderr, "web: template execute %s: %v\n", name, err)
+	}
+}
+
+func (s *Server) renderPartial(w http.ResponseWriter, name string, data any) {
+	tmpl, err := s.loadTemplate(name)
+	if err != nil {
+		http.Error(w, "template error: "+err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "content", data); err != nil {
+		fmt.Fprintf(os.Stderr, "web: partial execute %s: %v\n", name, err)
+	}
+}
+
+func (s *Server) renderLogin(w http.ResponseWriter, name string, data any) {
+	tmpl, err := s.loadTemplate(name)
+	if err != nil {
+		http.Error(w, "template error: "+err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "login", data); err != nil {
+		fmt.Fprintf(os.Stderr, "web: template execute %s: %v\n", name, err)
+	}
+}
+
+func (s *Server) loadTemplate(name string) (*template.Template, error) {
+	layout, err := fs.ReadFile(templateFS, "templates/layout.html")
+	if err != nil {
+		return nil, err
+	}
+	page, err := fs.ReadFile(templateFS, "templates/"+name)
+	if err != nil {
+		return nil, err
+	}
+	return template.New("base").Funcs(templateFuncs).Parse(string(layout) + string(page))
+}
+
+var templateFuncs = template.FuncMap{
+	"truncate": func(s string, n int) string {
+		if len(s) <= n {
+			return s
+		}
+		return s[:n] + "…"
+	},
+	"formatTime": func(t time.Time) string {
+		return t.Format("2006-01-02 15:04:05")
+	},
+	"safeHTML": func(s string) template.HTML {
+		return template.HTML(s) //nolint:gosec // intentional for pre-escaped content
+	},
+	"lines": func(s string) []string {
+		return strings.Split(s, "\n")
+	},
+}
+
+func findFreePort(from, to int) (net.Listener, error) {
+	for p := from; p <= to; p++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", p))
+		if err == nil {
+			return ln, nil
+		}
+	}
+	return nil, fmt.Errorf("no free port in range %d-%d", from, to)
+}

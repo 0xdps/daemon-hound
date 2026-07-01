@@ -96,3 +96,39 @@ func GetErrorLogPath() string {
 func GetPIDPath() string {
 	return filepath.Join(config.AppDir(), "daemon.pid")
 }
+
+// GetHaltPath returns the path to the daemon halt sentinel file.
+// When this file exists, the daemon is suspended waiting for the user to
+// resolve conflicts before syncing resumes.
+func GetHaltPath() string {
+	return filepath.Join(config.AppDir(), "daemon.halt")
+}
+
+// IsHalted reports whether the daemon halt sentinel file exists.
+func IsHalted() bool {
+	_, err := os.Stat(GetHaltPath())
+	return err == nil
+}
+
+// WriteHalt creates the halt sentinel file with the given reason.
+func WriteHalt(reason string) error {
+	return os.WriteFile(GetHaltPath(), []byte(reason), 0644)
+}
+
+// ClearHalt removes the halt sentinel file, allowing sync to resume.
+func ClearHalt() error {
+	err := os.Remove(GetHaltPath())
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+// ReadHaltReason returns the reason stored in the halt sentinel file.
+func ReadHaltReason() string {
+	data, err := os.ReadFile(GetHaltPath())
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}

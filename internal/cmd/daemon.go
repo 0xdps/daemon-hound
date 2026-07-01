@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/0xdps/daemon-hound/internal/config"
+	"github.com/0xdps/daemon-hound/internal/conflicts"
 	"github.com/0xdps/daemon-hound/internal/daemon"
 	"github.com/0xdps/daemon-hound/internal/git"
 	dhsync "github.com/0xdps/daemon-hound/internal/sync"
@@ -59,17 +60,15 @@ var daemonRunCmd = &cobra.Command{
 
 var daemonStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Check if the daemon is running",
-	Long:  `Check the status of the background sync daemon.`,
+	Short: "Show daemon status (running / stopped / halted)",
+	Long:  `Show the current state of the background sync daemon. Does NOT start the daemon.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		sm := daemon.NewServiceManager()
 
-		// Check if service is installed
 		installed, err := sm.IsInstalled()
 		if err != nil {
 			return fmt.Errorf("failed to check service installation: %w", err)
 		}
-
 		if !installed {
 			fmt.Println("❌ Daemon not installed")
 			fmt.Println("   Run: dhd init --remote <url>")
@@ -78,30 +77,96 @@ var daemonStatusCmd = &cobra.Command{
 
 		fmt.Println("✓ Daemon service installed")
 
-		// Check if running
+		// Halted state takes priority — report it even if the process is "running"
+		if daemon.IsHalted() {
+			reason := daemon.ReadHaltReason()
+			fmt.Println("⛔ Daemon halted (sync suspended)")
+			if reason != "" {
+				fmt.Printf("   Reason: %s\n", reason)
+			}
+			fmt.Println("   Resolve conflicts: dhd conflicts list")
+			fmt.Println("   Then resume:       dhd daemon resume")
+			return nil
+		}
+
 		running, err := sm.IsRunning()
 		if err != nil {
 			fmt.Printf("⚠️  Could not determine if daemon is running: %v\n", err)
 			return nil
 		}
-
 		if running {
 			fmt.Println("✓ Daemon is running")
 			fmt.Println("  Syncing every 30 seconds")
 		} else {
-			fmt.Println("⚠️  Daemon is not running")
-			fmt.Println("  Trying to start daemon...")
+			fmt.Println("⚠️  Daemon is stopped")
+			fmt.Println("   Start it: dhd daemon start")
+		}
+		return nil
+	},
+}
 
-			// Try to start it
-			if err := sm.Install(); err != nil {
-				fmt.Printf("❌ Failed to start daemon: %v\n", err)
-				fmt.Println("   Run: dhd daemon run (for manual testing)")
-				return nil
+var daemonStartCmd = &cobra.Command{
+	Use:   "start",
+	Short: "Start the background daemon",
+	Long:  `Install and start the background sync daemon.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if daemon.IsHalted() {
+			reason := daemon.ReadHaltReason()
+			fmt.Println("⛔ Cannot start: daemon is halted due to unresolved conflicts")
+			if reason != "" {
+				fmt.Printf("   Reason: %s\n", reason)
 			}
+			fmt.Println("   Resolve: dhd conflicts list")
+			fmt.Println("   Resume:  dhd daemon resume")
+			return nil
+		}
+		sm := daemon.NewServiceManager()
+		running, _ := sm.IsRunning()
+		if running {
+			fmt.Println("Daemon is already running")
+			return nil
+		}
+		if err := sm.Install(); err != nil {
+			return fmt.Errorf("failed to start daemon: %w", err)
+		}
+		fmt.Println("✓ Daemon started")
+		return nil
+	},
+}
 
-			fmt.Println("✓ Daemon started")
+var daemonResumeCmd = &cobra.Command{
+	Use:   "resume",
+	Short: "Resume sync after resolving conflicts",
+	Long: `Clear the halt state and resume automatic syncing.
+
+Only run this after resolving all pending conflicts:
+  dhd conflicts list
+  dhd conflicts resolve <file> --strategy local|remote`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !daemon.IsHalted() {
+			fmt.Println("Daemon is not halted — nothing to resume")
+			return nil
 		}
 
+		// Check there are no pending conflicts before allowing resume
+		store, err := conflicts.NewStore()
+		if err == nil {
+			pending, _ := store.Pending()
+			if len(pending) > 0 {
+				fmt.Printf("⚠️  %d conflict(s) still pending resolution:\n", len(pending))
+				for _, c := range pending {
+					fmt.Printf("   - %s\n", c.FilePath)
+				}
+				fmt.Println("\nResolve them first: dhd conflicts resolve <file> --strategy local|remote")
+				return nil
+			}
+		}
+
+		if err := daemon.ClearHalt(); err != nil {
+			return fmt.Errorf("failed to clear halt: %w", err)
+		}
+		fmt.Println("✓ Halt cleared — daemon will resume syncing on next poll")
+		fmt.Println("  (Or restart it now: dhd daemon restart)")
 		return nil
 	},
 }
@@ -292,10 +357,12 @@ var daemonErrorLogsCmd = &cobra.Command{
 
 func init() {
 	daemonCmd.AddCommand(daemonRunCmd)
+	daemonCmd.AddCommand(daemonStartCmd)
 	daemonCmd.AddCommand(daemonStatusCmd)
 	daemonCmd.AddCommand(daemonLogsCmd)
 	daemonCmd.AddCommand(daemonStopCmd)
 	daemonCmd.AddCommand(daemonRestartCmd)
+	daemonCmd.AddCommand(daemonResumeCmd)
 	daemonCmd.AddCommand(daemonErrorLogsCmd)
 
 	// Flags for logs command

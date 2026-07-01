@@ -1,0 +1,101 @@
+{{define "content"}}
+<section class="page-shell">
+  <div class="page-head">
+    <div>
+      <div class="page-kicker">Tracked inventory</div>
+      <h1 class="page-title">Inspect the vault file map.</h1>
+      <p class="page-subtitle">Browse encrypted inventory by namespace, inspect plaintext previews when needed, and keep a clear mental model of what the daemon is protecting.</p>
+    </div>
+    <div class="header-actions">
+      <span class="badge badge-neutral">{{.Total}} file{{if ne .Total 1}}s{{end}}</span>
+      <span class="badge badge-info">{{len .Namespaces}} namespace{{if ne (len .Namespaces) 1}}s{{end}}</span>
+    </div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-body">
+      <form class="toolbar" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+        <div class="search-field">
+          <span class="search-icon">⌕</span>
+          <input type="search" name="q" value="{{.Query}}" class="input" placeholder="Filter by namespace, path, or mode" hx-get="/files" hx-trigger="keyup changed delay:250ms, search" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true"/>
+        </div>
+        {{if .Query}}
+        <a href="/files" class="btn btn-secondary btn-sm" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Clear</a>
+        {{end}}
+      </form>
+      {{if .Query}}
+      <div class="toolbar-meta">Showing {{.Filtered}} of {{.Total}} tracked file{{if ne .Total 1}}s{{end}} for <span class="mono">{{.Query}}</span>.</div>
+      {{end}}
+    </div>
+  </section>
+
+  {{if not .Namespaces}}
+  <section class="panel">
+    <div class="empty-state">
+      <div class="empty-icon">◫</div>
+      <div class="empty-title">{{if .Query}}No files match this filter{{else}}No tracked files yet{{end}}</div>
+      <div class="empty-desc">{{if .Query}}Try a shorter path fragment, namespace, or mode value.{{else}}Start from the CLI with <code class="mono">dhd track &lt;path&gt;</code>, then return here to inspect the vault inventory in a structured view.{{end}}</div>
+    </div>
+  </section>
+  {{else}}
+  <div class="inspector-grid">
+    <section class="stack">
+      {{range .Namespaces}}
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title mono">{{.Name}}</div>
+            <div class="panel-subtitle">{{len .Files}} tracked file{{if gt (len .Files) 1}}s{{end}} in this namespace</div>
+          </div>
+          <span class="badge badge-neutral">inventory</span>
+        </div>
+        <div class="panel-body list-wrap">
+          {{range .Files}}
+          <div class="list-item">
+            <div class="list-main">
+              <div class="list-title mono truncate">{{.RelPath}}</div>
+              <div class="list-meta">Mode: {{.Mode}}</div>
+            </div>
+            <a href="/files/view?key={{.Namespace}}:{{.RelPath}}"
+               hx-get="/files/view?key={{.Namespace}}:{{.RelPath}}"
+               hx-target="#file-content"
+               hx-swap="innerHTML"
+               hx-on:before-request="document.getElementById('file-content').innerHTML = document.getElementById('file-loading-template').innerHTML"
+               class="btn btn-secondary btn-sm">
+              Preview
+            </a>
+          </div>
+          {{end}}
+        </div>
+      </section>
+      {{end}}
+    </section>
+
+    <div id="file-content" class="stack">
+      <section class="panel">
+        <div class="empty-state">
+          <div class="empty-icon">⌘</div>
+          <div class="empty-title">Select a file to preview</div>
+          <div class="empty-desc">The plaintext view opens here so you can inspect content without losing the namespace inventory on the left.</div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <template id="file-loading-template">
+    <section class="panel">
+      <div class="panel-body stack">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-line short"></div>
+        <div class="skeleton-code">
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line short"></div>
+          <div class="skeleton skeleton-line"></div>
+          <div class="skeleton skeleton-line medium"></div>
+        </div>
+      </div>
+    </section>
+  </template>
+  {{end}}
+</section>
+{{end}}

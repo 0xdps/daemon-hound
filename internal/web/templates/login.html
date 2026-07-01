@@ -1,0 +1,289 @@
+{{define "login"}}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DaemonHound · Unlock vault</title>
+  <link rel="icon" type="image/png" href="/static/logo.png"/>
+  <style>
+    :root {
+      --bg-root: #050608;
+      --bg-surface: rgba(16,20,24,0.92);
+      --bg-elevated: rgba(10,13,16,0.92);
+      --border: rgba(117,138,128,0.18);
+      --border-strong: rgba(57,255,90,0.22);
+      --text: #eaf2ec;
+      --text-secondary: #b8c4bd;
+      --text-muted: #8a9490;
+      --accent: #1fcb4f;
+      --accent-bright: #39ff5a;
+      --accent-soft: rgba(57,255,90,0.12);
+      --danger: #ff5d5d;
+      --danger-soft: rgba(255,93,93,0.12);
+      --shadow: 0 28px 70px rgba(0,0,0,0.4);
+      --radius: 24px;
+      --font-sans: -apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
+      --font-mono: ui-monospace,"SF Mono","JetBrains Mono","Fira Code","Cascadia Code",Menlo,Consolas,monospace;
+    }
+    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(57,255,90,0.14), transparent 28%),
+        radial-gradient(circle at 82% 18%, rgba(115,184,255,0.08), transparent 18%),
+        linear-gradient(180deg, #0a0d10 0%, #050608 100%);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(circle at center, black 34%, transparent 90%);
+      pointer-events: none;
+    }
+    .login-shell {
+      width: min(1080px, 100%);
+      display: grid;
+      grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      overflow: hidden;
+      background: rgba(8,11,13,0.9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+      position: relative;
+      z-index: 1;
+    }
+    .login-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(57,255,90,0.1), transparent 30%);
+      pointer-events: none;
+    }
+    .login-brand,
+    .login-card { padding: 42px; position: relative; }
+    .login-brand {
+      background:
+        radial-gradient(circle at top left, rgba(57,255,90,0.18), transparent 46%),
+        linear-gradient(180deg, rgba(14,18,22,0.92), rgba(9,11,13,0.9));
+      border-right: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 30px;
+    }
+    .brand-mark {
+      width: 84px;
+      height: 84px;
+      padding: 10px;
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(57,255,90,0.18), rgba(57,255,90,0.04));
+      border: 1px solid var(--border-strong);
+      box-shadow: 0 0 40px rgba(57,255,90,0.14);
+    }
+    .brand-kicker {
+      margin-top: 22px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-bright);
+    }
+    .brand-title {
+      margin-top: 14px;
+      font-size: clamp(38px, 5vw, 58px);
+      line-height: 0.94;
+      letter-spacing: -0.06em;
+      font-weight: 800;
+      max-width: 9ch;
+    }
+    .brand-copy {
+      margin-top: 16px;
+      max-width: 46ch;
+      font-size: 14px;
+      line-height: 1.75;
+      color: var(--text-secondary);
+    }
+    .brand-points {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .brand-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-secondary);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .brand-point span:first-child {
+      width: 28px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(57,255,90,0.08);
+      color: var(--accent-bright);
+      flex-shrink: 0;
+    }
+    .brand-footer {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+    .login-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 24px;
+    }
+    .login-card h1 {
+      font-size: 30px;
+      letter-spacing: -0.04em;
+      font-weight: 800;
+    }
+    .login-card p {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-muted);
+      max-width: 42ch;
+    }
+    .error-msg {
+      display: flex;
+      gap: 10px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,93,93,0.2);
+      background: var(--danger-soft);
+      color: #ffc2c2;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .form-box {
+      display: grid;
+      gap: 18px;
+      padding: 24px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: linear-gradient(180deg, rgba(16,20,24,0.88), rgba(9,12,14,0.82));
+    }
+    .field-label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .input-field {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(3,5,6,0.72);
+      color: var(--text);
+      font-size: 15px;
+    }
+    .input-field::placeholder { color: var(--text-muted); }
+    .input-field:focus { outline: none; border-color: rgba(57,255,90,0.32); box-shadow: 0 0 0 4px rgba(57,255,90,0.08); }
+    .btn-unlock {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 16px;
+      border: none;
+      background: linear-gradient(180deg, var(--accent-bright), var(--accent));
+      color: #041109;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      box-shadow: 0 14px 28px rgba(57,255,90,0.14);
+    }
+    .btn-unlock:hover { transform: translateY(-1px); }
+    .login-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .login-meta code { font-family: var(--font-mono); }
+    @media (max-width: 920px) {
+      .login-shell { grid-template-columns: 1fr; }
+      .login-brand { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    }
+    @media (max-width: 640px) {
+      body { padding: 14px; }
+      .login-brand,
+      .login-card { padding: 26px 22px; }
+      .brand-title { font-size: 36px; }
+      .login-card h1 { font-size: 26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-shell">
+    <section class="login-brand">
+      <div>
+        <img src="/static/logo.png" alt="DaemonHound" class="brand-mark" width="84" height="84"/>
+        <div class="brand-kicker">Vault watchdog</div>
+        <h2 class="brand-title">Unlock the guarded workspace.</h2>
+        <p class="brand-copy">DaemonHound is built to feel like a secure operator console: clear pressure signals, deliberate secret handling, and a tighter bond between daemon state and encrypted inventory.</p>
+        <div class="brand-points">
+          <div class="brand-point"><span>⚡</span><div>Resolve merge pressure before it cascades into halted sync behaviour.</div></div>
+          <div class="brand-point"><span>🔑</span><div>Inspect secrets and rotate values with explicit, versioned intent.</div></div>
+          <div class="brand-point"><span>◷</span><div>Keep a live eye on daemon events from the same control surface.</div></div>
+        </div>
+      </div>
+      <p class="brand-footer">Local session tokens expire after 12 hours of inactivity.</p>
+    </section>
+
+    <section class="login-card">
+      <div>
+        <h1>Unlock vault</h1>
+        <p>Enter the master password to restore access to the DaemonHound control surface and encrypted inventory.</p>
+      </div>
+
+      {{if .Error}}
+      <div class="error-msg">
+        <span>⚠</span>
+        <span>{{.Error}}</span>
+      </div>
+      {{end}}
+
+      <form action="/login" method="POST" class="form-box">
+        <input type="hidden" name="next" value="{{.Next}}"/>
+        <div>
+          <label class="field-label" for="password">Master password</label>
+          <input id="password" type="password" name="password" autofocus required class="input-field" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button type="submit" class="btn-unlock">Unlock vault</button>
+      </form>
+
+      <div class="login-meta">
+        <span>Session scope: local browser session</span>
+        <span>CLI remains available via <code>dhd</code></span>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
+{{end}}

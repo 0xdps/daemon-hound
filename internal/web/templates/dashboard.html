@@ -1,0 +1,182 @@
+{{define "content"}}
+<section class="page-shell">
+  <div class="page-head">
+    <div>
+      <div class="page-kicker">Operations overview</div>
+      <h1 class="page-title">Watch the vault before it drifts.</h1>
+      <p class="page-subtitle">DaemonHound should feel like a guarded cockpit: scan sync pressure, inspect vault inventory, and jump straight to the next corrective action.</p>
+    </div>
+    <div class="header-actions">
+      {{if .Halted}}
+      <span class="badge badge-danger">sync suspended</span>
+      {{else}}
+      <span class="badge badge-success">daemon healthy</span>
+      {{end}}
+      <a href="/status" class="btn btn-secondary" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open live status</a>
+    </div>
+  </div>
+
+  {{if .Halted}}
+  <div class="notice notice-danger">
+    <div class="notice-icon">⛔</div>
+    <div>
+      <strong>Sync is suspended.</strong> {{.HaltReason}}
+      <div class="action-row" style="margin-top:12px">
+        <a href="/conflicts" class="btn btn-danger btn-sm" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Resolve conflicts</a>
+      </div>
+    </div>
+  </div>
+  {{end}}
+
+  <div class="hero-grid">
+    <section class="panel hero">
+      <div class="panel-body">
+        <div class="hero-copy">
+          <img src="/static/logo.png" alt="DaemonHound" class="hero-mark" width="92" height="92"/>
+          <div>
+            <div class="page-kicker" style="margin-bottom:12px">Sentinel mode</div>
+            <div class="hero-title">{{if .Halted}}Conflict pressure detected{{else if .PendingCount}}Merge pressure is building{{else}}Vault posture is stable{{end}}</div>
+            <p class="hero-text">
+              {{if .Halted}}
+              The daemon has already halted to prevent bad merges from landing. Resolve the active cases first, then resume a clean sync path.
+              {{else if .PendingCount}}
+              The daemon is still active, but unresolved changes are accumulating. Triage the queue now before they become a blocking merge event.
+              {{else}}
+              No pending conflicts are active. Use this surface to audit files, rotate secrets, and keep the encrypted workspace ready for the next sync cycle.
+              {{end}}
+            </p>
+            <div class="hero-actions">
+              <a href="/conflicts" class="btn btn-primary" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Review conflicts</a>
+              <a href="/files" class="btn btn-secondary" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Browse tracked files</a>
+              <a href="/secrets" class="btn btn-secondary" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Inspect secrets</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Watch signals</div>
+            <div class="panel-subtitle">The shortest route to confidence</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="signal-list">
+            <div class="signal-item">
+              <div class="signal-icon">⚡</div>
+              <div>
+                <div class="signal-title">Conflict queue</div>
+                <div class="signal-copy">{{if .PendingCount}}{{.PendingCount}} unresolved file{{if ne .PendingCount 1}}s{{end}} need attention.{{else}}No unresolved merge pressure in the vault.{{end}}</div>
+              </div>
+            </div>
+            <div class="signal-item">
+              <div class="signal-icon">◫</div>
+              <div>
+                <div class="signal-title">Tracked inventory</div>
+                <div class="signal-copy">{{.FileCount}} file{{if ne .FileCount 1}}s{{end}} are currently guarded by the vault.</div>
+              </div>
+            </div>
+            <div class="signal-item">
+              <div class="signal-icon">🔑</div>
+              <div>
+                <div class="signal-title">Secret custody</div>
+                <div class="signal-copy">{{.SecretCount}} secret{{if ne .SecretCount 1}}s{{end}} are available for review and rotation.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+
+  <div class="metric-grid">
+    <a href="/conflicts" class="metric-card {{if .PendingCount}}metric-danger{{else}}metric-success{{end}}" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+      <div class="metric-label">Resolve pressure</div>
+      <div class="metric-value">{{.PendingCount}}</div>
+      <div class="metric-copy">{{if .PendingCount}}Pending conflicts are the highest risk in the system.{{else}}The merge queue is clear across the vault.{{end}}</div>
+    </a>
+    <a href="/files" class="metric-card metric-accent" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+      <div class="metric-label">Vault inventory</div>
+      <div class="metric-value">{{.FileCount}}</div>
+      <div class="metric-copy">Tracked files available for preview, review, and untracking workflows.</div>
+    </a>
+    <a href="/secrets" class="metric-card metric-accent" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+      <div class="metric-label">Secret custody</div>
+      <div class="metric-value">{{.SecretCount}}</div>
+      <div class="metric-copy">Stored secrets with version history and controlled rotation paths.</div>
+    </a>
+  </div>
+
+  <section class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Quick actions</div>
+        <div class="panel-subtitle">Simple jumps to the main workflows</div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="quick-actions-bar">
+        <a href="/conflicts" class="quick-action-chip" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+          <span class="signal-icon">⚡</span>
+          <span>Conflicts</span>
+        </a>
+        <a href="/status" class="quick-action-chip" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+          <span class="signal-icon">◷</span>
+          <span>Live status</span>
+        </a>
+        <a href="/files" class="quick-action-chip" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+          <span class="signal-icon">◫</span>
+          <span>Files</span>
+        </a>
+        <a href="/secrets" class="quick-action-chip" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
+          <span class="signal-icon">🔑</span>
+          <span>Secrets</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="split-grid">
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">Next step</div>
+          <div class="panel-subtitle">One clear place to continue</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="simple-next-step">
+          <h3>{{if .PendingCount}}Resolve pending conflicts{{else}}Stay on top of vault activity{{end}}</h3>
+          <p>{{if .PendingCount}}Open the resolver and clear active conflicts first.{{else}}Open live status or review tracked files to keep the vault in a healthy state.{{end}}</p>
+          <div class="action-row">
+            <a href="/conflicts" class="btn btn-primary btn-sm" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open conflicts</a>
+            <a href="/status" class="btn btn-secondary btn-sm" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open live status</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="stack">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">Operator notes</div>
+            <div class="panel-subtitle">Keep the workflow light and obvious</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="detail-list">
+            <div class="detail-row"><span>1.</span><strong>Scan dashboard posture</strong></div>
+            <div class="detail-row"><span>2.</span><strong>Open live status when something shifts</strong></div>
+            <div class="detail-row"><span>3.</span><strong>Resolve or rotate with deliberate intent</strong></div>
+            <div class="detail-row"><span>4.</span><strong>Return to a clean steady state</strong></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</section>
+{{end}}
