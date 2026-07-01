@@ -8,9 +8,6 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
-	"runtime"
-	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -21,7 +18,6 @@ import (
 	"github.com/0xdps/daemon-hound/internal/storage"
 	dhsync "github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/0xdps/daemon-hound/internal/tracker"
-	"github.com/fsnotify/fsnotify"
 )
 
 // Runner manages the daemon background syncing process.
@@ -31,9 +27,7 @@ type Runner struct {
 	syncer     *dhsync.Syncer // nil if identity could not be loaded
 	logger     *log.Logger
 	errFile    *os.File
-	watcher    *fsnotify.Watcher
 	stopCh     chan struct{}
-	syncOnce   sync.Mutex
 	logRotator *LogRotator
 	merger     *merge.Registry
 	halted     bool // true when suspended waiting for conflict resolution
@@ -63,11 +57,6 @@ func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) 
 		return nil, fmt.Errorf("failed to open error log file: %w", err)
 	}
 
-	watcher, err := fsnotify.NewWatcher()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create watcher: %w", err)
-	}
-
 	logger := log.New(logFile, "[daemon] ", log.LstdFlags)
 
 	merger := merge.NewRegistry()
@@ -81,7 +70,6 @@ func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) 
 		syncer:     syncer,
 		logger:     logger,
 		errFile:    errFile,
-		watcher:    watcher,
 		stopCh:     make(chan struct{}),
 		logRotator: NewLogRotator(10, 5, 30), // 10MB, 5MB, 30 days default
 		merger:     merger,
@@ -90,30 +78,13 @@ func NewRunner(cfg *config.Config, vault *storage.Vault, syncer *dhsync.Syncer) 
 
 // Run starts the daemon syncing loop. Blocks until stopped via context or signal.
 func (r *Runner) Run(ctx context.Context) error {
-	defer func() {
-		r.watcher.Close()
-		r.errFile.Close()
-	}()
+	defer r.errFile.Close()
 
 	r.logger.Println("=== Daemon started ===")
 
 	// Setup signal handling
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-
-	// Watch vault directory for changes
-	vaultPath := filepath.Join(os.Getenv("HOME"), ".dh", "vault")
-	if err := filepath.Walk(vaultPath, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return r.watcher.Add(path)
-		}
-		return nil
-	}); err != nil {
-		r.logger.Printf("Warning: failed to watch vault directory: %v", err)
-	}
 
 	// Create polling ticker
 	pollTicker := time.NewTicker(30 * time.Second)
@@ -122,9 +93,6 @@ func (r *Runner) Run(ctx context.Context) error {
 	// Create log rotation ticker (check hourly)
 	logRotateTicker := time.NewTicker(1 * time.Hour)
 	defer logRotateTicker.Stop()
-
-	// Watch tracked file directories so local edits trigger an immediate sync.
-	r.refreshTrackedWatches()
 
 	// Restore halt state from a previous run — if the sentinel file exists
 	// the user hasn't resolved conflicts yet; start in halted mode.
@@ -140,8 +108,6 @@ func (r *Runner) Run(ctx context.Context) error {
 	if err := r.performSync(); err != nil {
 		r.logger.Printf("Initial sync failed: %v", err)
 	}
-	// Refresh watches after initial sync in case new files were pulled.
-	r.refreshTrackedWatches()
 
 	// Main loop
 	for {
@@ -159,25 +125,6 @@ func (r *Runner) Run(ctx context.Context) error {
 			r.logger.Println("=== Daemon stopped ===")
 			return nil
 
-		case event, ok := <-r.watcher.Events:
-			if !ok {
-				return fmt.Errorf("watcher events channel closed")
-			}
-			if r.isRelevantChange(event.Name) {
-				if r.halted {
-					r.logger.Printf("Change detected but sync halted (unresolved conflicts): %s", event.Name)
-					continue
-				}
-				r.logger.Printf("Detected local change: %s (%s)", event.Name, event.Op)
-				r.triggerSync()
-			}
-
-		case err, ok := <-r.watcher.Errors:
-			if !ok {
-				return fmt.Errorf("watcher errors channel closed")
-			}
-			fmt.Fprintf(r.errFile, "[watcher] %v\n", err)
-
 		case <-pollTicker.C:
 			// If the daemon is halted due to unresolved conflicts, skip sync
 			// entirely — re-running will just hit the same conflict and waste
@@ -190,7 +137,6 @@ func (r *Runner) Run(ctx context.Context) error {
 			if err := r.performSync(); err != nil {
 				r.logger.Printf("Scheduled poll failed: %v", err)
 			}
-			r.refreshTrackedWatches()
 
 		case <-logRotateTicker.C:
 			if err := r.logRotator.Rotate(); err != nil {
@@ -203,33 +149,6 @@ func (r *Runner) Run(ctx context.Context) error {
 // Stop gracefully stops the daemon.
 func (r *Runner) Stop() {
 	close(r.stopCh)
-}
-
-// isRelevantChange checks if a file change is relevant for syncing.
-func (r *Runner) isRelevantChange(path string) bool {
-	base := filepath.Base(path)
-	// Ignore editor swap/backup files
-	if len(base) > 0 && base[len(base)-1] == '~' {
-		return false
-	}
-	// Ignore .git internals
-	if containsPath(path, ".git") {
-		return false
-	}
-	return true
-}
-
-// triggerSync performs a sync with debouncing (waits 2 seconds for more changes).
-func (r *Runner) triggerSync() {
-	r.syncOnce.Lock()
-	defer r.syncOnce.Unlock()
-
-	// Debounce: wait a bit for more changes to accumulate
-	time.Sleep(2 * time.Second)
-
-	if err := r.performSync(); err != nil {
-		r.logger.Printf("Triggered sync failed: %v", err)
-	}
 }
 
 // performSync orchestrates the full sync operation.
@@ -398,88 +317,6 @@ func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath
 		r.logger.Println("  Resolve with: dhd conflicts list && dhd conflicts resolve <file> --strategy local|remote")
 		r.logger.Println("  Then resume with: dhd daemon resume")
 	}
-}
-
-// refreshTrackedWatches adds fsnotify watches for the parent directories of all
-// locally-bound tracked files so that edits to those files trigger an immediate sync.
-// Config is reloaded from disk each call so bindings added after daemon startup are watched.
-func (r *Runner) refreshTrackedWatches() {
-	if r.vault == nil {
-		return
-	}
-	freshCfg := config.NewConfig()
-	if err := freshCfg.Load(); err != nil {
-		freshCfg = r.cfg // fall back to startup config
-	}
-	state, err := r.vault.LoadState()
-	if err != nil {
-		r.logger.Printf("Warning: could not load state for watch refresh: %v", err)
-		return
-	}
-	for _, file := range state.Files {
-		var localDir string
-		if file.Namespace == "global" {
-			home, _ := os.UserHomeDir()
-			localDir = filepath.Dir(filepath.Join(home, file.RelPath))
-		} else {
-			root, ok := freshCfg.GetBinding(file.Namespace)
-			if !ok {
-				continue
-			}
-			localDir = filepath.Dir(filepath.Join(root, file.RelPath))
-		}
-		// Skip macOS protected folders that trigger unnecessary TCC prompts.
-		if runtime.GOOS == "darwin" && isMacOSProtectedDir(localDir) {
-			r.logger.Printf("Skipping watch for protected dir: %s", localDir)
-			continue
-		}
-		if _, err := os.Stat(localDir); err == nil {
-			if addErr := r.watcher.Add(localDir); addErr == nil {
-				r.logger.Printf("Watching tracked dir: %s", localDir)
-			}
-		}
-	}
-}
-
-// isMacOSProtectedDir returns true if the given directory is under a macOS
-// TCC-protected location (Downloads, Documents, Desktop, Music, Movies,
-// Pictures) that would trigger unnecessary permission prompts.
-func isMacOSProtectedDir(dir string) bool {
-	home, _ := os.UserHomeDir()
-	if home == "" {
-		return false
-	}
-	// Only the TCC-prompted folders — not Library (which isn't TCC-prompted
-	// this way and would cause false positives).
-	protected := []string{
-		"Downloads",
-		"Documents",
-		"Desktop",
-		"Music",
-		"Movies",
-		"Pictures",
-	}
-	lowerDir := strings.ToLower(dir)
-	for _, p := range protected {
-		expected := strings.ToLower(filepath.Join(home, p))
-		// Use HasPrefix on the clean path plus a trailing separator to avoid
-		// false matches like /Users/mac/projects/Documents-project.
-		if strings.HasPrefix(lowerDir, expected+"/") || lowerDir == expected {
-			return true
-		}
-	}
-	return false
-}
-
-// containsPath checks if a path contains a given component
-func containsPath(path, component string) bool {
-	parts := filepath.SplitList(path)
-	for _, part := range parts {
-		if part == component {
-			return true
-		}
-	}
-	return false
 }
 
 // Helper to get log path
