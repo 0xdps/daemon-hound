@@ -20,10 +20,15 @@ build-macos: build-macos-icon
 	cp bin/dhd build/DaemonHound.app/Contents/MacOS/dhd
 	cp build/Info.plist build/DaemonHound.app/Contents/
 	cp build/AppIcon.icns build/DaemonHound.app/Contents/Resources/
+	@if [ -n "$$APPLE_DEVELOPER_IDENTITY" ]; then \
+		codesign --force --deep --options runtime --sign "$$APPLE_DEVELOPER_IDENTITY" build/DaemonHound.app; \
+		echo "✓ Signed macOS app bundle with $$APPLE_DEVELOPER_IDENTITY"; \
+	fi
 	@echo "✓ macOS app bundle created: build/DaemonHound.app"
 
 .PHONY: install-macos
 install-macos: build-macos
+	@rm -rf ~/Applications/DaemonHound.app
 	@cp -r build/DaemonHound.app ~/Applications/DaemonHound.app
 	@chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dhd
 	@echo "✓ Daemon Hound installed to ~/Applications/DaemonHound.app"

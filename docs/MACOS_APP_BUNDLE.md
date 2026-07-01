@@ -138,14 +138,25 @@ rm -f build/AppIcon.icns
 ## Troubleshooting
 
 ### Icon not showing
-- Rebuild with `make build-macos-icon`
+- If installed via `dhd init`, the runtime installer now regenerates `~/Applications/DaemonHound.app/Contents/Resources/AppIcon.icns`
+- For local builds, rebuild with `make build-macos-icon`
 - Check that `build/AppIcon.icns` exists
-- Restart daemon
+- Restart daemon with `dhd daemon restart`
 
 ### App name still shows as "exec"
 - Ensure Info.plist was copied: `cat build/DaemonHound.app/Contents/Info.plist`
 - Rebuild app bundle: `make build-macos`
 - Restart daemon
+
+### "Item from unidentified developer"
+- Set `APPLE_DEVELOPER_IDENTITY` before `make build-macos` or before running `dhd init`
+- Example identity: `Developer ID Application: Your Name (TEAMID)`
+- The app bundle is signed automatically when that environment variable is present
+- Notarization is still a release-step responsibility outside the local runtime installer
+
+### Duplicate Background Activity entries
+- Current installs remove both `com.0xdps.daemon-hound` and legacy `com.daemon-hound` launch agents before reinstalling
+- To clean stale local metadata, run `dhd cleanup --force` and then `dhd init`
 
 ### Binary not executable
 - Run: `chmod +x ~/Applications/DaemonHound.app/Contents/MacOS/dhd`

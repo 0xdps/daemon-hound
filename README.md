@@ -44,6 +44,10 @@ dhd version
 
 Linux package users can use `dhd` directly or `daemon-hound` as an alias. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
 
+Official macOS release DMGs are signed with Developer ID and notarized during CI releases.
+
+Maintainers: release secret preparation is documented in `.github/SECRETS.md`.
+
 ---
 
 ## Getting Started

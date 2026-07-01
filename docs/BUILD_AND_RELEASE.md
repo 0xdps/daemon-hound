@@ -245,6 +245,73 @@ Local development and testing targets
 ### `.github/workflows/release.yml`
 GitHub Actions workflow that runs goreleaser on tag
 
+## macOS Signing & Notarization
+
+Release-time macOS artifacts are now built on `macos-latest` and require these GitHub Actions secrets:
+
+| Secret | Purpose |
+|---|---|
+| `APPLE_DEVELOPER_IDENTITY` | Full Developer ID Application identity, e.g. `Developer ID Application: Your Name (TEAMID)` |
+| `MACOS_CERT_P12_BASE64` | Base64-encoded exported Developer ID `.p12` certificate |
+| `MACOS_CERT_PASSWORD` | Password for the `.p12` certificate |
+| `MACOS_KEYCHAIN_PASSWORD` | Temporary CI keychain password |
+| `MACOS_NOTARY_KEY_ID` | App Store Connect API key ID |
+| `MACOS_NOTARY_ISSUER_ID` | App Store Connect issuer UUID |
+| `MACOS_NOTARY_KEY_BASE64` | Base64-encoded `AuthKey_XXXXXX.p8` contents |
+| `GPG_PRIVATE_KEY` | ASCII-armored GPG private key for release checksum signing |
+| `GPG_PASSPHRASE` | Passphrase for the GPG key |
+
+The release workflow now:
+
+1. imports your Developer ID certificate into a temporary CI keychain
+2. builds arch-specific `DaemonHound.app` bundles
+3. signs the app bundle and resulting `.dmg`
+4. notarizes the `.dmg` with `xcrun notarytool`
+5. staples the notarization ticket
+6. uploads the notarized DMGs into the GitHub release
+7. signs `checksums.txt` as `checksums.txt.asc`
+
+### Prepare secrets locally
+
+Export your certificate and notary key once:
+
+```bash
+# Developer ID certificate exported from Keychain Access
+base64 -i Certificates.p12 | pbcopy
+
+# App Store Connect API key
+base64 -i AuthKey_ABC123XYZ.p8 | pbcopy
+
+# Optional: ASCII-armored GPG secret key for checksums
+gpg --armor --export-secret-keys YOUR_KEY_ID | pbcopy
+```
+
+There is also a helper script for preparing secret values:
+
+```bash
+scripts/prepare-release-secrets.sh macos-cert Certificates.p12
+scripts/prepare-release-secrets.sh notary-key AuthKey_ABC123XYZ.p8
+scripts/prepare-release-secrets.sh gpg-key YOUR_KEY_ID
+scripts/prepare-release-secrets.sh identity
+scripts/prepare-release-secrets.sh keychain-password
+```
+
+See `.github/SECRETS.md` for the full checklist.
+
+### Local macOS release smoke test
+
+```bash
+export APPLE_DEVELOPER_IDENTITY="Developer ID Application: Your Name (TEAMID)"
+export KEYCHAIN_PATH="$HOME/Library/Keychains/login.keychain-db"
+export MACOS_NOTARY_KEY_PATH="$HOME/private_keys/AuthKey_ABC123XYZ.p8"
+export MACOS_NOTARY_KEY_ID="ABC123XYZ"
+export MACOS_NOTARY_ISSUER_ID="00000000-0000-0000-0000-000000000000"
+
+scripts/build-macos-release.sh arm64 v1.2.0
+```
+
+This produces a signed, notarized DMG in `dist/`.
+
 ---
 
 ## Troubleshooting

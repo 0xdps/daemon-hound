@@ -85,6 +85,12 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 		fmt.Println(output.Dim("  Daemon not installed, skipping"))
 	}
 
+	if err := daemon.RemoveAppBundle(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to remove app bundle: %v\n", err)
+	} else {
+		fmt.Println(output.Green("✓") + " Removed macOS app bundle")
+	}
+
 	// Step 2: Remove master password from keychain (logout)
 	if keychain.IsSet() {
 		if err := keychain.Delete(); err != nil {

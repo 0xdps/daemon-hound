@@ -55,6 +55,23 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+signs:
+  - id: checksum-signature
+    artifacts: checksum
+    cmd: gpg
+    args:
+      - --batch
+      - --yes
+      - --armor
+      - --local-user
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - --output
+      - "${signature}"
+      - --detach-sign
+      - "${artifact}"
+    signature: "${artifact}.asc"
+    output: true
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
