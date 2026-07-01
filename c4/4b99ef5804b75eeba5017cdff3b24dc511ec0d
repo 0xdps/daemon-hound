@@ -1,0 +1,21 @@
+docs/PROJECT_GUIDE.md
+  s_7fe5c2ac60cf31::t_10bc1d5282f99c 1-262
+internal/daemon/runner.go
+  s_7fe5c2ac60cf31::t_5614cc17633f5a 81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "c44b99ef5804b75eeba5017cdff3b24dc511ec0d",
+  "prompts": {},
+  "sessions": {
+    "s_7fe5c2ac60cf31": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "b75f7f8b-9112-4acb-9483-e9a80dca0dab",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
