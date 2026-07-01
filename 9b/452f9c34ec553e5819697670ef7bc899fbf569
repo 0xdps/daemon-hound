@@ -1,0 +1,51 @@
+docs/BUILD_AND_RELEASE.md
+  s_215001f7b4616a::t_8e8ace1d00c9a7 248-288,301-314
+  s_215001f7b4616a::t_48e7423f98d4c0 289-300
+internal/cmd/cleanup.go
+  s_215001f7b4616a::t_632c9b14f09f34 88-93
+.goreleaser.yaml
+  s_215001f7b4616a::t_0f1773d186c009 58-74
+scripts/build-macos-release.sh
+  s_215001f7b4616a::t_b352f69f77c1cd 1-87
+README.md
+  s_215001f7b4616a::t_66ac94c7e63400 49-50
+  s_215001f7b4616a::t_697d4f9a3ec8c0 47-48
+.github/SECRETS.md
+  s_215001f7b4616a::t_bb4efcb07c16b9 1-149
+internal/daemon/launchd.go
+  s_215001f7b4616a::t_e86a8226fc9f89 14,18-24,33,45-50,78-79,82,85-87,93-94,102-106,108-109,111,116-121,139,162,199-216,218-235,251-271,291,304-306,358,362,364,390-396,608-622
+  s_215001f7b4616a::t_5026e5501a0954 107,217
+  s_215001f7b4616a::t_88382623eccb35 6-8,13,409-607
+  s_215001f7b4616a::t_ab1114b77cabde 236-250
+  s_215001f7b4616a::t_72a34c6c585624 397
+scripts/prepare-release-secrets.sh
+  s_215001f7b4616a::t_bbf911d6457a73 1-62
+.github/workflows/release.yml
+  s_215001f7b4616a::t_70781becd7f41f 16-82,84,103-116,133
+Makefile
+  s_215001f7b4616a::t_c6760ac6f15171 23-26,31
+docs/MACOS_APP_BUNDLE.md
+  s_215001f7b4616a::t_8c14c3970d8d87 141-142,144,151-159
+  s_215001f7b4616a::t_29f0725bbde972 160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.8",
+  "base_commit_sha": "9b452f9c34ec553e5819697670ef7bc899fbf569",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_215001f7b4616a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "8a8dd146-1fe4-439f-b723-f9f5d3ddddbb",
+        "model": "gpt-5-mini"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
