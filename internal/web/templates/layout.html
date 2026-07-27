@@ -1,0 +1,664 @@
+{{define "base"}}<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DaemonHound</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/css/nova.min.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js" defer></script>
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/js/all.min.js" defer></script>
+  <style>
+    :root {
+      --accent: #1fcb4f;
+      --accent-dim: #17a33f;
+      --sidebar-w: 240px;
+    }
+    body { background: #0d0d0f; color: #e2e2e5; font-family: 'Inter', system-ui, sans-serif; }
+
+    /* Sidebar */
+    #sidebar {
+      width: var(--sidebar-w);
+      background: #111114;
+      border-right: 1px solid #1e1e24;
+      height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 40;
+    }
+    #main-content {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    /* Nav items */
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      color: #9ca3af;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      margin: 0 0.5rem;
+    }
+    .nav-item:hover { background: #1a1a20; color: #e2e2e5; }
+    .nav-item.active { background: #0f2a18; color: var(--accent); }
+    .nav-item.active i { color: var(--accent); }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.1rem 0.45rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .badge-conflict { background: #3d1515; color: #f87171; }
+    .badge-success  { background: #0f2a18; color: var(--accent); }
+    .badge-neutral  { background: #1e1e24; color: #9ca3af; }
+    .badge-warn     { background: #2d2010; color: #fbbf24; }
+    .badge-sync     { background: #0e2133; color: #60a5fa; }
+    .badge-backup   { background: #1f1a2e; color: #a78bfa; }
+
+    /* Cards */
+    .card {
+      background: #111114;
+      border: 1px solid #1e1e24;
+      border-radius: 0.5rem;
+      padding: 1.25rem;
+    }
+
+    /* Metric card */
+    .metric-card {
+      background: #111114;
+      border: 1px solid #1e1e24;
+      border-radius: 0.5rem;
+      padding: 1rem 1.25rem;
+      transition: border-color 0.15s;
+      text-decoration: none;
+      display: block;
+    }
+    .metric-card:hover { border-color: #2e2e38; }
+
+    /* Alert banners */
+    .alert-danger { background: #2a0f0f; border: 1px solid #7f1d1d; border-radius: 0.5rem; padding: 0.75rem 1rem; color: #fca5a5; }
+    .alert-warn   { background: #2a1f0f; border: 1px solid #78350f; border-radius: 0.5rem; padding: 0.75rem 1rem; color: #fde68a; }
+    .alert-info   { background: #0e1f33; border: 1px solid #1e40af; border-radius: 0.5rem; padding: 0.75rem 1rem; color: #93c5fd; }
+
+    /* Daemon status pill in sidebar */
+    .daemon-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+    .daemon-pill .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+    .daemon-pill.running .dot { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+    .daemon-pill.halted  .dot { background: #f87171; }
+    .daemon-pill.running { color: var(--accent); }
+    .daemon-pill.halted  { color: #f87171; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    thead th { text-align: left; padding: 0.5rem 0.75rem; color: #6b7280; font-weight: 500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #1e1e24; }
+    tbody td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #16161a; color: #d1d5db; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #0f0f12; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 0.375rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.15s, border-color 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary   { background: var(--accent); color: #000; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-dim); border-color: var(--accent-dim); }
+    .btn-secondary { background: #1a1a20; color: #d1d5db; border-color: #2e2e38; }
+    .btn-secondary:hover { background: #222229; }
+    .btn-danger    { background: #2a0f0f; color: #f87171; border-color: #7f1d1d; }
+    .btn-danger:hover { background: #3d1515; }
+    .btn-ghost     { background: transparent; color: #9ca3af; border-color: transparent; }
+    .btn-ghost:hover { background: #1a1a20; color: #e2e2e5; }
+    .btn-sm { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
+
+    /* Form controls */
+    .form-input {
+      width: 100%;
+      background: #0d0d0f;
+      border: 1px solid #2e2e38;
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      color: #e2e2e5;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: #4b5563; }
+    .form-label { font-size: 0.8rem; font-weight: 500; color: #9ca3af; margin-bottom: 0.35rem; display: block; }
+
+    /* Search */
+    .search-wrap { position: relative; }
+    .search-wrap i { position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #4b5563; width: 14px; height: 14px; }
+    .search-wrap input { padding-left: 2.1rem; }
+
+    /* Code / pre */
+    pre, code { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; font-size: 0.8rem; }
+    pre {
+      background: #0a0a0c;
+      border: 1px solid #1e1e24;
+      border-radius: 0.375rem;
+      padding: 1rem;
+      overflow: auto;
+      color: #d1d5db;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Secret blur */
+    .secret-reveal {
+      filter: blur(4px);
+      cursor: pointer;
+      transition: filter 0.2s;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #d1d5db;
+      background: #0a0a0c;
+      border: 1px solid #1e1e24;
+      border-radius: 0.375rem;
+      padding: 0.5rem 0.75rem;
+      display: inline-block;
+      min-width: 12ch;
+    }
+    .secret-reveal:hover, .secret-reveal:focus { filter: none; }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: none;
+    }
+    .toast {
+      pointer-events: all;
+      padding: 0.65rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.85rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: slideIn 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .toast-success { background: #0f2a18; border: 1px solid #166534; color: var(--accent); }
+    .toast-error   { background: #2a0f0f; border: 1px solid #991b1b; color: #fca5a5; }
+    .toast-info    { background: #0e1f33; border: 1px solid #1e40af; color: #93c5fd; }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    /* Confirm dialog */
+    #confirm-dialog {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #confirm-dialog.open { display: flex; }
+    #confirm-dialog .dialog-box {
+      background: #111114;
+      border: 1px solid #2e2e38;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 24rem;
+    }
+
+    /* Keyboard shortcut overlay */
+    #kbd-overlay {
+      position: fixed; inset: 0; z-index: 8000;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    #kbd-overlay.open { display: flex; }
+    #kbd-overlay .kbd-box {
+      background: #111114;
+      border: 1px solid #2e2e38;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      width: 100%;
+      max-width: 28rem;
+    }
+    kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1a1a20;
+      border: 1px solid #2e2e38;
+      border-radius: 0.25rem;
+      padding: 0.1rem 0.4rem;
+      font-size: 0.72rem;
+      font-family: monospace;
+      color: #d1d5db;
+      min-width: 1.5rem;
+    }
+
+    /* Diff columns */
+    .diff-col { flex: 1; min-width: 0; }
+    .diff-col pre { height: 100%; min-height: 200px; }
+    .diff-header { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.4rem 0.75rem; border-radius: 0.25rem 0.25rem 0 0; }
+    .diff-base   .diff-header { background: #1e1a0e; color: #fbbf24; }
+    .diff-local  .diff-header { background: #0e2133; color: #60a5fa; }
+    .diff-remote .diff-header { background: #0f2a18; color: var(--accent); }
+
+    /* KV diff table rows */
+    tr.kv-conflict td { background: #1f0f0f; }
+    tr.kv-local-only td { background: #0e1f2a; }
+    tr.kv-remote-only td { background: #0f1f15; }
+    tr.kv-same td { opacity: 0.5; }
+
+    /* Section heading */
+    .section-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #4b5563; margin-bottom: 0.75rem; }
+
+    /* Page title */
+    .page-title { font-size: 1.25rem; font-weight: 600; color: #f3f4f6; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2e2e38; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3e3e4a; }
+
+    /* Divider */
+    hr { border: none; border-top: 1px solid #1e1e24; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: #4b5563; }
+    .empty-state i { width: 40px; height: 40px; margin: 0 auto 0.75rem; display: block; }
+
+    /* HTMX loading progress bar */
+    #htmx-progress {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--accent); z-index: 10000;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.15s ease, opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
+    }
+    #htmx-progress.active { transform: scaleX(0.7); opacity: 1; }
+    #htmx-progress.done { transform: scaleX(1); opacity: 0; transition: transform 0.3s ease, opacity 0.4s 0.3s; }
+
+    /* Button spinner indicator */
+    .btn.htmx-request { opacity: 0.6; pointer-events: none; }
+    .btn.htmx-request .btn-text { position: relative; }
+    .btn.htmx-request .btn-text::after {
+      content: '';
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.5s linear infinite;
+      margin-left: 0.5rem;
+      vertical-align: -1px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body hx-boost="false">
+
+<!-- HTMX loading progress bar -->
+<div id="htmx-progress"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar">
+  <!-- Brand -->
+  <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #1e1e24; display: flex; align-items: center; gap: 0.6rem;">
+    <img src="/static/logo.png" alt="DaemonHound" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+    <span style="font-size:0.95rem;font-weight:700;color:#f3f4f6;letter-spacing:-0.01em;">DaemonHound</span>
+  </div>
+
+  <!-- Navigation -->
+  <nav style="flex:1;overflow-y:auto;padding:0.75rem 0;">
+    <div style="padding: 0 0.75rem 0.4rem; margin-bottom: 0.25rem;">
+      <span class="section-title" style="padding-left:0.25rem;">Navigation</span>
+    </div>
+
+    <a class="nav-item {{if eq .Active `dashboard`}}active{{end}}"
+       hx-get="/" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/">
+      <i data-lucide="layout-dashboard" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Dashboard
+    </a>
+
+    <a class="nav-item {{if eq .Active `conflicts`}}active{{end}}"
+       hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/conflicts">
+      <i data-lucide="git-merge" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Conflicts
+      {{if gt .PendingCount 0}}
+        <span class="badge badge-conflict" style="margin-left:auto;">{{.PendingCount}}</span>
+      {{end}}
+    </a>
+
+    <a class="nav-item {{if eq .Active `status`}}active{{end}}"
+       hx-get="/status" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/status">
+      <i data-lucide="activity" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Live Status
+    </a>
+
+    <a class="nav-item {{if eq .Active `files`}}active{{end}}"
+       hx-get="/files" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/files">
+      <i data-lucide="folder-open" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Tracked Files
+    </a>
+
+    <a class="nav-item {{if eq .Active `secrets`}}active{{end}}"
+       hx-get="/secrets" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/secrets">
+      <i data-lucide="key-round" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Secrets
+    </a>
+
+    <a class="nav-item {{if eq .Active `settings`}}active{{end}}"
+       hx-get="/settings" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/settings">
+      <i data-lucide="settings-2" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Settings
+    </a>
+  </nav>
+
+  <!-- Bottom: daemon status + logout -->
+  <div style="border-top:1px solid #1e1e24;padding:0.75rem 1.25rem;">
+    {{if .DaemonRunning}}
+      <div class="daemon-pill running" style="margin-bottom:0.75rem;">
+        <span class="dot"></span> Daemon running
+      </div>
+    {{else}}
+      <div class="daemon-pill halted" style="margin-bottom:0.75rem;">
+        <span class="dot"></span> Daemon halted
+      </div>
+    {{end}}
+    <form method="POST" action="/logout" style="margin:0;">
+      <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;">
+        <i data-lucide="log-out" style="width:14px;height:14px;"></i>
+        Logout
+      </button>
+    </form>
+    <div style="margin-top:0.5rem;text-align:right;">
+      <button onclick="toggleKbd()" class="btn btn-ghost btn-sm" style="font-size:0.68rem;color:#4b5563;" title="Keyboard shortcuts (?)">
+        <kbd>?</kbd>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main content -->
+<main id="main-content">
+  <div id="app-content">
+    {{template "content" .Data}}
+  </div>
+</main>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Confirm dialog -->
+<div id="confirm-dialog" role="dialog" aria-modal="true">
+  <div class="dialog-box">
+    <h3 style="font-size:1rem;font-weight:600;color:#f3f4f6;margin-bottom:0.5rem;" id="confirm-title">Confirm action</h3>
+    <p style="font-size:0.875rem;color:#9ca3af;margin-bottom:1.25rem;" id="confirm-body">Are you sure?</p>
+    <div style="display:flex;gap:0.5rem;justify-content:flex-end;">
+      <button class="btn btn-secondary" onclick="closeConfirm(false)">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok" onclick="closeConfirm(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Keyboard shortcut overlay -->
+<div id="kbd-overlay" role="dialog" aria-modal="true" onclick="toggleKbd()">
+  <div class="kbd-box" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+      <h3 style="font-size:0.95rem;font-weight:600;color:#f3f4f6;">Keyboard Shortcuts</h3>
+      <button onclick="toggleKbd()" class="btn btn-ghost btn-sm"><i data-lucide="x" style="width:14px;height:14px;"></i></button>
+    </div>
+    <table style="font-size:0.82rem;">
+      <tbody>
+        <tr><td style="padding:0.3rem 0;color:#9ca3af;width:7rem;"><kbd>?</kbd></td><td style="color:#d1d5db;">Toggle this panel</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>D</kbd></td><td style="color:#d1d5db;">Go to Dashboard</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>C</kbd></td><td style="color:#d1d5db;">Go to Conflicts</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>L</kbd></td><td style="color:#d1d5db;">Go to Live Status</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>F</kbd></td><td style="color:#d1d5db;">Go to Tracked Files</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>S</kbd></td><td style="color:#d1d5db;">Go to Secrets</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>T</kbd></td><td style="color:#d1d5db;">Go to Settings</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ── Loading indicator ──────────────────────────────────────────────────────
+document.addEventListener('htmx:beforeRequest', function(e) {
+  // Show progress bar for non-SSE requests
+  if (!e.detail.target || !e.detail.target.hasAttribute('sse-connect')) {
+    var bar = document.getElementById('htmx-progress');
+    bar.classList.remove('done'); bar.classList.add('active');
+  }
+});
+document.addEventListener('htmx:afterRequest', function() {
+  var bar = document.getElementById('htmx-progress');
+  bar.classList.remove('active'); bar.classList.add('done');
+});
+document.addEventListener('htmx:responseError', function() {
+  var bar = document.getElementById('htmx-progress');
+  bar.classList.remove('active'); bar.classList.add('done');
+  setTimeout(function() { bar.classList.remove('done'); }, 500);
+});
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(kind, message) {
+  const c = document.getElementById('toast-container');
+  const icons = { success: 'check-circle', error: 'x-circle', info: 'info' };
+  const el = document.createElement('div');
+  el.className = `toast toast-${kind}`;
+  el.innerHTML = `<i data-lucide="${icons[kind] || 'info'}" style="width:15px;height:15px;flex-shrink:0;"></i><span>${message}</span>`;
+  c.appendChild(el);
+  if (window.lucide) lucide.createIcons({ nodes: [el] });
+  setTimeout(function() { el.remove(); }, 4000);
+}
+
+function dismissAllToasts() {
+  document.getElementById('toast-container').innerHTML = '';
+}
+
+document.addEventListener('htmx:trigger', function(e) {
+  const val = e.detail.value;
+  if (val && val['app:toast']) {
+    const t = val['app:toast'];
+    showToast(t.kind, t.message);
+  }
+});
+
+// Also handle HX-Trigger header response event
+document.body.addEventListener('app:toast', function(e) {
+  showToast(e.detail.kind, e.detail.message);
+});
+
+// ── Confirm dialog ────────────────────────────────────────────────────────
+let _confirmResolve = null;
+let _pendingForm = null;
+
+function openConfirm(title, body, form) {
+  document.getElementById('confirm-title').textContent = title || 'Confirm action';
+  document.getElementById('confirm-body').textContent  = body  || 'Are you sure?';
+  _pendingForm = form || null;
+  document.getElementById('confirm-dialog').classList.add('open');
+}
+
+function closeConfirm(confirmed) {
+  document.getElementById('confirm-dialog').classList.remove('open');
+  if (confirmed && _pendingForm) {
+    // Submit the stored form via htmx if possible, else native submit
+    if (window.htmx) {
+      htmx.trigger(_pendingForm, 'confirmed-submit');
+    } else {
+      _pendingForm.submit();
+    }
+  }
+  _pendingForm = null;
+}
+
+// ── Keyboard shortcuts ─────────────────────────────────────────────────────
+let _kbdPending = null;
+let _kbdTimer   = null;
+
+const KBD_NAV = { d: '/', c: '/conflicts', l: '/status', f: '/files', s: '/secrets', t: '/settings' };
+
+document.addEventListener('keydown', function(e) {
+  // Ignore when typing in inputs/textareas
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+
+  const key = e.key.toLowerCase();
+
+  if (key === '?') { toggleKbd(); return; }
+
+  if (key === 'escape') {
+    document.getElementById('kbd-overlay').classList.remove('open');
+    document.getElementById('confirm-dialog').classList.remove('open');
+    dismissAllToasts();
+    return;
+  }
+
+  if (_kbdPending === 'g') {
+    clearTimeout(_kbdTimer);
+    _kbdPending = null;
+    const path = KBD_NAV[key];
+    if (path) {
+      htmx.ajax('GET', path, { target: '#app-content', swap: 'innerHTML', pushURL: true });
+    }
+    return;
+  }
+
+  if (key === 'g') {
+    _kbdPending = 'g';
+    _kbdTimer = setTimeout(() => { _kbdPending = null; }, 1200);
+  }
+});
+
+function toggleKbd() {
+  document.getElementById('kbd-overlay').classList.toggle('open');
+}
+
+// ── Nav active state sync after HTMX swaps ─────────────────────────────────
+function syncNav() {
+  const path = window.location.pathname;
+  const map = {
+    '/': 'dashboard', '/conflicts': 'conflicts', '/status': 'status',
+    '/files': 'files', '/secrets': 'secrets', '/settings': 'settings'
+  };
+  // Match longest prefix
+  let active = 'dashboard';
+  for (const [prefix, name] of Object.entries(map)) {
+    if (prefix !== '/' && path.startsWith(prefix)) { active = name; break; }
+    if (prefix === '/' && path === '/') { active = 'dashboard'; break; }
+  }
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.getAttribute('hx-get') === (active === 'dashboard' ? '/' : `/${active}`) || (active === 'dashboard' && el.getAttribute('hx-get') === '/'));
+  });
+}
+
+document.addEventListener('htmx:afterSettle', function() {
+  syncNav();
+  if (window.lucide) lucide.createIcons();
+});
+
+// ── Sidebar live metrics ───────────────────────────────────────────────────
+document.addEventListener('sidebar:update', function(e) {
+  if (!e.detail) return;
+  var d = e.detail;
+  // Update conflict badge
+  var badge = document.querySelector('.nav-item[href="/conflicts"] .badge-conflict');
+  if (d.pending > 0) {
+    if (badge) { badge.textContent = d.pending; }
+    else {
+      var link = document.querySelector('.nav-item[href="/conflicts"]');
+      if (link) {
+        var newBadge = document.createElement('span');
+        newBadge.className = 'badge badge-conflict';
+        newBadge.style.cssText = 'margin-left:auto;';
+        newBadge.textContent = d.pending;
+        link.appendChild(newBadge);
+      }
+    }
+  } else {
+    if (badge) badge.remove();
+  }
+});
+
+// ── Daemon status pulse polling ────────────────────────────────────────────
+setInterval(function() {
+  fetch('/status/pulse')
+    .then(function(r) {
+      if (!r.ok) return;
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data) return;
+      var pill = document.querySelector('.daemon-pill');
+      if (!pill) return;
+      var isRunning = pill.classList.contains('running');
+      if (data.running !== isRunning) {
+        // Update class and text
+        if (data.running) {
+          pill.className = 'daemon-pill running';
+          pill.innerHTML = '<span class="dot"></span> Daemon running';
+        } else {
+          pill.className = 'daemon-pill halted';
+          pill.innerHTML = '<span class="dot"></span> Daemon halted';
+        }
+      }
+    })
+    .catch(function() { /* ignore fetch errors */ });
+}, 10000);
+
+// ── Lucide init on page load ───────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.lucide) lucide.createIcons();
+});
+window.addEventListener('load', function() {
+  if (window.lucide) lucide.createIcons();
+});
+</script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,122 @@
+{{define "content"}}
+<div>
+  <h1 class="page-title">
+    <i data-lucide="folder-open" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Tracked Files
+  </h1>
+
+  <!-- Search + stats bar -->
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+    <div class="search-wrap" style="flex:1;max-width:360px;">
+      <i data-lucide="search" style="width:14px;height:14px;"></i>
+      <input
+        class="form-input"
+        type="search"
+        name="q"
+        value="{{.Query}}"
+        placeholder="Search namespace, path, or mode…"
+        hx-get="/files"
+        hx-target="#file-list"
+        hx-trigger="keyup changed delay:300ms"
+        hx-swap="outerHTML"
+        autocomplete="off"
+      >
+    </div>
+    <span style="font-size:0.78rem;color:#6b7280;white-space:nowrap;">
+      {{.Filtered}} of {{.Total}} files
+    </span>
+  </div>
+
+  <div id="file-list">
+    {{if .Namespaces}}
+      {{range .Namespaces}}
+      <div style="margin-bottom:1.75rem;">
+        <!-- Namespace heading (clickable to toggle collapse) -->
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem;cursor:pointer;" onclick="toggleNamespace({{printf "%q" .Name}})">
+          <i data-lucide="chevron-down" id="ns-icon-{{.Name}}" style="width:12px;height:12px;color:#6b7280;transition:transform 0.2s;"></i>
+          <i data-lucide="layers" style="width:14px;height:14px;color:#6b7280;"></i>
+          <span style="font-size:0.8rem;font-weight:600;color:#9ca3af;">{{.Name}}</span>
+          <span class="badge badge-neutral">{{len .Files}}</span>
+        </div>
+
+        <div class="card" style="padding:0;overflow:hidden;" id="ns-body-{{.Name}}">
+          <table>
+            <thead>
+              <tr>
+                <th>Path</th>
+                <th style="width:90px;">Mode</th>
+                <th style="width:170px;">Last sync</th>
+                <th style="width:80px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Files}}
+              <tr>
+                <td style="font-family:monospace;font-size:0.78rem;color:#d1d5db;max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{.RelPath}}">{{.RelPath}}</td>
+                <td>
+                  {{if eq (printf "%s" .Mode) "sync"}}
+                    <span class="badge badge-sync">sync</span>
+                  {{else}}
+                    <span class="badge badge-backup">backup</span>
+                  {{end}}
+                </td>
+                <td style="font-size:0.75rem;color:#6b7280;white-space:nowrap;">{{formatTime .LastSyncAt}}</td>
+                <td style="text-align:right;">
+                  <a
+                    class="btn btn-secondary btn-sm"
+                    hx-get="/files/view?key={{.Namespace}}:{{.RelPath}}"
+                    hx-target="#app-content"
+                    hx-swap="innerHTML"
+                    hx-push-url="true"
+                    href="/files/view?key={{.Namespace}}:{{.RelPath}}"
+                  >
+                    <i data-lucide="eye" style="width:12px;height:12px;"></i>
+                    View
+                  </a>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {{end}}
+    {{else}}
+    <div class="card">
+      <div class="empty-state">
+        <i data-lucide="folder-x" style="width:36px;height:36px;color:#374151;margin:0 auto 0.75rem;display:block;"></i>
+        <div style="font-size:0.875rem;color:#6b7280;margin-bottom:0.5rem;">
+          {{if .Query}}No files match <strong style="color:#9ca3af;">{{.Query}}</strong>{{else}}No tracked files yet{{end}}
+        </div>
+        {{if not .Query}}
+        <div style="font-size:0.75rem;color:#374151;">Use <code style="font-size:0.75rem;color:#6b7280;background:#111114;padding:0.1rem 0.4rem;border-radius:0.2rem;">dhd track &lt;file&gt;</code> from the CLI to start tracking files.</div>
+        {{end}}
+      </div>
+    </div>
+    {{end}}
+  </div>
+</div>
+
+<script>
+function toggleNamespace(name) {
+  var body = document.getElementById('ns-body-' + name);
+  var icon = document.getElementById('ns-icon-' + name);
+  if (!body) return;
+  var hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (icon) icon.style.transform = hidden ? 'rotate(0deg)' : 'rotate(-90deg)';
+  try { localStorage.setItem('dhd:ns:' + name, hidden ? 'open' : 'closed'); } catch(e) {}
+}
+(function() {
+  document.querySelectorAll('[id^="ns-icon-"]').forEach(function(icon) {
+    var name = icon.id.replace('ns-icon-', '');
+    try {
+      if (localStorage.getItem('dhd:ns:' + name) === 'closed') {
+        var body = document.getElementById('ns-body-' + name);
+        if (body) { body.style.display = 'none'; icon.style.transform = 'rotate(-90deg)'; }
+      }
+    } catch(e) {}
+  });
+})();
+</script>
+{{end}}

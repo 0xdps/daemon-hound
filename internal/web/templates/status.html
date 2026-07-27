@@ -1,0 +1,98 @@
+{{define "content"}}
+<div>
+  <h1 class="page-title">
+    <i data-lucide="activity" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Live Status
+  </h1>
+
+  <!-- Daemon state banner -->
+  {{if .Halted}}
+  <div class="alert-danger" style="margin-bottom:1.25rem;display:flex;align-items:flex-start;gap:0.75rem;">
+    <i data-lucide="shield-alert" style="width:16px;height:16px;flex-shrink:0;margin-top:0.1rem;"></i>
+    <div>
+      <div style="font-weight:600;margin-bottom:0.2rem;">Daemon halted</div>
+      <div style="font-size:0.85rem;">{{if .HaltReason}}{{.HaltReason}}{{else}}The daemon is paused and waiting for action.{{end}}</div>
+    </div>
+  </div>
+  {{else}}
+  <div class="alert-info" style="margin-bottom:1.25rem;display:flex;align-items:center;gap:0.75rem;">
+    <i data-lucide="check-circle" style="width:16px;height:16px;flex-shrink:0;color:#1fcb4f;"></i>
+    <span style="font-size:0.875rem;color:#1fcb4f;">Daemon is running normally</span>
+  </div>
+  {{end}}
+
+  <!-- Log file path -->
+  {{if .LogPath}}
+  <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1.25rem;">
+    <span class="section-title" style="margin-bottom:0;">Log file</span>
+    <code style="font-size:0.78rem;color:#9ca3af;background:#111114;border:1px solid #1e1e24;border-radius:0.25rem;padding:0.15rem 0.5rem;">{{.LogPath}}</code>
+  </div>
+  {{end}}
+
+  <!-- Log viewer -->
+  <div class="card" style="padding:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid #1e1e24;">
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <i data-lucide="terminal" style="width:14px;height:14px;color:#6b7280;"></i>
+        <span style="font-size:0.8rem;font-weight:500;color:#9ca3af;">Daemon logs</span>
+        <span id="sse-indicator" style="width:6px;height:6px;border-radius:50%;background:#1fcb4f;box-shadow:0 0 4px #1fcb4f;display:inline-block;" title="Live stream active"></span>
+      </div>
+      <button
+        id="autoscroll-btn"
+        onclick="toggleAutoscroll()"
+        class="btn btn-secondary btn-sm"
+        title="Toggle autoscroll"
+      >
+        <i data-lucide="arrow-down-to-line" style="width:13px;height:13px;"></i>
+        <span id="autoscroll-label">Autoscroll on</span>
+      </button>
+    </div>
+
+    <!-- Pre-loaded recent lines -->
+    <div
+      id="log-output"
+      style="height:420px;overflow-y:auto;padding:0.85rem 1rem;font-family:'JetBrains Mono','Fira Code',ui-monospace,monospace;font-size:0.75rem;line-height:1.6;color:#9ca3af;background:#0a0a0c;"
+      hx-ext="sse"
+      sse-connect="/status/stream"
+      sse-swap="log"
+      hx-swap="beforeend"
+      hx-target="#log-output"
+    >{{range .RecentLogs}}<div class="log-line">{{.}}</div>
+{{end}}</div>
+  </div>
+</div>
+
+<script>
+  let _autoscroll = true;
+  const logEl = document.getElementById('log-output');
+  const btnLabel = document.getElementById('autoscroll-label');
+  const sseIndicator = document.getElementById('sse-indicator');
+
+  function scrollToBottom() {
+    if (_autoscroll && logEl) logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function toggleAutoscroll() {
+    _autoscroll = !_autoscroll;
+    btnLabel.textContent = _autoscroll ? 'Autoscroll on' : 'Autoscroll off';
+    if (_autoscroll) scrollToBottom();
+  }
+
+  // Scroll on initial load
+  scrollToBottom();
+
+  // Observe mutations to auto-scroll when new lines arrive via SSE
+  if (logEl) {
+    new MutationObserver(scrollToBottom).observe(logEl, { childList: true });
+  }
+
+  // SSE connection state management
+  document.addEventListener('htmx:sseBeforeMessage', function() {
+    if (sseIndicator) { sseIndicator.style.background = '#1fcb4f'; sseIndicator.style.boxShadow = '0 0 4px #1fcb4f'; }
+  });
+  document.addEventListener('htmx:sseError', function() {
+    if (sseIndicator) { sseIndicator.style.background = '#6b7280'; sseIndicator.style.boxShadow = 'none'; }
+    showToast('info', 'Log stream reconnecting...');
+  });
+</script>
+{{end}}

@@ -1,0 +1,147 @@
+{{define "content"}}
+<div>
+  <!-- Back -->
+  <a hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts"
+     class="btn btn-ghost btn-sm" style="margin-bottom:1rem;display:inline-flex;">
+    <i data-lucide="arrow-left" style="width:13px;height:13px;"></i>
+    Back to Conflicts
+  </a>
+
+  <h1 class="page-title" style="margin-bottom:0.35rem;">
+    <i data-lucide="diff" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Conflict Diff
+  </h1>
+  <div style="font-family:monospace;font-size:0.8rem;color:#9ca3af;margin-bottom:1.5rem;word-break:break-all;">{{.FilePath}}</div>
+
+  {{if .IsKV}}
+  <!-- Key-value diff table -->
+  <div style="margin-bottom:0.75rem;">
+    <span class="section-title">Key-level diff</span>
+    <div style="display:inline-flex;gap:0.5rem;margin-left:1rem;font-size:0.72rem;align-items:center;">
+      <span style="display:inline-flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;background:#1f0f0f;border:1px solid #7f1d1d;border-radius:2px;display:inline-block;"></span>conflict</span>
+      <span style="display:inline-flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;background:#0e1f2a;border:1px solid #1e40af;border-radius:2px;display:inline-block;"></span>local only</span>
+      <span style="display:inline-flex;align-items:center;gap:0.3rem;"><span style="width:10px;height:10px;background:#0f1f15;border:1px solid #166534;border-radius:2px;display:inline-block;"></span>remote only</span>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:1.5rem;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:20%;">Key</th>
+          <th style="width:20%;">Base</th>
+          <th style="width:22%;">Local</th>
+          <th style="width:22%;">Remote</th>
+          <th style="width:16%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .KeyDiffs}}
+        <tr class="kv-{{.Status}}">
+          <td style="font-family:monospace;font-size:0.78rem;font-weight:500;color:#d1d5db;">{{.Key}}</td>
+          <td style="font-family:monospace;font-size:0.78rem;color:#9ca3af;">{{if .BaseValue}}{{truncate .BaseValue 40}}{{else}}<span style="color:#374151;font-style:italic;">—</span>{{end}}</td>
+          <td style="font-family:monospace;font-size:0.78rem;color:#93c5fd;">{{if .LocalValue}}{{truncate .LocalValue 40}}{{else}}<span style="color:#374151;font-style:italic;">—</span>{{end}}</td>
+          <td style="font-family:monospace;font-size:0.78rem;color:#86efac;">{{if .RemoteValue}}{{truncate .RemoteValue 40}}{{else}}<span style="color:#374151;font-style:italic;">—</span>{{end}}</td>
+          <td>
+            {{if eq .Status "conflict"}}<span class="badge badge-conflict">conflict</span>
+            {{else if eq .Status "local-only"}}<span class="badge badge-sync">local</span>
+            {{else if eq .Status "remote-only"}}<span class="badge badge-success">remote</span>
+            {{else}}<span class="badge badge-neutral">same</span>{{end}}
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <!-- Raw 3-column diff -->
+  <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;min-height:200px;">
+    <div class="diff-col diff-base" style="display:flex;flex-direction:column;">
+      <div class="diff-header">Base</div>
+      <pre style="flex:1;border-radius:0 0 0.375rem 0.375rem;border-top:none;margin:0;">{{range .BaseLines}}{{.}}
+{{end}}</pre>
+    </div>
+    <div class="diff-col diff-local" style="display:flex;flex-direction:column;">
+      <div class="diff-header">Local (ours)</div>
+      <pre style="flex:1;border-radius:0 0 0.375rem 0.375rem;border-top:none;margin:0;">{{range .LocalLines}}{{.}}
+{{end}}</pre>
+    </div>
+    <div class="diff-col diff-remote" style="display:flex;flex-direction:column;">
+      <div class="diff-header">Remote (theirs)</div>
+      <pre style="flex:1;border-radius:0 0 0.375rem 0.375rem;border-top:none;margin:0;">{{range .RemoteLines}}{{.}}
+{{end}}</pre>
+    </div>
+  </div>
+  {{end}}
+
+  <!-- Resolution form -->
+  <div class="card">
+    <div style="font-size:0.875rem;font-weight:600;color:#f3f4f6;margin-bottom:1rem;">Resolve Conflict</div>
+    <form
+      hx-post="/conflicts/resolve"
+      hx-target="#app-content"
+      hx-swap="innerHTML"
+      hx-push-url="/conflicts"
+      hx-confirm="Resolve this conflict? This will commit the change and cannot be undone."
+    >
+      <input type="hidden" name="file" value="{{.FilePath}}">
+
+      <div style="display:flex;flex-direction:column;gap:0.5rem;margin-bottom:1.25rem;">
+
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;border-radius:0.375rem;border:1px solid #2e2e38;cursor:pointer;transition:border-color 0.15s;" id="lbl-local">
+          <input type="radio" name="strategy" value="local" style="margin-top:0.2rem;accent-color:#1fcb4f;" onchange="highlightStrategy(this)">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500;color:#93c5fd;">Keep Local</div>
+            <div style="font-size:0.78rem;color:#6b7280;margin-top:0.15rem;">Discard remote changes — keep your local version (<code>git checkout --ours</code>)</div>
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;border-radius:0.375rem;border:1px solid #2e2e38;cursor:pointer;transition:border-color 0.15s;" id="lbl-remote">
+          <input type="radio" name="strategy" value="remote" style="margin-top:0.2rem;accent-color:#1fcb4f;" onchange="highlightStrategy(this)">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500;color:#86efac;">Accept Remote</div>
+            <div style="font-size:0.78rem;color:#6b7280;margin-top:0.15rem;">Discard local changes — accept the remote version (<code>git checkout --theirs</code>)</div>
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.75rem;border-radius:0.375rem;border:1px solid #2e2e38;cursor:pointer;transition:border-color 0.15s;" id="lbl-merged">
+          <input type="radio" name="strategy" value="merged" style="margin-top:0.2rem;accent-color:#1fcb4f;" onchange="highlightStrategy(this)">
+          <div>
+            <div style="font-size:0.875rem;font-weight:500;color:#1fcb4f;">Smart Merge</div>
+            <div style="font-size:0.78rem;color:#6b7280;margin-top:0.15rem;">Re-run automatic merge — combines non-conflicting changes from both sides</div>
+          </div>
+        </label>
+
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="check" style="width:14px;height:14px;"></i>
+        Resolve
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+function highlightStrategy(radio) {
+  ['local','remote','merged'].forEach(function(s) {
+    var lbl = document.getElementById('lbl-' + s);
+    if (lbl) lbl.style.borderColor = radio.value === s ? '#1fcb4f' : '#2e2e38';
+  });
+
+  // Visually highlight the chosen strategy's diff column
+  var cols = document.querySelectorAll('.diff-col');
+  if (radio.value === 'local') {
+    cols.forEach(function(c) { c.style.opacity = '0.3'; c.style.transition = 'opacity 0.25s'; });
+    var col = document.querySelector('.diff-local');
+    if (col) { col.style.opacity = '1'; col.style.borderColor = '#1fcb4f'; }
+  } else if (radio.value === 'remote') {
+    cols.forEach(function(c) { c.style.opacity = '0.3'; c.style.transition = 'opacity 0.25s'; });
+    var col = document.querySelector('.diff-remote');
+    if (col) { col.style.opacity = '1'; col.style.borderColor = '#1fcb4f'; }
+  } else {
+    // Merged: show all equally
+    cols.forEach(function(c) { c.style.opacity = '1'; });
+  }
+}
+</script>
+{{end}}

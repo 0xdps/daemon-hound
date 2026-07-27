@@ -1,0 +1,121 @@
+{{define "content"}}
+<div>
+  <h1 class="page-title">
+    <i data-lucide="layout-dashboard" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Dashboard
+  </h1>
+
+  {{if .Halted}}
+  <div class="alert-danger" style="margin-bottom:1.5rem;display:flex;align-items:flex-start;gap:0.75rem;">
+    <i data-lucide="shield-alert" style="width:16px;height:16px;flex-shrink:0;margin-top:0.1rem;"></i>
+    <div>
+      <div style="font-weight:600;margin-bottom:0.25rem;">Daemon halted</div>
+      <div style="font-size:0.85rem;">{{if .HaltReason}}{{.HaltReason}}{{else}}The daemon has been paused and requires attention.{{end}}</div>
+      <a hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts"
+         style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.5rem;font-size:0.8rem;color:#fca5a5;text-decoration:underline;cursor:pointer;">
+        Resolve conflicts <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
+      </a>
+    </div>
+  </div>
+  {{end}}
+
+  <!-- Metric cards -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:2rem;">
+
+    <a class="metric-card" hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;">Conflicts</span>
+        <i data-lucide="git-merge" style="width:14px;height:14px;color:#6b7280;"></i>
+      </div>
+      <div style="font-size:2rem;font-weight:700;color:{{if gt .PendingCount 0}}#f87171{{else}}#f3f4f6{{end}};line-height:1;">{{.PendingCount}}</div>
+      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">{{if gt .PendingCount 0}}pending resolution{{else}}all clear{{end}}</div>
+    </a>
+
+    <a class="metric-card" hx-get="/secrets" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/secrets">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;">Secrets</span>
+        <i data-lucide="key-round" style="width:14px;height:14px;color:#6b7280;"></i>
+      </div>
+      <div style="font-size:2rem;font-weight:700;color:#f3f4f6;line-height:1;">{{.SecretCount}}</div>
+      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">stored in vault</div>
+    </a>
+
+    <a class="metric-card" hx-get="/files" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/files">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;">Files</span>
+        <i data-lucide="folder-open" style="width:14px;height:14px;color:#6b7280;"></i>
+      </div>
+      <div style="font-size:2rem;font-weight:700;color:#f3f4f6;line-height:1;">{{.FileCount}}</div>
+      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">tracked files</div>
+    </a>
+
+    <a class="metric-card" hx-get="/status" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/status">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;">
+        <span style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;">Daemon</span>
+        <i data-lucide="activity" style="width:14px;height:14px;color:#6b7280;"></i>
+      </div>
+      <div style="font-size:1.1rem;font-weight:700;line-height:1;margin-top:0.25rem;">
+        {{if .Halted}}
+          <span style="color:#f87171;">Halted</span>
+        {{else}}
+          <span style="color:#1fcb4f;">Running</span>
+        {{end}}
+      </div>
+      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">view live logs</div>
+    </a>
+
+  </div>
+
+  <!-- Quick actions -->
+  <div style="margin-bottom:0.75rem;">
+    <span class="section-title">Quick Actions</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;">
+
+    <a class="card" style="display:flex;align-items:center;gap:0.85rem;text-decoration:none;cursor:pointer;transition:border-color 0.15s;"
+       hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts">
+      <div style="background:#3d1515;border-radius:0.375rem;padding:0.5rem;flex-shrink:0;">
+        <i data-lucide="git-merge" style="width:16px;height:16px;color:#f87171;"></i>
+      </div>
+      <div>
+        <div style="font-size:0.875rem;font-weight:500;color:#f3f4f6;">Resolve Conflicts</div>
+        <div style="font-size:0.72rem;color:#6b7280;margin-top:0.1rem;">Review and resolve merge conflicts</div>
+      </div>
+    </a>
+
+    <a class="card" style="display:flex;align-items:center;gap:0.85rem;text-decoration:none;cursor:pointer;transition:border-color 0.15s;"
+       hx-get="/files" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/files">
+      <div style="background:#0e2133;border-radius:0.375rem;padding:0.5rem;flex-shrink:0;">
+        <i data-lucide="folder-open" style="width:16px;height:16px;color:#60a5fa;"></i>
+      </div>
+      <div>
+        <div style="font-size:0.875rem;font-weight:500;color:#f3f4f6;">Browse Files</div>
+        <div style="font-size:0.72rem;color:#6b7280;margin-top:0.1rem;">View decrypted tracked files</div>
+      </div>
+    </a>
+
+    <a class="card" style="display:flex;align-items:center;gap:0.85rem;text-decoration:none;cursor:pointer;transition:border-color 0.15s;"
+       hx-get="/secrets" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/secrets">
+      <div style="background:#1f1a2e;border-radius:0.375rem;padding:0.5rem;flex-shrink:0;">
+        <i data-lucide="key-round" style="width:16px;height:16px;color:#a78bfa;"></i>
+      </div>
+      <div>
+        <div style="font-size:0.875rem;font-weight:500;color:#f3f4f6;">Manage Secrets</div>
+        <div style="font-size:0.72rem;color:#6b7280;margin-top:0.1rem;">View, rotate, and audit secrets</div>
+      </div>
+    </a>
+
+    <a class="card" style="display:flex;align-items:center;gap:0.85rem;text-decoration:none;cursor:pointer;transition:border-color 0.15s;"
+       hx-get="/status" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/status">
+      <div style="background:#0f2a18;border-radius:0.375rem;padding:0.5rem;flex-shrink:0;">
+        <i data-lucide="activity" style="width:16px;height:16px;color:#1fcb4f;"></i>
+      </div>
+      <div>
+        <div style="font-size:0.875rem;font-weight:500;color:#f3f4f6;">Live Status</div>
+        <div style="font-size:0.72rem;color:#6b7280;margin-top:0.1rem;">Stream daemon logs in real-time</div>
+      </div>
+    </a>
+
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,144 @@
+{{define "content"}}
+<div>
+  <h1 class="page-title">
+    <i data-lucide="settings-2" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Settings
+  </h1>
+
+  <div style="margin-bottom:0.6rem;">
+    <span class="section-title">
+      Tracked Files
+      {{if .Files}}<span class="badge badge-neutral" style="margin-left:0.4rem;">{{len .Files}}</span>{{end}}
+    </span>
+  </div>
+
+  {{if .Files}}
+  <div class="card" style="padding:0;overflow:hidden;" id="settings-table">
+    <table>
+      <thead>
+        <tr>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(0)">Namespace <span class="sort-arrow" data-col="0"></span></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(1)">Path <span class="sort-arrow" data-col="1"></span></th>
+          <th style="width:90px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(2)">Mode <span class="sort-arrow" data-col="2"></span></th>
+          <th style="width:170px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(3)">Last Sync <span class="sort-arrow" data-col="3">▼</span></th>
+          <th style="width:100px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Files}}
+        <tr id="row-{{.Key | printf "%s"}}">
+          <td style="font-size:0.78rem;color:#9ca3af;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{.File.Namespace}}">{{.File.Namespace}}</td>
+          <td style="font-family:monospace;font-size:0.78rem;color:#d1d5db;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{.File.RelPath}}">{{.File.RelPath}}</td>
+          <td>
+            {{if eq (printf "%s" .File.Mode) "sync"}}
+              <span class="badge badge-sync">sync</span>
+            {{else}}
+              <span class="badge badge-backup">backup</span>
+            {{end}}
+          </td>
+          <td style="font-size:0.75rem;color:#6b7280;white-space:nowrap;">{{formatTime .File.LastSyncAt}}</td>
+          <td style="text-align:right;">
+            <button
+              class="btn btn-danger btn-sm"
+              onclick="confirmUntrack(this, {{.Key | printf "%q"}}, {{.File.RelPath | printf "%q"}})"
+              data-key="{{.Key}}"
+            >
+              <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+              Untrack
+            </button>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+  {{else}}
+  <div class="card">
+    <div class="empty-state">
+      <i data-lucide="folder-x" style="width:36px;height:36px;color:#374151;margin:0 auto 0.75rem;display:block;"></i>
+      <div style="font-size:0.875rem;color:#6b7280;">No tracked files found</div>
+    </div>
+  </div>
+  {{end}}
+
+  <!-- Hidden untrack form — submitted programmatically after confirm -->
+  <form
+    id="untrack-form"
+    hx-post="/settings/untrack"
+    hx-target="#settings-table"
+    hx-swap="outerHTML"
+    style="display:none;"
+  >
+    <input type="hidden" name="key" id="untrack-key">
+  </form>
+</div>
+
+<script>
+(function() {
+  var _sortState = { col: 3, dir: 'desc' }; // default: last sync descending
+
+  window.sortSettingsTable = function(col) {
+    if (_sortState.col === col) {
+      _sortState.dir = _sortState.dir === 'asc' ? 'desc' : 'asc';
+    } else {
+      _sortState.col = col;
+      _sortState.dir = 'asc';
+    }
+
+    var tbody = document.querySelector('#settings-table tbody');
+    if (!tbody) return;
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+
+    rows.sort(function(a, b) {
+      var ca = a.cells[col] ? (a.cells[col].textContent || '').trim() : '';
+      var cb = b.cells[col] ? (b.cells[col].textContent || '').trim() : '';
+
+      // Numeric comparison for timestamps (col 3)
+      if (col === 3) {
+        var da = Date.parse(ca);
+        var db = Date.parse(cb);
+        if (!isNaN(da) && !isNaN(db)) {
+          return _sortState.dir === 'asc' ? da - db : db - da;
+        }
+      }
+      // String comparison
+      return _sortState.dir === 'asc' ? ca.localeCompare(cb) : cb.localeCompare(ca);
+    });
+
+    rows.forEach(function(r) { tbody.appendChild(r); });
+
+    // Update arrow indicators
+    document.querySelectorAll('.sort-arrow').forEach(function(s) {
+      s.textContent = '';
+      if (parseInt(s.getAttribute('data-col')) === _sortState.col) {
+        s.textContent = _sortState.dir === 'asc' ? '▲' : '▼';
+      }
+    });
+  };
+})();
+
+function confirmUntrack(btn, key, relPath) {
+  document.getElementById('untrack-key').value = key;
+  openConfirm(
+    'Untrack file',
+    'Remove "' + relPath + '" from the vault? This will delete the encrypted file and cannot be undone.',
+    document.getElementById('untrack-form')
+  );
+}
+
+// Wire the htmx confirmed-submit trigger on the untrack form
+document.addEventListener('htmx:load', function() {
+  const form = document.getElementById('untrack-form');
+  if (form) {
+    form.addEventListener('confirmed-submit', function() {
+      htmx.trigger(form, 'submit');
+    });
+  }
+});
+
+// Also handle if lucide icons aren't yet loaded when settings page swaps in
+document.addEventListener('htmx:afterSwap', function() {
+  if (window.lucide) lucide.createIcons();
+});
+</script>
+{{end}}
