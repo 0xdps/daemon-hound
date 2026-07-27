@@ -1,0 +1,14 @@
+docs/WEB_UI_GUIDE.md
+  h_95aea6b4aa8772 60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "9efbee7f2f857614573d12aec2b0e63f8a0458b1",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
