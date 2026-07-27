@@ -1,0 +1,21 @@
+internal/web/templates/login.html
+  s_869ebb7471faa0::t_a14ff840f70379 56,61-74,78-80,85,89-93,97-111,118
+internal/web/templates/layout.html
+  s_869ebb7471faa0::t_a14ff840f70379 53,55-132,135,139,141,143-178,207,210-263,267-291,295-301,306-331,334,336-353,357-395,398,400-411,414-416,418-419,426-427,430-435,438-461,464-469,473-474,481-494,497,499-507,509,513-514,516,520-538,541,543-544,546-555,560,562-578,581,583-589,591-609,614-636,672-706,708,710-717,764-765,768-769,772-851,869,871-874,876-888,890-932
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "3c811171ab6d6b0963c09068d18d097eb7f646b8",
+  "prompts": {},
+  "sessions": {
+    "s_869ebb7471faa0": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "6b6810fa-1010-4c13-aee0-bd721cc29b13",
+        "model": "anthropic/claude-sonnet-4"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
