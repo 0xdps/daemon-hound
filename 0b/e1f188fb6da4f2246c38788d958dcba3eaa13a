@@ -1,0 +1,42 @@
+internal/web/templates/files/view.html
+  s_2cb799fcf14556::t_55a9ecfc3cfd1c 3,6,17,22-24,28-31,38,42,49,52-54
+internal/web/templates/login.html
+  s_2cb799fcf14556::t_d4733883a34e75 12-43,51,55-61,63-79,82-87,89-92,94,96-97,99-130,135-136
+internal/web/templates/layout.html
+  s_2cb799fcf14556::t_72ea54eaff48a4 483
+  s_2cb799fcf14556::t_9016f05a60e1cb 351-352,354,381-385,400-404,411-416
+  s_2cb799fcf14556::t_987886474238fa 565
+  s_2cb799fcf14556::t_e027ec8b0e2bc3 423,427,431-438
+  s_2cb799fcf14556::t_bfc57af14a79cc 607,615-617
+  s_2cb799fcf14556::t_c67eac2554cab3 417
+internal/web/templates/secrets/list.html
+  s_2cb799fcf14556::t_d0966706d6c1c0 3,8-28,30-64,66-72,78-84
+internal/web/server.go
+  s_2cb799fcf14556::t_0755a280223c80 349-351
+  s_2cb799fcf14556::t_f8af758251762e 125-127
+  s_2cb799fcf14556::t_773480111b11eb 16
+internal/web/templates/secrets/view.html
+  s_2cb799fcf14556::t_ca3fba7dd83086 3-4,6,9-11,15-17,19-22,25-26,29-31,33-34,36-37,39-40,51-53,61,63-65,67,72-78,80,82-83,86-87
+internal/web/templates/files/list.html
+  s_2cb799fcf14556::t_7577959544cf85 3,8-26,28-38,40-67,71-78,86-90
+internal/web/templates/help.html
+  s_2cb799fcf14556::t_612c1d7a0239f6 1-112
+internal/web/handler_help.go
+  s_2cb799fcf14556::t_3a00ad9c535331 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "0be1f188fb6da4f2246c38788d958dcba3eaa13a",
+  "prompts": {},
+  "sessions": {
+    "s_2cb799fcf14556": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fca6dce5-62bf-470d-92fd-7470fe226921",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
