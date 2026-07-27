@@ -1,0 +1,116 @@
+internal/web/templates/status.html
+  s_2cb799fcf14556::t_d298deb784a758 89-92,95
+  s_2cb799fcf14556::t_ed6a5ecf9f312d 1-88,93-94,96-98
+internal/web/templates/dashboard.html
+  s_2cb799fcf14556::t_21c8e7a00680cb 1-121
+internal/web/templates/conflicts/diff.html
+  s_2cb799fcf14556::t_23dbdc58c0dd2a 1-83,85-126,128-129,145-147
+  s_2cb799fcf14556::t_d298deb784a758 84,127,130-144
+internal/web/templates/secrets/view.html
+  s_2cb799fcf14556::t_aa25c3f92b57ab 108-109,121-127
+  s_2cb799fcf14556::t_4eb194c1207cc6 1-107,110-120,128-153
+internal/web/handler_dashboard.go
+  s_2cb799fcf14556::t_d298deb784a758 4-42,44
+  s_2cb799fcf14556::t_5112e6a4e68bae 1-3
+  s_2cb799fcf14556::t_9a56a54db309f9 43
+  s_2cb799fcf14556::t_ab88fda4409cf6 45-46
+internal/web/templates/layout.html
+  s_2cb799fcf14556::t_84381c0bc82940 1-306,334-336,340-469,488-496,502-557,559-602,626,653-664
+  s_2cb799fcf14556::t_5382d26e036855 307-333,337-339,470-487,497-501,558,603-625,627-652
+internal/web/templates/settings.html
+  s_2cb799fcf14556::t_aa25c3f92b57ab 20-23,77-119
+  s_2cb799fcf14556::t_a6f5521a9951c4 1-19,24-76,120-144
+internal/web/templates/login.html
+  s_2cb799fcf14556::t_feb64e9bf7114a 1-97
+internal/web/templates/files/list.html
+  s_2cb799fcf14556::t_95ad365420225d 1-33,37-41,43-87,89-90,94-98,122
+  s_2cb799fcf14556::t_d298deb784a758 34-36,42,88,91-93,99-121
+internal/web/handler_status.go
+  s_2cb799fcf14556::t_22d2806ce087a9 18,35,37-42,89,109,114,123
+  s_2cb799fcf14556::t_f95afff8db8416 15-17
+  s_2cb799fcf14556::t_278a282ef8c8f9 19-21,32-34
+  s_2cb799fcf14556::t_c767e5857d2a74 36
+  s_2cb799fcf14556::t_39e9f4fe73a593 43-45,86-88
+  s_2cb799fcf14556::t_0713765553b33e 90-92,106-108
+  s_2cb799fcf14556::t_e8196254465ab3 110-113
+  s_2cb799fcf14556::t_23be5cc6aa2a39 115-117,120-122
+internal/web/templates/secrets/list.html
+  s_2cb799fcf14556::t_d298deb784a758 85,88-90
+  s_2cb799fcf14556::t_b8cbe964db15a7 1-84,86-87,91-96
+internal/web/server.go
+  s_2cb799fcf14556::t_9689c541b33fb5 142,201,203,208-221,333,352
+  s_2cb799fcf14556::t_5ec940062f34a5 118
+  s_2cb799fcf14556::t_ffa5ca843cc18e 10
+  s_2cb799fcf14556::t_e6b23f41bd11a4 40,47,52,55,61,63,74,125,144-145,149,151,156,177,186,198,204,206,222-251,254,258-259,261,267,269-270,275-276,280,282-283,302-303,307,309-310,314-315,319,321,323,325,327,345,353,355
+  s_2cb799fcf14556::t_313d106ae6bb4b 285-299
+  s_2cb799fcf14556::t_9c8a644a4def1b 188-193
+  s_2cb799fcf14556::t_044bc017e80760 7-9
+  s_2cb799fcf14556::t_b8b4ea97ae7933 11-13,37-39
+  s_2cb799fcf14556::t_8ea0299676efd5 41-46
+  s_2cb799fcf14556::t_fdc544ec7b501a 48-51
+  s_2cb799fcf14556::t_eb07a5cb3a2f28 53-54
+  s_2cb799fcf14556::t_2786099b83fade 56-60
+  s_2cb799fcf14556::t_4e055325569624 62
+  s_2cb799fcf14556::t_3c96b0705495b7 64-66,71-73
+  s_2cb799fcf14556::t_1f0bfb6469b112 75-77,115-117
+  s_2cb799fcf14556::t_45241d7aafade9 119-124
+  s_2cb799fcf14556::t_080f9961b29223 126-128,139-141
+  s_2cb799fcf14556::t_23f1085c2e1469 143
+  s_2cb799fcf14556::t_933f8e2ca4f009 146-148
+  s_2cb799fcf14556::t_21dc9b03b7a1e5 150
+  s_2cb799fcf14556::t_0d61ccfaefec9c 152-155
+  s_2cb799fcf14556::t_0f4049c63312e0 157-159,174-176
+  s_2cb799fcf14556::t_ae375d5ec297b4 178-180,183-185
+  s_2cb799fcf14556::t_5849484ec69efb 187
+  s_2cb799fcf14556::t_3e8afdc641f89b 194-197
+  s_2cb799fcf14556::t_2929438b709b2d 199-200
+  s_2cb799fcf14556::t_1891947a6abe4a 202
+  s_2cb799fcf14556::t_548b72161900a1 205
+  s_2cb799fcf14556::t_f9e50c41ffe935 207
+  s_2cb799fcf14556::t_76932df98026ca 252-253
+  s_2cb799fcf14556::t_214b865a02a198 255-257
+  s_2cb799fcf14556::t_31d07b1fcb5195 260
+  s_2cb799fcf14556::t_58a5798c67e3c2 262-266
+  s_2cb799fcf14556::t_737bfebd1fecdb 268
+  s_2cb799fcf14556::t_bb77ef7683eeb0 271-274
+  s_2cb799fcf14556::t_67da63e0255777 277-279
+  s_2cb799fcf14556::t_8392f48409adde 281
+  s_2cb799fcf14556::t_5320ed63d2465a 284
+  s_2cb799fcf14556::t_35f9a80c4e88d2 300-301
+  s_2cb799fcf14556::t_f206875c5af06a 304-306
+  s_2cb799fcf14556::t_872d80bb3354f2 308
+  s_2cb799fcf14556::t_56dfe616e906d0 311-313
+  s_2cb799fcf14556::t_88de9e6b543acf 316-318
+  s_2cb799fcf14556::t_7de6da8300f563 320
+  s_2cb799fcf14556::t_f354b1ae2978ae 322
+  s_2cb799fcf14556::t_710abd425652d1 324
+  s_2cb799fcf14556::t_33080fd8b3ef87 326
+  s_2cb799fcf14556::t_49edf4a0c5024d 328-332
+  s_2cb799fcf14556::t_53bd7b4b5babd3 334-336,342-344
+  s_2cb799fcf14556::t_5f4ea059012d33 346-351
+  s_2cb799fcf14556::t_eb9652cae8899a 354
+internal/web/handler_secrets.go
+  s_2cb799fcf14556::t_aa25c3f92b57ab 31-174
+  s_2cb799fcf14556::t_539ef6a6db4388 28-30
+  s_2cb799fcf14556::t_f18ed097a0246b 175-177
+internal/web/templates/conflicts/list.html
+  s_2cb799fcf14556::t_99fc7146908e88 1-98
+internal/web/templates/files/view.html
+  s_2cb799fcf14556::t_7005f4605790e1 1-74
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "c55a65cf0615ef1657c02d1ff977bc3e17306c4f",
+  "prompts": {},
+  "sessions": {
+    "s_2cb799fcf14556": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fca6dce5-62bf-470d-92fd-7470fe226921",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
