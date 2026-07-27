@@ -1,0 +1,19 @@
+docs/WEB_UI_GUIDE.md
+  s_c6341a6098b8a3::t_cf9263f513c6f2 1-667
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "8bffae8ddf98be6fc434661e98f8f78dc8a71ba9",
+  "prompts": {},
+  "sessions": {
+    "s_c6341a6098b8a3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5e723d30-7083-497d-82e1-5b5f8cf114c5",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
