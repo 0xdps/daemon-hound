@@ -1,289 +1,161 @@
 {{define "login"}}<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="password-managers" content="disabled"/>
   <title>DaemonHound · Unlock vault</title>
   <link rel="icon" type="image/png" href="/static/logo.png"/>
+  <!-- Tailwind CSS (full) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(var(--border))',
+            input: 'hsl(var(--input))',
+            ring: 'hsl(var(--ring))',
+            background: 'hsl(var(--background))',
+            foreground: 'hsl(var(--foreground))',
+            primary: {
+              DEFAULT: 'hsl(var(--primary))',
+              foreground: 'hsl(var(--primary-foreground))'
+            },
+            secondary: {
+              DEFAULT: 'hsl(var(--secondary))',
+              foreground: 'hsl(var(--secondary-foreground))'
+            },
+            destructive: {
+              DEFAULT: 'hsl(var(--destructive))',
+              foreground: 'hsl(var(--destructive-foreground))'
+            },
+            muted: {
+              DEFAULT: 'hsl(var(--muted))',
+              foreground: 'hsl(var(--muted-foreground))'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Basecoat CSS (Nova dark style) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/basecoat-nova.cdn.min.css"/>
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <!-- Basecoat JS (sidebar + toast + tabs) -->
+  <script src="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/js/all.min.js" defer></script>
+  <!-- Lucide icons -->
+  <script src="https://unpkg.com/lucide@latest" defer></script>
   <style>
-    :root {
-      --bg-root: #050608;
-      --bg-surface: rgba(16,20,24,0.92);
-      --bg-elevated: rgba(10,13,16,0.92);
-      --border: rgba(117,138,128,0.18);
-      --border-strong: rgba(57,255,90,0.22);
-      --text: #eaf2ec;
-      --text-secondary: #b8c4bd;
-      --text-muted: #8a9490;
-      --accent: #1fcb4f;
-      --accent-bright: #39ff5a;
-      --accent-soft: rgba(57,255,90,0.12);
-      --danger: #ff5d5d;
-      --danger-soft: rgba(255,93,93,0.12);
-      --shadow: 0 28px 70px rgba(0,0,0,0.4);
-      --radius: 24px;
-      --font-sans: -apple-system,BlinkMacSystemFont,"Segoe UI","Inter",Roboto,Helvetica,Arial,sans-serif;
-      --font-mono: ui-monospace,"SF Mono","JetBrains Mono","Fira Code","Cascadia Code",Menlo,Consolas,monospace;
+    body { 
+      min-height: 100vh; 
+      display: grid; 
+      place-items: center; 
+      padding: 1.5rem;
+      background: linear-gradient(135deg, #1e1e2e 0%, #181825 50%, #11111b 100%);
+      background-attachment: fixed;
     }
-    *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 24px;
-      font-family: var(--font-sans);
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(57,255,90,0.14), transparent 28%),
-        radial-gradient(circle at 82% 18%, rgba(115,184,255,0.08), transparent 18%),
-        linear-gradient(180deg, #0a0d10 0%, #050608 100%);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
+    
+    /* Login page specific styling */
+    .login-container {
+      backdrop-filter: blur(20px);
+      background: rgba(30, 30, 46, 0.7);
+      animation: float 6s ease-in-out infinite;
     }
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
-      background-size: 48px 48px;
-      mask-image: radial-gradient(circle at center, black 34%, transparent 90%);
-      pointer-events: none;
+    
+    .login-container:hover {
+      transform: scale(1.02);
+      transition: transform 0.3s ease;
     }
-    .login-shell {
-      width: min(1080px, 100%);
-      display: grid;
-      grid-template-columns: minmax(320px, 1.05fr) minmax(320px, 0.95fr);
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      overflow: hidden;
-      background: rgba(8,11,13,0.9);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      position: relative;
-      z-index: 1;
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-5px); }
     }
-    .login-shell::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at top left, rgba(57,255,90,0.1), transparent 30%);
-      pointer-events: none;
+    
+    .feature-item {
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      padding: 12px;
     }
-    .login-brand,
-    .login-card { padding: 42px; position: relative; }
-    .login-brand {
-      background:
-        radial-gradient(circle at top left, rgba(57,255,90,0.18), transparent 46%),
-        linear-gradient(180deg, rgba(14,18,22,0.92), rgba(9,11,13,0.9));
-      border-right: 1px solid rgba(255,255,255,0.05);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      gap: 30px;
-    }
-    .brand-mark {
-      width: 84px;
-      height: 84px;
-      padding: 10px;
-      border-radius: 24px;
-      background: linear-gradient(180deg, rgba(57,255,90,0.18), rgba(57,255,90,0.04));
-      border: 1px solid var(--border-strong);
-      box-shadow: 0 0 40px rgba(57,255,90,0.14);
-    }
-    .brand-kicker {
-      margin-top: 22px;
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--accent-bright);
-    }
-    .brand-title {
-      margin-top: 14px;
-      font-size: clamp(38px, 5vw, 58px);
-      line-height: 0.94;
-      letter-spacing: -0.06em;
-      font-weight: 800;
-      max-width: 9ch;
-    }
-    .brand-copy {
-      margin-top: 16px;
-      max-width: 46ch;
-      font-size: 14px;
-      line-height: 1.75;
-      color: var(--text-secondary);
-    }
-    .brand-points {
-      display: grid;
-      gap: 12px;
-      margin-top: 22px;
-    }
-    .brand-point {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      padding: 14px 16px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: rgba(255,255,255,0.03);
-      color: var(--text-secondary);
-      font-size: 13px;
-      line-height: 1.55;
-    }
-    .brand-point span:first-child {
-      width: 28px;
-      height: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 10px;
-      background: rgba(57,255,90,0.08);
-      color: var(--accent-bright);
-      flex-shrink: 0;
-    }
-    .brand-footer {
-      font-size: 12px;
-      line-height: 1.6;
-      color: var(--text-muted);
-    }
-    .login-card {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      gap: 24px;
-    }
-    .login-card h1 {
-      font-size: 30px;
-      letter-spacing: -0.04em;
-      font-weight: 800;
-    }
-    .login-card p {
-      font-size: 14px;
-      line-height: 1.7;
-      color: var(--text-muted);
-      max-width: 42ch;
-    }
-    .error-msg {
-      display: flex;
-      gap: 10px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,93,93,0.2);
-      background: var(--danger-soft);
-      color: #ffc2c2;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-    .form-box {
-      display: grid;
-      gap: 18px;
-      padding: 24px;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.05);
-      background: linear-gradient(180deg, rgba(16,20,24,0.88), rgba(9,12,14,0.82));
-    }
-    .field-label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .input-field {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(3,5,6,0.72);
-      color: var(--text);
-      font-size: 15px;
-    }
-    .input-field::placeholder { color: var(--text-muted); }
-    .input-field:focus { outline: none; border-color: rgba(57,255,90,0.32); box-shadow: 0 0 0 4px rgba(57,255,90,0.08); }
-    .btn-unlock {
-      width: 100%;
-      min-height: 48px;
-      border-radius: 16px;
-      border: none;
-      background: linear-gradient(180deg, var(--accent-bright), var(--accent));
-      color: #041109;
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      box-shadow: 0 14px 28px rgba(57,255,90,0.14);
-    }
-    .btn-unlock:hover { transform: translateY(-1px); }
-    .login-meta {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    .login-meta code { font-family: var(--font-mono); }
-    @media (max-width: 920px) {
-      .login-shell { grid-template-columns: 1fr; }
-      .login-brand { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-    }
-    @media (max-width: 640px) {
-      body { padding: 14px; }
-      .login-brand,
-      .login-card { padding: 26px 22px; }
-      .brand-title { font-size: 36px; }
-      .login-card h1 { font-size: 26px; }
+    
+    .feature-item:hover {
+      background: rgba(139, 92, 246, 0.1);
+      transform: translateX(4px);
     }
   </style>
 </head>
 <body>
-  <div class="login-shell">
-    <section class="login-brand">
+  <div class="login-container w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden rounded-xl border border-border shadow-2xl">
+    <!-- Brand panel -->
+    <div class="card rounded-none border-0 border-r border-border flex flex-col justify-between gap-6 p-10">
       <div>
-        <img src="/static/logo.png" alt="DaemonHound" class="brand-mark" width="84" height="84"/>
-        <div class="brand-kicker">Vault watchdog</div>
-        <h2 class="brand-title">Unlock the guarded workspace.</h2>
-        <p class="brand-copy">DaemonHound is built to feel like a secure operator console: clear pressure signals, deliberate secret handling, and a tighter bond between daemon state and encrypted inventory.</p>
-        <div class="brand-points">
-          <div class="brand-point"><span>⚡</span><div>Resolve merge pressure before it cascades into halted sync behaviour.</div></div>
-          <div class="brand-point"><span>🔑</span><div>Inspect secrets and rotate values with explicit, versioned intent.</div></div>
-          <div class="brand-point"><span>◷</span><div>Keep a live eye on daemon events from the same control surface.</div></div>
+        <img src="/static/logo.png" alt="DaemonHound" width="64" height="64" class="rounded-xl mb-6"/>
+        <p class="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-2">Vault watchdog</p>
+        <h1 class="text-4xl font-bold tracking-tight leading-tight mb-4">Unlock the guarded workspace.</h1>
+        <p class="text-muted-foreground text-sm leading-relaxed mb-6">DaemonHound is a secure operator console: clear pressure signals, deliberate secret handling, and a tight bond between daemon state and encrypted inventory.</p>
+        <div class="flex flex-col gap-3">
+          <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/40 text-sm text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg>
+            Resolve merge pressure before it cascades into halted sync.
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/40 text-sm text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+            Inspect secrets and rotate values with explicit, versioned intent.
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/40 text-sm text-muted-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Monitor daemon events from one unified control surface.
+          </div>
         </div>
       </div>
-      <p class="brand-footer">Local session tokens expire after 12 hours of inactivity.</p>
-    </section>
+      <p class="text-xs text-muted-foreground">Local session tokens expire after 12 hours of inactivity.</p>
+    </div>
 
-    <section class="login-card">
+    <!-- Login card -->
+    <div class="card rounded-none border-0 flex flex-col justify-center gap-6 p-10">
       <div>
-        <h1>Unlock vault</h1>
-        <p>Enter the master password to restore access to the DaemonHound control surface and encrypted inventory.</p>
+        <h2 class="text-2xl font-bold tracking-tight mb-1">Unlock vault</h2>
+        <p class="text-sm text-muted-foreground">Enter the master password to access the DaemonHound control surface.</p>
       </div>
 
       {{if .Error}}
-      <div class="error-msg">
-        <span>⚠</span>
-        <span>{{.Error}}</span>
+      <div class="alert" data-variant="destructive">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+        <h2>Authentication failed</h2>
+        <section>{{.Error}}</section>
       </div>
       {{end}}
 
-      <form action="/login" method="POST" class="form-box">
+      <form action="/login" method="POST" class="flex flex-col gap-4" autocomplete="off" data-lpignore="true">
         <input type="hidden" name="next" value="{{.Next}}"/>
-        <div>
-          <label class="field-label" for="password">Master password</label>
-          <input id="password" type="password" name="password" autofocus required class="input-field" placeholder="••••••••" autocomplete="current-password"/>
+        <div class="field">
+          <label for="password">Master password</label>
+          <input id="password" class="input" type="password" name="password" autofocus required placeholder="••••••••" autocomplete="off" data-lpignore="true" data-form-type="other" spellcheck="false" data-1p-ignore data-bwignore readonly onfocus="this.removeAttribute('readonly');"/>
         </div>
-        <button type="submit" class="btn-unlock">Unlock vault</button>
+        <button type="submit" class="btn w-full">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="11" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Unlock vault
+        </button>
       </form>
 
-      <div class="login-meta">
-        <span>Session scope: local browser session</span>
-        <span>CLI remains available via <code>dhd</code></span>
+      <div class="flex justify-between gap-4 text-xs text-muted-foreground flex-wrap">
+        <span>Session scope: local browser</span>
+        <span>CLI: <code class="font-mono">dhd</code></span>
       </div>
-    </section>
+    </div>
   </div>
+
+<script>
+// Initialize Basecoat components when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof window.basecoat !== 'undefined') {
+    window.basecoat.initAll();
+  }
+});
+</script>
 </body>
 </html>
 {{end}}

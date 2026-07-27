@@ -68,7 +68,7 @@ func (s *Server) handleFileList(w http.ResponseWriter, r *http.Request) {
 
 	data := fileListData{Namespaces: nsList, Total: len(state.Files), Filtered: filtered, Query: query}
 	if isHTMX(r) {
-		s.renderPartial(w, "files/list.html", data)
+		s.renderPartialWithTitle(w, "files/list.html", data, "Tracked Files - DaemonHound")
 		return
 	}
 	s.render(w, "files", "files/list.html", data)
@@ -103,7 +103,7 @@ func (s *Server) handleFileView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHTMX(r) {
-		s.renderPartial(w, "files/view.html", data)
+		s.renderPartialWithTitle(w, "files/view.html", data, "File View - DaemonHound")
 		return
 	}
 	s.render(w, "files", "files/view.html", data)

@@ -67,7 +67,7 @@ func (s *Server) handleConflictList(w http.ResponseWriter, r *http.Request) {
 		data.Resolved = append(data.Resolved, conflict)
 	}
 	if isHTMX(r) {
-		s.renderPartial(w, "conflicts/list.html", data)
+		s.renderPartialWithTitle(w, "conflicts/list.html", data, "Conflicts - DaemonHound")
 		return
 	}
 	s.render(w, "conflicts", "conflicts/list.html", data)

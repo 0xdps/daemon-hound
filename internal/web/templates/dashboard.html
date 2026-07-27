@@ -1,182 +1,140 @@
 {{define "content"}}
-<section class="page-shell">
-  <div class="page-head">
+<div class="flex flex-col gap-6">
+
+  <!-- Page header -->
+  <div class="flex items-start justify-between gap-4 flex-wrap pb-4 border-b border-border">
     <div>
-      <div class="page-kicker">Operations overview</div>
-      <h1 class="page-title">Watch the vault before it drifts.</h1>
-      <p class="page-subtitle">DaemonHound should feel like a guarded cockpit: scan sync pressure, inspect vault inventory, and jump straight to the next corrective action.</p>
+      <p class="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-1">Operations overview</p>
+      <h1 class="text-3xl font-bold tracking-tight">Vault control surface</h1>
+      <p class="text-sm text-muted-foreground mt-1 max-w-prose">Monitor sync pressure, inspect vault inventory, and execute corrective actions.</p>
     </div>
-    <div class="header-actions">
+    <div class="flex items-center gap-2 flex-wrap">
       {{if .Halted}}
-      <span class="badge badge-danger">sync suspended</span>
+      <span class="badge" data-variant="destructive">Sync halted</span>
       {{else}}
-      <span class="badge badge-success">daemon healthy</span>
+      <span class="badge" data-variant="secondary">
+        <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-1"></span>
+        Daemon healthy
+      </span>
       {{end}}
-      <a href="/status" class="btn btn-secondary" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open live status</a>
+      <a href="/status" class="btn" data-variant="outline" data-size="sm"
+         hx-get="/status" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Live status
+      </a>
     </div>
   </div>
 
   {{if .Halted}}
-  <div class="notice notice-danger">
-    <div class="notice-icon">⛔</div>
-    <div>
-      <strong>Sync is suspended.</strong> {{.HaltReason}}
-      <div class="action-row" style="margin-top:12px">
-        <a href="/conflicts" class="btn btn-danger btn-sm" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Resolve conflicts</a>
-      </div>
-    </div>
+  <div class="alert" data-variant="destructive">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <h2>Sync suspended</h2>
+    <section>{{.HaltReason}}</section>
+    <footer>
+      <a href="/conflicts" class="btn" data-variant="destructive" data-size="sm"
+         hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Resolve conflicts</a>
+    </footer>
   </div>
   {{end}}
 
-  <div class="hero-grid">
-    <section class="panel hero">
-      <div class="panel-body">
-        <div class="hero-copy">
-          <img src="/static/logo.png" alt="DaemonHound" class="hero-mark" width="92" height="92"/>
-          <div>
-            <div class="page-kicker" style="margin-bottom:12px">Sentinel mode</div>
-            <div class="hero-title">{{if .Halted}}Conflict pressure detected{{else if .PendingCount}}Merge pressure is building{{else}}Vault posture is stable{{end}}</div>
-            <p class="hero-text">
-              {{if .Halted}}
-              The daemon has already halted to prevent bad merges from landing. Resolve the active cases first, then resume a clean sync path.
-              {{else if .PendingCount}}
-              The daemon is still active, but unresolved changes are accumulating. Triage the queue now before they become a blocking merge event.
-              {{else}}
-              No pending conflicts are active. Use this surface to audit files, rotate secrets, and keep the encrypted workspace ready for the next sync cycle.
-              {{end}}
-            </p>
-            <div class="hero-actions">
-              <a href="/conflicts" class="btn btn-primary" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Review conflicts</a>
-              <a href="/files" class="btn btn-secondary" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Browse tracked files</a>
-              <a href="/secrets" class="btn btn-secondary" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Inspect secrets</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <aside class="stack">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Watch signals</div>
-            <div class="panel-subtitle">The shortest route to confidence</div>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="signal-list">
-            <div class="signal-item">
-              <div class="signal-icon">⚡</div>
-              <div>
-                <div class="signal-title">Conflict queue</div>
-                <div class="signal-copy">{{if .PendingCount}}{{.PendingCount}} unresolved file{{if ne .PendingCount 1}}s{{end}} need attention.{{else}}No unresolved merge pressure in the vault.{{end}}</div>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-icon">◫</div>
-              <div>
-                <div class="signal-title">Tracked inventory</div>
-                <div class="signal-copy">{{.FileCount}} file{{if ne .FileCount 1}}s{{end}} are currently guarded by the vault.</div>
-              </div>
-            </div>
-            <div class="signal-item">
-              <div class="signal-icon">🔑</div>
-              <div>
-                <div class="signal-title">Secret custody</div>
-                <div class="signal-copy">{{.SecretCount}} secret{{if ne .SecretCount 1}}s{{end}} are available for review and rotation.</div>
-              </div>
-            </div>
-          </div>
+  <!-- Hero + signals -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2 card">
+      <header>
+        <h3>{{if .Halted}}Conflict pressure detected{{else if .PendingCount}}Merge pressure building{{else}}Vault posture stable{{end}}</h3>
+        <p>{{if .Halted}}Daemon halted to prevent bad merges. Resolve active cases to resume sync.{{else if .PendingCount}}{{.PendingCount}} unresolved change{{if ne .PendingCount 1}}s{{end}} accumulating. Triage before they block.{{else}}No pending conflicts. Vault ready for next sync cycle.{{end}}</p>
+      </header>
+      <section>
+        <div class="flex gap-2 flex-wrap">
+          <a href="/conflicts" class="btn" data-size="sm"
+             hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Conflicts</a>
+          <a href="/files" class="btn" data-variant="outline" data-size="sm"
+             hx-get="/files" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Files</a>
+          <a href="/secrets" class="btn" data-variant="outline" data-size="sm"
+             hx-get="/secrets" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Secrets</a>
         </div>
       </section>
-    </aside>
-  </div>
-
-  <div class="metric-grid">
-    <a href="/conflicts" class="metric-card {{if .PendingCount}}metric-danger{{else}}metric-success{{end}}" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-      <div class="metric-label">Resolve pressure</div>
-      <div class="metric-value">{{.PendingCount}}</div>
-      <div class="metric-copy">{{if .PendingCount}}Pending conflicts are the highest risk in the system.{{else}}The merge queue is clear across the vault.{{end}}</div>
-    </a>
-    <a href="/files" class="metric-card metric-accent" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-      <div class="metric-label">Vault inventory</div>
-      <div class="metric-value">{{.FileCount}}</div>
-      <div class="metric-copy">Tracked files available for preview, review, and untracking workflows.</div>
-    </a>
-    <a href="/secrets" class="metric-card metric-accent" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-      <div class="metric-label">Secret custody</div>
-      <div class="metric-value">{{.SecretCount}}</div>
-      <div class="metric-copy">Stored secrets with version history and controlled rotation paths.</div>
-    </a>
-  </div>
-
-  <section class="panel">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Quick actions</div>
-        <div class="panel-subtitle">Simple jumps to the main workflows</div>
-      </div>
     </div>
-    <div class="panel-body">
-      <div class="quick-actions-bar">
-        <a href="/conflicts" class="quick-action-chip" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-          <span class="signal-icon">⚡</span>
-          <span>Conflicts</span>
-        </a>
-        <a href="/status" class="quick-action-chip" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-          <span class="signal-icon">◷</span>
-          <span>Live status</span>
-        </a>
-        <a href="/files" class="quick-action-chip" hx-get="/files" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-          <span class="signal-icon">◫</span>
-          <span>Files</span>
-        </a>
-        <a href="/secrets" class="quick-action-chip" hx-get="/secrets" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">
-          <span class="signal-icon">🔑</span>
-          <span>Secrets</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <div class="split-grid">
-    <section class="panel">
-      <div class="panel-header">
-        <div>
-          <div class="panel-title">Next step</div>
-          <div class="panel-subtitle">One clear place to continue</div>
+    <div class="card">
+      <header><h3>Watch signals</h3></header>
+      <section class="flex flex-col gap-3">
+        <div class="flex items-center gap-3">
+          <span class="badge" data-variant="{{if .PendingCount}}destructive{{else}}secondary{{end}}">{{if .PendingCount}}{{.PendingCount}}{{else}}0{{end}}</span>
+          <div><p class="text-sm font-medium">Conflicts</p><p class="text-xs text-muted-foreground">{{if .PendingCount}}Pending triage{{else}}Queue clear{{end}}</p></div>
         </div>
-      </div>
-      <div class="panel-body">
-        <div class="simple-next-step">
-          <h3>{{if .PendingCount}}Resolve pending conflicts{{else}}Stay on top of vault activity{{end}}</h3>
-          <p>{{if .PendingCount}}Open the resolver and clear active conflicts first.{{else}}Open live status or review tracked files to keep the vault in a healthy state.{{end}}</p>
-          <div class="action-row">
-            <a href="/conflicts" class="btn btn-primary btn-sm" hx-get="/conflicts" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open conflicts</a>
-            <a href="/status" class="btn btn-secondary btn-sm" hx-get="/status" hx-target=".main" hx-swap="innerHTML show:top" hx-push-url="true">Open live status</a>
-          </div>
+        <div class="flex items-center gap-3">
+          <span class="badge" data-variant="secondary">{{.FileCount}}</span>
+          <div><p class="text-sm font-medium">Files</p><p class="text-xs text-muted-foreground">Tracked and encrypted</p></div>
         </div>
-      </div>
-    </section>
-
-    <aside class="stack">
-      <section class="panel">
-        <div class="panel-header">
-          <div>
-            <div class="panel-title">Operator notes</div>
-            <div class="panel-subtitle">Keep the workflow light and obvious</div>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div class="detail-list">
-            <div class="detail-row"><span>1.</span><strong>Scan dashboard posture</strong></div>
-            <div class="detail-row"><span>2.</span><strong>Open live status when something shifts</strong></div>
-            <div class="detail-row"><span>3.</span><strong>Resolve or rotate with deliberate intent</strong></div>
-            <div class="detail-row"><span>4.</span><strong>Return to a clean steady state</strong></div>
-          </div>
+        <div class="flex items-center gap-3">
+          <span class="badge" data-variant="secondary">{{.SecretCount}}</span>
+          <div><p class="text-sm font-medium">Secrets</p><p class="text-xs text-muted-foreground">In custody</p></div>
         </div>
       </section>
-    </aside>
+    </div>
   </div>
-</section>
+
+  <!-- Metric cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <a href="/conflicts" class="card no-underline hover:border-primary transition-colors"
+       hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">
+      <header>
+        <h3>Resolve pressure</h3>
+        <div class="card-action">
+          <span class="badge" data-variant="{{if .PendingCount}}destructive{{else}}secondary{{end}}">{{if .PendingCount}}active{{else}}clear{{end}}</span>
+        </div>
+      </header>
+      <section>
+        <p class="text-4xl font-bold tracking-tight">{{.PendingCount}}</p>
+        <p class="text-sm text-muted-foreground mt-1">{{if .PendingCount}}Conflicts need attention{{else}}Merge queue clear{{end}}</p>
+      </section>
+    </a>
+    <a href="/files" class="card no-underline hover:border-primary transition-colors"
+       hx-get="/files" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">
+      <header><h3>Vault inventory</h3></header>
+      <section>
+        <p class="text-4xl font-bold tracking-tight">{{.FileCount}}</p>
+        <p class="text-sm text-muted-foreground mt-1">Files tracked and encrypted</p>
+      </section>
+    </a>
+    <a href="/secrets" class="card no-underline hover:border-primary transition-colors"
+       hx-get="/secrets" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">
+      <header><h3>Secret custody</h3></header>
+      <section>
+        <p class="text-4xl font-bold tracking-tight">{{.SecretCount}}</p>
+        <p class="text-sm text-muted-foreground mt-1">Versioned with rotation history</p>
+      </section>
+    </a>
+  </div>
+
+  <!-- Bottom row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="card">
+      <header>
+        <h3>{{if .PendingCount}}Resolve pending conflicts{{else}}Stay on top of vault activity{{end}}</h3>
+      </header>
+      <section>
+        <p class="text-sm text-muted-foreground mb-4">{{if .PendingCount}}Open the resolver and clear active conflicts first.{{else}}Open live status or review tracked files to keep the vault healthy.{{end}}</p>
+        <div class="flex gap-2 flex-wrap">
+          <a href="/conflicts" class="btn" data-size="sm"
+             hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Open conflicts</a>
+          <a href="/status" class="btn" data-variant="outline" data-size="sm"
+             hx-get="/status" hx-target="#app-content" hx-swap="innerHTML show:top" hx-push-url="true">Live status</a>
+        </div>
+      </section>
+    </div>
+    <div class="card">
+      <header><h3>Operator workflow</h3></header>
+      <section>
+        <ol class="flex flex-col gap-2 text-sm text-muted-foreground list-decimal list-inside">
+          <li>Scan dashboard posture</li>
+          <li>Open live status when something shifts</li>
+          <li>Resolve or rotate with deliberate intent</li>
+          <li>Return to a clean steady state</li>
+        </ol>
+      </section>
+    </div>
+  </div>
+
+</div>
 {{end}}

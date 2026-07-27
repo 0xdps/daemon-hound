@@ -32,5 +32,9 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		data.FileCount = len(state.Files)
 	}
 
+	if isHTMX(r) {
+		s.renderPartialWithTitle(w, "dashboard.html", data, "Dashboard - DaemonHound")
+		return
+	}
 	s.render(w, "dashboard", "dashboard.html", data)
 }

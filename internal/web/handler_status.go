@@ -28,7 +28,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	data.RecentLogs = tailFile(logPath, 50)
 
 	if isHTMX(r) {
-		s.renderPartial(w, "status.html", data)
+		s.renderPartialWithTitle(w, "status.html", data, "Live Status - DaemonHound")
 		return
 	}
 	s.render(w, "status", "status.html", data)

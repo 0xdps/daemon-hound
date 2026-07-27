@@ -1,31 +1,41 @@
 {{define "content"}}
-<section class="inspector-shell">
-  <section class="panel hero">
-    <div class="panel-body">
-      <div class="page-kicker">File preview</div>
-      <h2 class="page-title is-compact mono">{{.File.Namespace}} / {{.File.RelPath}}</h2>
-      <p class="page-subtitle">Current mode: {{.File.Mode}}</p>
-    </div>
-  </section>
+<div class="flex flex-col gap-6">
+
+  <div class="card">
+    <header>
+      <div>
+        <p class="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-1">File preview</p>
+        <h2 class="font-mono text-lg font-bold">{{.File.Namespace}} / {{.File.RelPath}}</h2>
+      </div>
+      <div class="card-action">
+        <span class="badge" data-variant="outline">{{.File.Mode}}</span>
+      </div>
+    </header>
+  </div>
 
   {{if .Error}}
-  <div class="notice notice-danger">
-    <div class="notice-icon">⚠</div>
-    <div><strong>Preview failed.</strong> {{.Error}}</div>
+  <div class="alert" data-variant="destructive">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+    <h2>Preview failed.</h2>
+    <section>{{.Error}}</section>
   </div>
   {{else}}
-  <section class="panel">
-    <div class="panel-header">
+  <div class="card overflow-hidden">
+    <header>
       <div>
-        <div class="panel-title">Plaintext content</div>
-        <div class="panel-subtitle">Rendered directly from the vault for inspection</div>
+        <h3>Plaintext content</h3>
+        <p>Rendered directly from the vault for inspection.</p>
       </div>
-      <button type="button" class="btn btn-secondary btn-sm" data-copy-button data-copy-target="[data-file-copy-source]">Copy content</button>
-    </div>
-    <div class="code-frame">
-      <pre data-file-copy-source>{{.Content}}</pre>
-    </div>
-  </section>
+      <div class="card-action">
+        <button type="button" class="btn" data-variant="outline" data-size="sm"
+                data-copy-button data-copy-target="[data-file-copy-source]">Copy</button>
+      </div>
+    </header>
+    <section class="p-0">
+      <pre class="font-mono text-xs p-4 overflow-auto max-h-[72vh] text-muted-foreground" data-file-copy-source>{{.Content}}</pre>
+    </section>
+  </div>
   {{end}}
-</section>
+
+</div>
 {{end}}

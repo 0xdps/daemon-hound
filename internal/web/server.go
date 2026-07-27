@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/0xdps/daemon-hound/internal/conflicts"
+	"github.com/0xdps/daemon-hound/internal/daemon"
 	"github.com/0xdps/daemon-hound/internal/storage"
 )
 
@@ -176,13 +177,17 @@ func (s *Server) issueSession(w http.ResponseWriter) {
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 type pageData struct {
-	Active       string // "dashboard", "status", "conflicts", "files", "secrets", "settings"
-	PendingCount int
-	Data         any
+	Active        string // "dashboard", "status", "conflicts", "files", "secrets", "settings"
+	PendingCount  int
+	DaemonRunning bool
+	Data          any
 }
 
 func (s *Server) pageData(active string) pageData {
-	pd := pageData{Active: active}
+	pd := pageData{
+		Active:        active,
+		DaemonRunning: !daemon.IsHalted(),
+	}
 	store, err := conflicts.NewStore()
 	if err == nil {
 		if pending, err := store.Pending(); err == nil {
@@ -225,6 +230,19 @@ func (s *Server) renderPartial(w http.ResponseWriter, name string, data any) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := tmpl.ExecuteTemplate(w, "content", data); err != nil {
+		fmt.Fprintf(os.Stderr, "web: partial execute %s: %v\n", name, err)
+	}
+}
+
+func (s *Server) renderPartialWithTitle(w http.ResponseWriter, name string, data any, title string) {
+	tmpl, err := s.loadTemplate(name)
+	if err != nil {
+		http.Error(w, "template error: "+err.Error(), 500)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("HX-Title", title)
 	if err := tmpl.ExecuteTemplate(w, "content", data); err != nil {
 		fmt.Fprintf(os.Stderr, "web: partial execute %s: %v\n", name, err)
 	}

@@ -38,7 +38,7 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 
 	data := settingsData{Files: entries}
 	if isHTMX(r) {
-		s.renderPartial(w, "settings.html", data)
+		s.renderPartialWithTitle(w, "settings.html", data, "Settings - DaemonHound")
 		return
 	}
 	s.render(w, "settings", "settings.html", data)
@@ -88,7 +88,7 @@ func (s *Server) handleUntrack(w http.ResponseWriter, r *http.Request) {
 		sort.Slice(entries, func(i, j int) bool {
 			return entries[i].Key < entries[j].Key
 		})
-		s.renderPartial(w, "settings.html", settingsData{Files: entries})
+		s.renderPartialWithTitle(w, "settings.html", settingsData{Files: entries}, "Settings - DaemonHound")
 		return
 	}
 	http.Redirect(w, r, "/settings", http.StatusFound)

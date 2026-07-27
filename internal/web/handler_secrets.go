@@ -56,7 +56,7 @@ func (s *Server) handleSecretList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHTMX(r) {
-		s.renderPartial(w, "secrets/list.html", data)
+		s.renderPartialWithTitle(w, "secrets/list.html", data, "Secrets - DaemonHound")
 		return
 	}
 	s.render(w, "secrets", "secrets/list.html", data)
@@ -103,7 +103,7 @@ func (s *Server) handleSecretView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isHTMX(r) {
-		s.renderPartial(w, "secrets/view.html", data)
+		s.renderPartialWithTitle(w, "secrets/view.html", data, "Secret View - DaemonHound")
 		return
 	}
 	s.render(w, "secrets", "secrets/view.html", data)
@@ -167,7 +167,7 @@ func (s *Server) handleSecretRotate(w http.ResponseWriter, r *http.Request) {
 			return versions[i].CreatedAt.After(versions[j].CreatedAt)
 		})
 		data.Versions = versions
-		s.renderPartial(w, "secrets/view.html", data)
+		s.renderPartialWithTitle(w, "secrets/view.html", data, "Secret View - DaemonHound")
 		return
 	}
 	http.Redirect(w, r, "/secrets/view?name="+name, http.StatusFound)
