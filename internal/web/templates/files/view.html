@@ -30,16 +30,27 @@
         <i data-lucide="file-code" style="width:12px;height:12px;color:#6b7280;"></i>
         <span style="font-size:0.72rem;color:#9ca3af;">Decrypted content</span>
       </div>
-      <button
-        onclick="copyContent()"
-        class="btn btn-secondary btn-sm"
-        id="copy-btn"
-      >
-        <i data-lucide="copy" style="width:11px;height:11px;"></i>
-        Copy
-      </button>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button
+          onclick="downloadContent()"
+          class="btn btn-secondary btn-sm"
+          id="download-btn"
+          title="Download file"
+        >
+          <i data-lucide="download" style="width:11px;height:11px;"></i>
+          Download
+        </button>
+        <button
+          onclick="copyContent()"
+          class="btn btn-secondary btn-sm"
+          id="copy-btn"
+        >
+          <i data-lucide="copy" style="width:11px;height:11px;"></i>
+          Copy
+        </button>
+      </div>
     </div>
-    <pre id="file-content" style="border:none;border-radius:0;margin:0;max-height:520px;overflow-y:auto;font-size:0.75rem;">{{.Content}}</pre>
+    <pre id="file-content"><code class="language-{{detectLang .File.RelPath}}">{{.Content}}</code></pre>
   </div>
   {{end}}
 </div>
@@ -55,6 +66,20 @@ function copyContent() {
     if (window.lucide) lucide.createIcons({ nodes: [btn] });
     setTimeout(function() { btn.innerHTML = orig; if (window.lucide) lucide.createIcons({ nodes: [btn] }); }, 2000);
   });
+}
+
+function downloadContent() {
+  var el = document.getElementById('file-content');
+  if (!el) return;
+  var blob = new Blob([el.textContent], { type: 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = '{{.File.RelPath}}';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 </script>
 {{end}}

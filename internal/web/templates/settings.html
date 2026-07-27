@@ -5,11 +5,32 @@
     Settings
   </h1>
 
-  <div style="margin-bottom:0.6rem;">
+  <div style="margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
     <span class="section-title">
       Tracked Files
       {{if .Files}}<span class="badge badge-neutral" style="margin-left:0.4rem;">{{len .Files}}</span>{{end}}
     </span>
+    <div style="display:flex;align-items:center;gap:0.5rem;">
+      <div style="position:relative;">
+        <i data-lucide="search" style="position:absolute;left:0.5rem;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#6b7280;pointer-events:none;"></i>
+        <input
+          type="text"
+          id="settings-search"
+          placeholder="Search files..."
+          oninput="filterSettingsTable(this.value)"
+          style="padding:0.35rem 0.6rem 0.35rem 1.7rem;font-size:0.78rem;background:#0a0a0c;border:1px solid #1e1e24;border-radius:0.375rem;color:#d1d5db;width:220px;"
+        >
+      </div>
+      <button
+        id="bulk-untrack-btn"
+        class="btn btn-danger btn-sm"
+        onclick="confirmBulkUntrack()"
+        style="display:none;"
+      >
+        <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+        Untrack <span id="bulk-count">0</span>
+      </button>
+    </div>
   </div>
 
   {{if .Files}}
@@ -17,16 +38,22 @@
     <table>
       <thead>
         <tr>
-          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(0)">Namespace <span class="sort-arrow" data-col="0"></span></th>
-          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(1)">Path <span class="sort-arrow" data-col="1"></span></th>
-          <th style="width:90px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(2)">Mode <span class="sort-arrow" data-col="2"></span></th>
-          <th style="width:170px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(3)">Last Sync <span class="sort-arrow" data-col="3">▼</span></th>
+          <th style="width:32px;">
+            <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" style="cursor:pointer;">
+          </th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(1)">Namespace <span class="sort-arrow" data-col="1"></span></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(2)">Path <span class="sort-arrow" data-col="2"></span></th>
+          <th style="width:90px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(3)">Mode <span class="sort-arrow" data-col="3"></span></th>
+          <th style="width:170px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(4)">Last Sync <span class="sort-arrow" data-col="4"><i data-lucide="arrow-down" style="width:10px;height:10px;display:inline-block;vertical-align:middle;"></i></span></th>
           <th style="width:100px;"></th>
         </tr>
       </thead>
       <tbody>
         {{range .Files}}
-        <tr id="row-{{.Key | printf "%s"}}">
+        <tr id="row-{{.Key | printf "%s"}}" class="settings-row" data-key="{{.Key}}" data-path="{{.File.RelPath}}" data-ns="{{.File.Namespace}}">
+          <td>
+            <input type="checkbox" class="row-select" onchange="updateBulkState()" style="cursor:pointer;">
+          </td>
           <td style="font-size:0.78rem;color:#9ca3af;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{.File.Namespace}}">{{.File.Namespace}}</td>
           <td style="font-family:monospace;font-size:0.78rem;color:#d1d5db;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{.File.RelPath}}">{{.File.RelPath}}</td>
           <td>
@@ -71,11 +98,36 @@
   >
     <input type="hidden" name="key" id="untrack-key">
   </form>
+
+  <!-- Hidden bulk untrack form -->
+  <form
+    id="bulk-untrack-form"
+    hx-post="/settings/bulk-untrack"
+    hx-target="#settings-table"
+    hx-swap="outerHTML"
+    style="display:none;"
+  >
+    <input type="hidden" name="keys" id="bulk-untrack-keys">
+  </form>
 </div>
 
 <script>
 (function() {
-  var _sortState = { col: 3, dir: 'desc' }; // default: last sync descending
+  var _sortState = { col: 4, dir: 'desc' }; // default: last sync descending
+
+  function setSortArrow(el, dir) {
+    if (!el) return;
+    if (dir === 'asc') {
+      el.innerHTML = '<i data-lucide="arrow-up" style="width:10px;height:10px;display:inline-block;vertical-align:middle;"></i>';
+    } else {
+      el.innerHTML = '<i data-lucide="arrow-down" style="width:10px;height:10px;display:inline-block;vertical-align:middle;"></i>';
+    }
+    if (window.lucide) lucide.createIcons({ nodes: [el] });
+  }
+
+  function clearSortArrow(el) {
+    if (el) el.innerHTML = '';
+  }
 
   window.sortSettingsTable = function(col) {
     if (_sortState.col === col) {
@@ -93,8 +145,8 @@
       var ca = a.cells[col] ? (a.cells[col].textContent || '').trim() : '';
       var cb = b.cells[col] ? (b.cells[col].textContent || '').trim() : '';
 
-      // Numeric comparison for timestamps (col 3)
-      if (col === 3) {
+      // Numeric comparison for timestamps (col 4)
+      if (col === 4) {
         var da = Date.parse(ca);
         var db = Date.parse(cb);
         if (!isNaN(da) && !isNaN(db)) {
@@ -109,12 +161,20 @@
 
     // Update arrow indicators
     document.querySelectorAll('.sort-arrow').forEach(function(s) {
-      s.textContent = '';
-      if (parseInt(s.getAttribute('data-col')) === _sortState.col) {
-        s.textContent = _sortState.dir === 'asc' ? '▲' : '▼';
+      var scol = parseInt(s.getAttribute('data-col'));
+      if (scol === _sortState.col) {
+        setSortArrow(s, _sortState.dir);
+      } else {
+        clearSortArrow(s);
       }
     });
   };
+
+  // Initialize default arrow
+  document.addEventListener('DOMContentLoaded', function() {
+    var def = document.querySelector('.sort-arrow[data-col="4"]');
+    if (def) setSortArrow(def, 'desc');
+  });
 })();
 
 function confirmUntrack(btn, key, relPath) {
@@ -134,11 +194,68 @@ document.addEventListener('htmx:load', function() {
       htmx.trigger(form, 'submit');
     });
   }
+  const bulkForm = document.getElementById('bulk-untrack-form');
+  if (bulkForm) {
+    bulkForm.addEventListener('confirmed-submit', function() {
+      htmx.trigger(bulkForm, 'submit');
+    });
+  }
 });
 
 // Also handle if lucide icons aren't yet loaded when settings page swaps in
 document.addEventListener('htmx:afterSwap', function() {
   if (window.lucide) lucide.createIcons();
 });
+
+// Search filter
+window.filterSettingsTable = function(query) {
+  var q = query.toLowerCase();
+  document.querySelectorAll('.settings-row').forEach(function(row) {
+    var path = (row.getAttribute('data-path') || '').toLowerCase();
+    var ns = (row.getAttribute('data-ns') || '').toLowerCase();
+    if (!q || path.indexOf(q) >= 0 || ns.indexOf(q) >= 0) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+};
+
+// Bulk selection
+window.toggleSelectAll = function(checkbox) {
+  document.querySelectorAll('.row-select').forEach(function(cb) {
+    cb.checked = checkbox.checked;
+  });
+  updateBulkState();
+};
+
+window.updateBulkState = function() {
+  var checked = document.querySelectorAll('.row-select:checked');
+  var btn = document.getElementById('bulk-untrack-btn');
+  var count = document.getElementById('bulk-count');
+  if (!btn || !count) return;
+  count.textContent = checked.length;
+  btn.style.display = checked.length > 0 ? 'inline-flex' : 'none';
+};
+
+window.confirmBulkUntrack = function() {
+  var checked = document.querySelectorAll('.row-select:checked');
+  if (checked.length === 0) return;
+  var keys = [];
+  var paths = [];
+  checked.forEach(function(cb) {
+    var row = cb.closest('tr');
+    if (row) {
+      keys.push(row.getAttribute('data-key'));
+      paths.push(row.getAttribute('data-path'));
+    }
+  });
+  document.getElementById('bulk-untrack-keys').value = keys.join(',');
+  openConfirm(
+    'Untrack ' + checked.length + ' files',
+    'Remove the following files from the vault? This cannot be undone.\n\n' + paths.slice(0, 5).join('\n') + (paths.length > 5 ? '\n...and ' + (paths.length - 5) + ' more' : ''),
+    document.getElementById('bulk-untrack-form')
+  );
+};
 </script>
 {{end}}

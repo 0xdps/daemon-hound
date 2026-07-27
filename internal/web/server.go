@@ -111,7 +111,9 @@ func (s *Server) registerRoutes() {
 	// Secrets
 	mux.HandleFunc("GET /secrets", s.requireAuth(s.handleSecretList))
 	mux.HandleFunc("GET /secrets/view", s.requireAuth(s.handleSecretView))
+	mux.HandleFunc("POST /secrets/create", s.requireAuth(s.handleSecretCreate))
 	mux.HandleFunc("POST /secrets/rotate", s.requireAuth(s.handleSecretRotate))
+	mux.HandleFunc("GET /secrets/diff", s.requireAuth(s.handleSecretDiff))
 
 	// Status (SSE)
 	mux.HandleFunc("GET /status", s.requireAuth(s.handleStatus))
@@ -121,6 +123,7 @@ func (s *Server) registerRoutes() {
 	// Settings
 	mux.HandleFunc("GET /settings", s.requireAuth(s.handleSettings))
 	mux.HandleFunc("POST /settings/untrack", s.requireAuth(s.handleUntrack))
+	mux.HandleFunc("POST /settings/bulk-untrack", s.requireAuth(s.handleBulkUntrack))
 
 	// Help
 	mux.HandleFunc("GET /help", s.requireAuth(s.handleHelp))
@@ -348,6 +351,125 @@ var templateFuncs = template.FuncMap{
 	},
 	"urlquery": func(s string) string {
 		return url.QueryEscape(s)
+	},
+	"detectLogLevel": func(line string) string {
+		lower := strings.ToLower(line)
+		if strings.Contains(lower, "error") || strings.Contains(lower, "fatal") || strings.Contains(lower, "panic") {
+			return "error"
+		}
+		if strings.Contains(lower, "warn") {
+			return "warn"
+		}
+		return "info"
+	},
+	"fileIcon": func(path string) string {
+		ext := strings.ToLower(path)
+		if strings.HasSuffix(ext, ".json") {
+			return "file-json"
+		}
+		if strings.HasSuffix(ext, ".yaml") || strings.HasSuffix(ext, ".yml") {
+			return "file-code"
+		}
+		if strings.HasSuffix(ext, ".toml") {
+			return "file-code"
+		}
+		if strings.HasSuffix(ext, ".md") {
+			return "file-text"
+		}
+		if strings.HasSuffix(ext, ".env") || strings.Contains(ext, ".env.") {
+			return "file-lock"
+		}
+		if strings.HasSuffix(ext, ".go") || strings.HasSuffix(ext, ".rs") || strings.HasSuffix(ext, ".py") || strings.HasSuffix(ext, ".js") || strings.HasSuffix(ext, ".ts") {
+			return "file-code"
+		}
+		if strings.HasSuffix(ext, ".sh") || strings.HasSuffix(ext, ".bash") || strings.HasSuffix(ext, ".zsh") {
+			return "terminal"
+		}
+		if strings.HasSuffix(ext, ".sql") {
+			return "database"
+		}
+		if strings.HasSuffix(ext, ".dockerfile") || strings.Contains(ext, "dockerfile") {
+			return "container"
+		}
+		return "file"
+	},
+	"detectLang": func(path string) string {
+		ext := strings.ToLower(path)
+		if strings.HasSuffix(ext, ".json") {
+			return "json"
+		}
+		if strings.HasSuffix(ext, ".yaml") || strings.HasSuffix(ext, ".yml") {
+			return "yaml"
+		}
+		if strings.HasSuffix(ext, ".toml") {
+			return "toml"
+		}
+		if strings.HasSuffix(ext, ".md") {
+			return "markdown"
+		}
+		if strings.HasSuffix(ext, ".env") || strings.Contains(ext, ".env.") {
+			return "bash"
+		}
+		if strings.HasSuffix(ext, ".go") {
+			return "go"
+		}
+		if strings.HasSuffix(ext, ".rs") {
+			return "rust"
+		}
+		if strings.HasSuffix(ext, ".py") {
+			return "python"
+		}
+		if strings.HasSuffix(ext, ".js") {
+			return "javascript"
+		}
+		if strings.HasSuffix(ext, ".ts") {
+			return "typescript"
+		}
+		if strings.HasSuffix(ext, ".sh") || strings.HasSuffix(ext, ".bash") || strings.HasSuffix(ext, ".zsh") {
+			return "bash"
+		}
+		if strings.HasSuffix(ext, ".sql") {
+			return "sql"
+		}
+		if strings.HasSuffix(ext, ".dockerfile") {
+			return "dockerfile"
+		}
+		if strings.HasSuffix(ext, ".html") || strings.HasSuffix(ext, ".htm") {
+			return "html"
+		}
+		if strings.HasSuffix(ext, ".css") {
+			return "css"
+		}
+		if strings.HasSuffix(ext, ".xml") {
+			return "xml"
+		}
+		return "plaintext"
+	},
+	"parseLogTimestamp": func(line string) string {
+		// Match "[daemon] 2024/01/15 10:30:45 message"
+		if idx := strings.Index(line, "] "); idx > 0 {
+			rest := line[idx+2:]
+			// Find the space after the timestamp
+			if tsEnd := strings.Index(rest[20:], " "); tsEnd >= 0 {
+				return rest[:20+tsEnd]
+			}
+			if len(rest) >= 19 {
+				return rest[:19]
+			}
+		}
+		return ""
+	},
+	"stripLogPrefix": func(line string) string {
+		if idx := strings.Index(line, "] "); idx > 0 {
+			rest := line[idx+2:]
+			if tsEnd := strings.Index(rest[20:], " "); tsEnd >= 0 {
+				return rest[20+tsEnd+1:]
+			}
+			if len(rest) >= 20 {
+				return rest[20:]
+			}
+		}
+		return line
 	},
 }
 

@@ -31,21 +31,28 @@
 
   <!-- Log viewer -->
   <div class="card" style="padding:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid #1e1e24;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border-bottom:1px solid #1e1e24;flex-wrap:wrap;gap:0.5rem;">
       <div style="display:flex;align-items:center;gap:0.5rem;">
         <i data-lucide="terminal" style="width:14px;height:14px;color:#6b7280;"></i>
         <span style="font-size:0.8rem;font-weight:500;color:#9ca3af;">Daemon logs</span>
         <span id="sse-indicator" style="width:6px;height:6px;border-radius:50%;background:#1fcb4f;box-shadow:0 0 4px #1fcb4f;display:inline-block;" title="Live stream active"></span>
       </div>
-      <button
-        id="autoscroll-btn"
-        onclick="toggleAutoscroll()"
-        class="btn btn-secondary btn-sm"
-        title="Toggle autoscroll"
-      >
-        <i data-lucide="arrow-down-to-line" style="width:13px;height:13px;"></i>
-        <span id="autoscroll-label">Autoscroll on</span>
-      </button>
+      <div style="display:flex;align-items:center;gap:0.4rem;">
+        <button class="log-filter btn btn-sm active" data-level="all" onclick="setLogFilter('all')">All</button>
+        <button class="log-filter btn btn-ghost btn-sm" data-level="info" onclick="setLogFilter('info')">Info</button>
+        <button class="log-filter btn btn-ghost btn-sm" data-level="warn" onclick="setLogFilter('warn')">Warn</button>
+        <button class="log-filter btn btn-ghost btn-sm" data-level="error" onclick="setLogFilter('error')">Error</button>
+        <div style="width:1px;height:16px;background:#1e1e24;margin:0 0.25rem;"></div>
+        <button
+          id="autoscroll-btn"
+          onclick="toggleAutoscroll()"
+          class="btn btn-secondary btn-sm"
+          title="Toggle autoscroll"
+        >
+          <i data-lucide="arrow-down-to-line" style="width:13px;height:13px;"></i>
+          <span id="autoscroll-label">Autoscroll on</span>
+        </button>
+      </div>
     </div>
 
     <!-- Pre-loaded recent lines -->
@@ -57,7 +64,7 @@
       sse-swap="log"
       hx-swap="beforeend"
       hx-target="#log-output"
-    >{{range .RecentLogs}}<div class="log-line">{{.}}</div>
+    >{{range .RecentLogs}}<div class="log-line" data-level="{{detectLogLevel .}}"><span class="log-ts">{{parseLogTimestamp .}}</span><span class="log-msg">{{stripLogPrefix .}}</span></div>
 {{end}}</div>
   </div>
 </div>
@@ -94,5 +101,24 @@
     if (sseIndicator) { sseIndicator.style.background = '#6b7280'; sseIndicator.style.boxShadow = 'none'; }
     showToast('info', 'Log stream reconnecting...');
   });
+
+  // Log level filtering
+  let _logFilter = 'all';
+  function setLogFilter(level) {
+    _logFilter = level;
+    document.querySelectorAll('.log-filter').forEach(function(btn) {
+      var isActive = btn.getAttribute('data-level') === level;
+      btn.classList.toggle('btn-secondary', isActive);
+      btn.classList.toggle('btn-ghost', !isActive);
+    });
+    document.querySelectorAll('.log-line').forEach(function(line) {
+      var lineLevel = line.getAttribute('data-level') || 'info';
+      if (level === 'all' || lineLevel === level) {
+        line.style.display = '';
+      } else {
+        line.style.display = 'none';
+      }
+    });
+  }
 </script>
 {{end}}

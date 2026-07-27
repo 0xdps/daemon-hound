@@ -1,17 +1,20 @@
 {{define "content"}}
 <div>
-  <!-- Back -->
-  <a hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts"
-     class="btn btn-ghost btn-sm" style="margin-bottom:1rem;display:inline-flex;">
-    <i data-lucide="arrow-left" style="width:13px;height:13px;"></i>
-    Back to Conflicts
-  </a>
+  <!-- Breadcrumb -->
+  <nav style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.75rem;font-size:0.78rem;color:#6b7280;">
+    <a hx-get="/conflicts" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/conflicts"
+       style="display:inline-flex;align-items:center;gap:0.3rem;color:#9ca3af;text-decoration:none;cursor:pointer;transition:color 0.15s;"
+       onmouseover="this.style.color='#e2e2e5'" onmouseout="this.style.color='#9ca3af'">
+      <i data-lucide="git-merge" style="width:12px;height:12px;"></i> Conflicts
+    </a>
+    <i data-lucide="chevron-right" style="width:12px;height:12px;color:#4b5563;"></i>
+    <span style="color:#d1d5db;word-break:break-all;max-width:600px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{.FilePath}}">{{.FilePath}}</span>
+  </nav>
 
   <h1 class="page-title" style="margin-bottom:0.35rem;">
     <i data-lucide="diff" style="width:20px;height:20px;color:#1fcb4f;"></i>
     Conflict Diff
   </h1>
-  <div style="font-family:monospace;font-size:0.8rem;color:#9ca3af;margin-bottom:1.5rem;word-break:break-all;">{{.FilePath}}</div>
 
   {{if .IsKV}}
   <!-- Key-value diff table -->
@@ -27,16 +30,17 @@
     <table>
       <thead>
         <tr>
-          <th style="width:20%;">Key</th>
-          <th style="width:20%;">Base</th>
-          <th style="width:22%;">Local</th>
-          <th style="width:22%;">Remote</th>
-          <th style="width:16%;">Status</th>
+          <th style="width:18%;">Key</th>
+          <th style="width:18%;">Base</th>
+          <th style="width:20%;">Local</th>
+          <th style="width:20%;">Remote</th>
+          <th style="width:10%;">Status</th>
+          <th style="width:14%;">Pick</th>
         </tr>
       </thead>
       <tbody>
         {{range .KeyDiffs}}
-        <tr class="kv-{{.Status}}">
+        <tr class="kv-{{.Status}}" data-key="{{.Key}}" data-local="{{.LocalValue}}" data-remote="{{.RemoteValue}}" data-base="{{.BaseValue}}">
           <td style="font-family:monospace;font-size:0.78rem;font-weight:500;color:#d1d5db;">{{.Key}}</td>
           <td style="font-family:monospace;font-size:0.78rem;color:#9ca3af;">{{if .BaseValue}}{{truncate .BaseValue 40}}{{else}}<span style="color:#374151;font-style:italic;">—</span>{{end}}</td>
           <td style="font-family:monospace;font-size:0.78rem;color:#93c5fd;">{{if .LocalValue}}{{truncate .LocalValue 40}}{{else}}<span style="color:#374151;font-style:italic;">—</span>{{end}}</td>
@@ -47,11 +51,53 @@
             {{else if eq .Status "remote-only"}}<span class="badge badge-success">remote</span>
             {{else}}<span class="badge badge-neutral">same</span>{{end}}
           </td>
+          <td>
+            {{if eq .Status "conflict"}}
+            <div style="display:flex;gap:0.25rem;">
+              <button type="button" class="btn btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;" onclick="pickKey(this,'local')" title="Pick local">L</button>
+              <button type="button" class="btn btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;" onclick="pickKey(this,'remote')" title="Pick remote">R</button>
+              <button type="button" class="btn btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;" onclick="pickKey(this,'base')" title="Pick base">B</button>
+            </div>
+            {{else if eq .Status "local-only"}}
+            <button type="button" class="btn btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;" onclick="pickKey(this,'local')" title="Keep local">Keep</button>
+            {{else if eq .Status "remote-only"}}
+            <button type="button" class="btn btn-sm" style="padding:0.15rem 0.35rem;font-size:0.65rem;" onclick="pickKey(this,'remote')" title="Keep remote">Keep</button>
+            {{else}}
+            <span style="font-size:0.65rem;color:#4b5563;">—</span>
+            {{end}}
+          </td>
         </tr>
         {{end}}
       </tbody>
     </table>
   </div>
+
+  <!-- Inline merge preview -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+      <div style="font-size:0.875rem;font-weight:600;color:#f3f4f6;">Merge Preview</div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="copyMergePreview()">
+        <i data-lucide="copy" style="width:11px;height:11px;"></i> Copy
+      </button>
+    </div>
+    <pre id="merge-preview" style="background:#0a0a0c;border:1px solid #1e1e24;border-radius:0.375rem;padding:0.75rem;font-size:0.75rem;max-height:240px;overflow:auto;color:#d1d5db;"></pre>
+  </div>
+  <form
+    id="merge-form"
+    hx-post="/conflicts/resolve"
+    hx-target="#app-content"
+    hx-swap="innerHTML"
+    hx-push-url="/conflicts"
+    style="display:none;"
+  >
+    <input type="hidden" name="file" value="{{.FilePath}}">
+    <input type="hidden" name="strategy" value="merged">
+    <input type="hidden" name="merged_content" id="merged-content-input">
+  </form>
+  <button type="button" class="btn btn-primary" onclick="submitMerge()" style="margin-bottom:1.5rem;">
+    <i data-lucide="check" style="width:14px;height:14px;"></i>
+    Commit Merge
+  </button>
   {{else}}
   <!-- Raw 3-column diff -->
   <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;min-height:200px;">
@@ -74,6 +120,9 @@
   {{end}}
 
   <!-- Resolution form -->
+  {{if .IsKV}}
+  <!-- Inline merge already rendered above -->
+  {{else}}
   <div class="card">
     <div style="font-size:0.875rem;font-weight:600;color:#f3f4f6;margin-bottom:1rem;">Resolve Conflict</div>
     <form
@@ -119,9 +168,85 @@
       </button>
     </form>
   </div>
+  {{end}}
 </div>
 
 <script>
+(function() {
+  var _picks = {};
+
+  window.pickKey = function(btn, side) {
+    var row = btn.closest('tr');
+    if (!row) return;
+    var key = row.getAttribute('data-key');
+    var val = row.getAttribute('data-' + side) || '';
+    _picks[key] = val;
+    // Visual feedback
+    row.querySelectorAll('button').forEach(function(b) {
+      b.style.background = '';
+      b.style.color = '';
+    });
+    btn.style.background = '#1fcb4f';
+    btn.style.color = '#0a0a0c';
+    rebuildPreview();
+  };
+
+  function rebuildPreview() {
+    var rows = document.querySelectorAll('tr[data-key]');
+    var lines = [];
+    rows.forEach(function(row) {
+      var key = row.getAttribute('data-key');
+      var status = row.className.replace('kv-', '');
+      var val;
+      if (_picks.hasOwnProperty(key)) {
+        val = _picks[key];
+      } else if (status === 'same' || status === 'local-only' || status === 'remote-only') {
+        // Default: keep whichever side has the value
+        val = row.getAttribute('data-local') || row.getAttribute('data-remote') || row.getAttribute('data-base') || '';
+      } else {
+        val = '<<<<<<< CONFLICT: ' + key + ' >>>>>>>';
+      }
+      if (val !== '') {
+        lines.push(key + '=' + val);
+      }
+    });
+    var pre = document.getElementById('merge-preview');
+    if (pre) pre.textContent = lines.join('\n');
+  }
+
+  window.copyMergePreview = function() {
+    var pre = document.getElementById('merge-preview');
+    if (!pre) return;
+    navigator.clipboard.writeText(pre.textContent).then(function() {
+      showToast('success', 'Merge preview copied');
+    });
+  };
+
+  window.submitMerge = function() {
+    var pre = document.getElementById('merge-preview');
+    if (!pre) return;
+    document.getElementById('merged-content-input').value = pre.textContent;
+    openConfirm(
+      'Commit merge',
+      'This will resolve the conflict with your custom merge and cannot be undone.',
+      document.getElementById('merge-form')
+    );
+  };
+
+  // Wire confirm dialog for merge form
+  document.addEventListener('htmx:load', function() {
+    var form = document.getElementById('merge-form');
+    if (form) {
+      form.addEventListener('confirmed-submit', function() {
+        htmx.trigger(form, 'submit');
+      });
+    }
+  });
+
+  // Build initial preview
+  rebuildPreview();
+})();
+
 function highlightStrategy(radio) {
   ['local','remote','merged'].forEach(function(s) {
     var lbl = document.getElementById('lbl-' + s);

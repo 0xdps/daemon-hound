@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/0xdps/daemon-hound/internal/conflicts"
 	"github.com/0xdps/daemon-hound/internal/daemon"
@@ -14,6 +15,7 @@ type dashboardData struct {
 	PendingCount int
 	SecretCount  int
 	FileCount    int
+	LastActivity string
 }
 
 func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +33,16 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	if state, err := s.vault.LoadState(); err == nil {
 		data.SecretCount = len(state.Secrets)
 		data.FileCount = len(state.Files)
+		// Find most recent sync activity
+		var latest time.Time
+		for _, f := range state.Files {
+			if f.LastSyncAt.After(latest) {
+				latest = f.LastSyncAt
+			}
+		}
+		if !latest.IsZero() {
+			data.LastActivity = formatRelativeTime(latest)
+		}
 	}
 
 	title := "Dashboard - DaemonHound"
@@ -43,4 +55,20 @@ func (s *Server) handleDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.render(w, "dashboard", "dashboard.html", data)
+}
+
+func formatRelativeTime(t time.Time) string {
+	d := time.Since(t)
+	switch {
+	case d < time.Minute:
+		return "just now"
+	case d < time.Hour:
+		return fmt.Sprintf("%d min ago", int(d.Minutes()))
+	case d < 24*time.Hour:
+		return fmt.Sprintf("%d hr ago", int(d.Hours()))
+	case d < 30*24*time.Hour:
+		return fmt.Sprintf("%d days ago", int(d.Hours()/24))
+	default:
+		return t.Format("2006-01-02")
+	}
 }

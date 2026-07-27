@@ -46,7 +46,9 @@
         <i data-lucide="folder-open" style="width:14px;height:14px;color:#6b7280;"></i>
       </div>
       <div style="font-size:2rem;font-weight:700;color:#f3f4f6;line-height:1;">{{.FileCount}}</div>
-      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">tracked files</div>
+      <div style="font-size:0.72rem;color:#4b5563;margin-top:0.3rem;">
+        {{if .LastActivity}}Last sync {{.LastActivity}}{{else}}tracked files{{end}}
+      </div>
     </a>
 
     <a class="metric-card" hx-get="/status" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" href="/status">

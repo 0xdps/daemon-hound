@@ -6,8 +6,12 @@
   </h1>
 
   <!-- Environment -->
-  <div style="margin-bottom:0.6rem;">
-    <span class="section-title">Environment</span>
+  <div style="margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
+    <span class="section-title" style="margin-bottom:0;">Environment</span>
+    <button class="btn btn-secondary btn-sm" onclick="copyDebugInfo()">
+      <i data-lucide="clipboard-copy" style="width:12px;height:12px;"></i>
+      Copy Debug Info
+    </button>
   </div>
   <div class="card" style="margin-bottom:2rem;padding:0;overflow:hidden;">
     <table>
@@ -26,6 +30,16 @@
       </tbody>
     </table>
   </div>
+
+  <textarea id="debug-info" style="position:absolute;left:-9999px;" readonly>
+DaemonHound Debug Info
+======================
+Version:      {{.Version}}
+Daemon:       {{if .DaemonRun}}Running{{else}}Halted{{end}}
+Go Version:   {{.GoVersion}}
+OS / Arch:    {{.OS}} / {{.Arch}}
+Web UI Port:  {{.Port}}
+</textarea>
 
   <!-- CLI Reference -->
   <div style="margin-bottom:0.6rem;">
@@ -109,4 +123,16 @@
   </div>
 
 </div>
+
+<script>
+function copyDebugInfo() {
+  var el = document.getElementById('debug-info');
+  if (!el) return;
+  navigator.clipboard.writeText(el.value).then(function() {
+    showToast('success', 'Debug info copied to clipboard');
+  }).catch(function() {
+    showToast('error', 'Failed to copy debug info');
+  });
+}
+</script>
 {{end}}

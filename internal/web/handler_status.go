@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/0xdps/daemon-hound/internal/daemon"
@@ -77,7 +78,10 @@ func (s *Server) handleStatusStream(w http.ResponseWriter, r *http.Request) {
 		case <-ticker.C:
 			for scanner.Scan() {
 				line := scanner.Text()
-				fmt.Fprintf(w, "event: log\ndata: %s\n\n", line)
+				level := detectLogLevel(line)
+				ts := parseLogTimestamp(line)
+				msg := stripLogPrefix(line)
+				fmt.Fprintf(w, "event: log\ndata: <div class=\"log-line\" data-level=\"%s\"><span class=\"log-ts\">%s</span><span class=\"log-msg\">%s</span></div>\n\n", level, ts, msg)
 				flusher.Flush()
 			}
 			_ = scanner.Err() // non-fatal; retry on next tick
@@ -86,6 +90,43 @@ func (s *Server) handleStatusStream(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		}
 	}
+}
+
+func detectLogLevel(line string) string {
+	lower := strings.ToLower(line)
+	if strings.Contains(lower, "error") || strings.Contains(lower, "fatal") || strings.Contains(lower, "panic") {
+		return "error"
+	}
+	if strings.Contains(lower, "warn") {
+		return "warn"
+	}
+	return "info"
+}
+
+func parseLogTimestamp(line string) string {
+	if idx := strings.Index(line, "] "); idx > 0 {
+		rest := line[idx+2:]
+		if tsEnd := strings.Index(rest[20:], " "); tsEnd >= 0 {
+			return rest[:20+tsEnd]
+		}
+		if len(rest) >= 19 {
+			return rest[:19]
+		}
+	}
+	return ""
+}
+
+func stripLogPrefix(line string) string {
+	if idx := strings.Index(line, "] "); idx > 0 {
+		rest := line[idx+2:]
+		if tsEnd := strings.Index(rest[20:], " "); tsEnd >= 0 {
+			return rest[20+tsEnd+1:]
+		}
+		if len(rest) >= 20 {
+			return rest[20:]
+		}
+	}
+	return line
 }
 
 func tailFile(path string, n int) []string {

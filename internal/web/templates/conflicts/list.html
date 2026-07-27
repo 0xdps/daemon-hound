@@ -13,11 +13,21 @@
   {{end}}
 
   <!-- Pending -->
-  <div style="margin-bottom:0.6rem;">
+  <div style="margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
     <span class="section-title">
       Pending
       {{if .Pending}}<span class="badge badge-conflict" style="margin-left:0.4rem;">{{len .Pending}}</span>{{end}}
     </span>
+    <div style="position:relative;">
+      <i data-lucide="search" style="position:absolute;left:0.5rem;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#6b7280;pointer-events:none;"></i>
+      <input
+        type="text"
+        id="conflict-search"
+        placeholder="Search conflicts..."
+        oninput="filterConflicts(this.value)"
+        style="padding:0.35rem 0.6rem 0.35rem 1.7rem;font-size:0.78rem;background:#0a0a0c;border:1px solid #1e1e24;border-radius:0.375rem;color:#d1d5db;width:220px;"
+      >
+    </div>
   </div>
 
   {{if .Pending}}
@@ -95,4 +105,16 @@
   {{end}}
 
 </div>
+
+<script>
+function filterConflicts(query) {
+  var q = query.toLowerCase();
+  var list = document.getElementById('conflict-list');
+  if (!list) return;
+  list.querySelectorAll('.card').forEach(function(card) {
+    var text = card.textContent.toLowerCase();
+    card.style.display = (!q || text.indexOf(q) >= 0) ? '' : 'none';
+  });
+}
+</script>
 {{end}}

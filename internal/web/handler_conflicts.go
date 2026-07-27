@@ -153,20 +153,29 @@ func (s *Server) handleConflictResolve(w http.ResponseWriter, r *http.Request) {
 	gc := git.NewClient(config.VaultPath())
 
 	if strategy == "merged" {
-		// Re-run smart merge
-		baseEnc, localEnc, remoteEnc, err := gc.GetConflictVersions(filePath)
-		if err == nil {
-			base, _ := s.vault.Decrypt(baseEnc)
-			local, _ := s.vault.Decrypt(localEnc)
-			remote, _ := s.vault.Decrypt(remoteEnc)
+		mergedContent := r.FormValue("merged_content")
+		if mergedContent != "" {
+			// User submitted a custom inline merge
+			reenc, err := s.vault.Encrypt([]byte(mergedContent))
+			if err == nil {
+				_ = gc.StageFile(filePath, reenc)
+			}
+		} else {
+			// Re-run smart merge
+			baseEnc, localEnc, remoteEnc, err := gc.GetConflictVersions(filePath)
+			if err == nil {
+				base, _ := s.vault.Decrypt(baseEnc)
+				local, _ := s.vault.Decrypt(localEnc)
+				remote, _ := s.vault.Decrypt(remoteEnc)
 
-			reg := merge.NewRegistry().WithSecretDriver(s.vault.Encrypt, s.vault.Decrypt)
-			merged, result, _ := reg.Resolve(filePath, base, local, remote)
-			if result == merge.Merged {
-				reenc, err := s.vault.Encrypt(merged)
-				if err == nil {
-					_ = gc.StageFile(filePath, reenc)
-					strategy = "merged"
+				reg := merge.NewRegistry().WithSecretDriver(s.vault.Encrypt, s.vault.Decrypt)
+				merged, result, _ := reg.Resolve(filePath, base, local, remote)
+				if result == merge.Merged {
+					reenc, err := s.vault.Encrypt(merged)
+					if err == nil {
+						_ = gc.StageFile(filePath, reenc)
+						strategy = "merged"
+					}
 				}
 			}
 		}

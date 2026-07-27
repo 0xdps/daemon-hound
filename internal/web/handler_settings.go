@@ -93,3 +93,58 @@ func (s *Server) handleUntrack(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/settings", http.StatusFound)
 }
+
+func (s *Server) handleBulkUntrack(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad request", 400)
+		return
+	}
+	keysStr := r.FormValue("keys")
+	if keysStr == "" {
+		http.Error(w, "keys required", 400)
+		return
+	}
+
+	state, err := s.vault.LoadState()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	keys := strings.Split(keysStr, ",")
+	var removed int
+	for _, key := range keys {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			continue
+		}
+		file, ok := state.Files[key]
+		if !ok {
+			continue
+		}
+		if err := s.vault.RemoveFile(file); err != nil {
+			continue
+		}
+		delete(state.Files, key)
+		removed++
+	}
+
+	if err := s.vault.SaveState(state); err != nil {
+		http.Error(w, "save state failed: "+err.Error(), 500)
+		return
+	}
+
+	if isHTMX(r) {
+		setHXToast(w, "success", fmt.Sprintf("Untracked %d files", removed))
+		var entries []trackedFileEntry
+		for k, f := range state.Files {
+			entries = append(entries, trackedFileEntry{Key: k, File: f})
+		}
+		sort.Slice(entries, func(i, j int) bool {
+			return entries[i].Key < entries[j].Key
+		})
+		s.renderPartialWithTitle(w, "settings.html", settingsData{Files: entries}, "Settings - DaemonHound")
+		return
+	}
+	http.Redirect(w, r, "/settings", http.StatusFound)
+}
