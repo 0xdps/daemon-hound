@@ -1,0 +1,79 @@
+internal/web/templates/status.html
+  s_2cb799fcf14556::t_74d9975db89b1c 34,40-55,104-122
+  s_2cb799fcf14556::t_3d58607b8f774a 67
+internal/web/templates/files/view.html
+  s_2cb799fcf14556::t_74d9975db89b1c 33-51,53,70-82
+  s_2cb799fcf14556::t_1c5e54baf081a3 83
+internal/web/templates/settings.html
+  s_2cb799fcf14556::t_7b607993277f6c 8,13-33,41-47,53-56,101-111,116-130,148-149,164-168,172-177,197-202,209-259
+internal/web/templates/secrets/view.html
+  s_2cb799fcf14556::t_74d9975db89b1c 3-13
+  s_2cb799fcf14556::t_5ec4cbd6cc7e29 66,84-91
+  s_2cb799fcf14556::t_a6eb9ff68633ac 92-93
+internal/web/templates/secrets/list.html
+  s_2cb799fcf14556::t_f8b01243dc26ff 27-29,33-55
+  s_2cb799fcf14556::t_4cd8cc64dde255 117-127
+  s_2cb799fcf14556::t_a86b3d3a20bd98 89-94
+  s_2cb799fcf14556::t_15ea39ffd1a0b0 56-57
+internal/web/templates/conflicts/diff.html
+  s_2cb799fcf14556::t_f93af0fb171e38 175-249
+  s_2cb799fcf14556::t_5ef6718cfd899f 123-125,171
+  s_2cb799fcf14556::t_1fde1d42456e22 33-38,43,54-68,74-100
+  s_2cb799fcf14556::t_74d9975db89b1c 3-12
+internal/web/templates/help.html
+  s_2cb799fcf14556::t_ed4979c8f85363 9-14,34-42
+  s_2cb799fcf14556::t_13e3ac3ada0324 126-137
+  s_2cb799fcf14556::t_e9694c98396138 43
+internal/web/templates/secrets/diff.html
+  s_2cb799fcf14556::t_9a88f2d9584003 1-67
+internal/web/templates/conflicts/list.html
+  s_2cb799fcf14556::t_675a7aed9916b5 108-119
+  s_2cb799fcf14556::t_15e66db9857ea8 16,21-30
+internal/web/handler_settings.go
+  s_2cb799fcf14556::t_97234c879b124f 96-150
+internal/web/templates/layout.html
+  s_2cb799fcf14556::t_8cf80bc7e93e3a 352-357
+  s_2cb799fcf14556::t_6e1c83e23bdb48 676
+  s_2cb799fcf14556::t_f6238a2931ab3c 326-340,546,550-552,663-669
+  s_2cb799fcf14556::t_b65c0618588ea3 345-351
+  s_2cb799fcf14556::t_401785c4a97579 13-19
+  s_2cb799fcf14556::t_39fe2e9edc619e 341-344,358-362
+internal/web/handler_dashboard.go
+  s_2cb799fcf14556::t_043a704aa13992 6,18,36-45,59-73
+  s_2cb799fcf14556::t_99261a369efb3d 74
+internal/web/server.go
+  s_2cb799fcf14556::t_c03fa557cb3bbf 126
+  s_2cb799fcf14556::t_f6238a2931ab3c 114
+  s_2cb799fcf14556::t_e4683c1ec574d0 448-473
+  s_2cb799fcf14556::t_b77e1451fa7330 355-447
+  s_2cb799fcf14556::t_0d98a8613fdbd2 116
+internal/web/handler_secrets.go
+  s_2cb799fcf14556::t_f2aba3779f1347 254-335
+  s_2cb799fcf14556::t_a35cc17b899dca 118-185
+internal/web/handler_conflicts.go
+  s_2cb799fcf14556::t_e198694356f87c 156-178
+internal/web/handler_status.go
+  s_2cb799fcf14556::t_29f0bced8903fa 8
+  s_2cb799fcf14556::t_a99ec75dba0a90 81-84
+  s_2cb799fcf14556::t_d1694a72393dc3 95-131
+internal/web/templates/dashboard.html
+  s_2cb799fcf14556::t_071bf566d86ce6 49-51
+internal/web/templates/files/list.html
+  s_2cb799fcf14556::t_74d9975db89b1c 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "0ba73b8b92621a16e44c3c95185049e37f0e8664",
+  "prompts": {},
+  "sessions": {
+    "s_2cb799fcf14556": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "fca6dce5-62bf-470d-92fd-7470fe226921",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
