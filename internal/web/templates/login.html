@@ -53,44 +53,69 @@
       min-height: 100vh; 
       display: grid; 
       place-items: center; 
-      padding: 1.5rem;
-      background: linear-gradient(135deg, #1e1e2e 0%, #181825 50%, #11111b 100%);
-      background-attachment: fixed;
+      padding: var(--dh-space-lg);
     }
     
     /* Login page specific styling */
     .login-container {
-      backdrop-filter: blur(20px);
-      background: rgba(30, 30, 46, 0.7);
-      animation: float 6s ease-in-out infinite;
+      backdrop-filter: blur(24px);
+      background: var(--dh-surface-elevated);
+      animation: float 8s ease-in-out infinite;
+      border: 1px solid var(--dh-border-primary);
+    }
+    
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--dh-primary), transparent);
     }
     
     .login-container:hover {
-      transform: scale(1.02);
-      transition: transform 0.3s ease;
+      transform: scale(1.01) translateY(-2px);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--dh-shadow-xl);
     }
     
     @keyframes float {
       0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-5px); }
+      50% { transform: translateY(-8px); }
     }
     
     .feature-item {
-      transition: all 0.3s ease;
-      border-radius: 8px;
-      padding: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: var(--dh-radius-lg);
+      padding: var(--dh-space-md);
+      border: 1px solid transparent;
+      background: var(--dh-glass-medium);
     }
     
     .feature-item:hover {
-      background: rgba(139, 92, 246, 0.1);
-      transform: translateX(4px);
+      background: var(--dh-surface-interactive);
+      border-color: var(--dh-border-primary);
+      transform: translateX(6px);
+      box-shadow: var(--dh-shadow-sm);
+    }
+    
+    .feature-item svg {
+      color: var(--dh-primary);
+      opacity: 0.8;
+    }
+    
+    .feature-item:hover svg {
+      opacity: 1;
+      transform: scale(1.1);
+      transition: all 0.3s ease;
     }
   </style>
 </head>
 <body>
   <div class="login-container w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-0 overflow-hidden rounded-xl border border-border shadow-2xl">
     <!-- Brand panel -->
-    <div class="card rounded-none border-0 border-r border-border flex flex-col justify-between gap-6 p-10">
+    <div class="card rounded-none border-0 border-r border-border flex flex-col justify-between gap-6 p-10" style="background: var(--dh-surface);">
       <div>
         <img src="/static/logo.png" alt="DaemonHound" width="64" height="64" class="rounded-xl mb-6"/>
         <p class="text-xs font-semibold tracking-widest uppercase text-muted-foreground mb-2">Vault watchdog</p>
