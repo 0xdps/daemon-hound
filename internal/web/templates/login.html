@@ -9,8 +9,38 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/basecoat-css@1.0.2/dist/css/nova.min.css">
   <script src="https://unpkg.com/lucide@latest" defer></script>
   <style>
-    body { background: #0d0d0f; color: #e2e2e5; font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-    .login-card { background: #111114; border: 1px solid #1e1e24; border-radius: 0.75rem; padding: 2.5rem 2rem; width: 100%; max-width: 22rem; }
+    body { background: #0d0d0f; color: #e2e2e5; font-family: 'Inter', system-ui, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 2rem; }
+    .login-container {
+      display: flex;
+      background: #111114;
+      border: 1px solid #1e1e24;
+      border-radius: 0.75rem;
+      overflow: hidden;
+      width: 100%;
+      max-width: 56rem;
+      min-height: 28rem;
+    }
+    .login-info {
+      flex: 1;
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0f0c 0%, #111114 100%);
+      border-right: 1px solid #1e1e24;
+    }
+    .login-form {
+      flex: 1;
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    @media (max-width: 720px) {
+      .login-container { flex-direction: column; max-width: 28rem; }
+      .login-info { border-right: none; border-bottom: 1px solid #1e1e24; padding: 2rem; }
+      .login-form { padding: 2rem; }
+    }
     .form-input { width: 100%; background: #0d0d0f; border: 1px solid #2e2e38; border-radius: 0.375rem; padding: 0.55rem 0.85rem; font-size: 0.875rem; color: #e2e2e5; outline: none; box-sizing: border-box; transition: border-color 0.15s; }
     .form-input:focus { border-color: #1fcb4f; }
     .form-input::placeholder { color: #4b5563; }
@@ -18,68 +48,92 @@
     .btn-primary { display: flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%; padding: 0.55rem; border-radius: 0.375rem; background: #1fcb4f; color: #000; font-size: 0.875rem; font-weight: 600; border: none; cursor: pointer; transition: background 0.15s; }
     .btn-primary:hover { background: #17a33f; }
     .alert-error { background: #2a0f0f; border: 1px solid #7f1d1d; border-radius: 0.375rem; padding: 0.6rem 0.85rem; color: #fca5a5; font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; }
+    .feature-pill { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.68rem; background: rgba(31,203,79,0.08); color: #1fcb4f; border: 1px solid rgba(31,203,79,0.18); }
   </style>
 </head>
 <body>
-  <div class="login-card">
-    <!-- Brand -->
-    <div style="text-align:center;margin-bottom:2rem;">
-      <img src="/static/logo.png" alt="DaemonHound" style="width:48px;height:48px;border-radius:10px;margin:0 auto 0.75rem;display:block;object-fit:cover;">
-      <h1 style="font-size:1.25rem;font-weight:700;color:#f3f4f6;letter-spacing:-0.01em;">DaemonHound</h1>
-      <p style="font-size:0.8rem;color:#6b7280;margin-top:0.25rem;">Enter your master password to unlock</p>
-    </div>
-
-    {{if .Error}}
-    <div class="alert-error" style="margin-bottom:1.25rem;">
-      <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
-      {{.Error}}
-    </div>
-    {{end}}
-
-    <form method="POST" action="/login">
-      <input type="hidden" name="next" value="{{.Next}}">
-
-      <div style="margin-bottom:1.25rem;">
-        <label class="form-label" for="password">Password</label>
-        <div style="position:relative;">
-          <input
-            id="password"
-            class="form-input"
-            type="password"
-            name="password"
-            autocomplete="current-password"
-            placeholder="Master password"
-            autofocus
-            required
-            style="padding-right:2.5rem;"
-          >
-          <button
-            type="button"
-            onclick="togglePwd()"
-            tabindex="-1"
-            style="position:absolute;right:0.65rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#4b5563;padding:0;display:flex;align-items:center;"
-            aria-label="Toggle password visibility"
-          >
-            <i id="eye-icon" data-lucide="eye" style="width:15px;height:15px;"></i>
-          </button>
-        </div>
+  <div class="login-container">
+    <!-- Info pane -->
+    <div class="login-info">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;">
+        <img src="/static/logo.png" alt="DaemonHound" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+        <h1 style="font-size:1.35rem;font-weight:700;color:#f3f4f6;letter-spacing:-0.01em;margin:0;">DaemonHound</h1>
       </div>
 
-      <button type="submit" class="btn-primary">
-        <i data-lucide="unlock" style="width:15px;height:15px;"></i>
-        Unlock
-      </button>
-    </form>
+      <p style="font-size:1rem;font-weight:500;color:#e2e2e5;line-height:1.5;margin-bottom:0.75rem;">
+        Unlock the guarded workspace.
+      </p>
+      <p style="font-size:0.85rem;color:#9ca3af;line-height:1.6;margin-bottom:2rem;">
+        DaemonHound is a secure operator console: clear pressure signals, deliberate secret handling, and a tight bond between daemon state and encrypted inventory.
+      </p>
 
-    <p style="text-align:center;margin-top:1.5rem;font-size:0.72rem;color:#374151;">
-      Session expires after 12 hours
-    </p>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+        <span class="feature-pill"><i data-lucide="shield" style="width:12px;height:12px;"></i> End-to-end encrypted</span>
+        <span class="feature-pill"><i data-lucide="git-merge" style="width:12px;height:12px;"></i> Smart conflict resolution</span>
+        <span class="feature-pill"><i data-lucide="key-round" style="width:12px;height:12px;"></i> Secret rotation</span>
+        <span class="feature-pill"><i data-lucide="activity" style="width:12px;height:12px;"></i> Live daemon status</span>
+      </div>
+
+      <div style="margin-top:auto;">
+        <p style="font-size:0.7rem;color:#374151;margin-top:1.5rem;">Session expires after 12 hours · All data encrypted at rest</p>
+      </div>
+    </div>
+
+    <!-- Login form pane -->
+    <div class="login-form">
+      <div style="margin-bottom:2rem;">
+        <h2 style="font-size:1rem;font-weight:600;color:#f3f4f6;margin-bottom:0.25rem;">Master password</h2>
+        <p style="font-size:0.78rem;color:#6b7280;">Enter your vault password to unlock</p>
+      </div>
+
+      {{if .Error}}
+      <div class="alert-error" style="margin-bottom:1.25rem;">
+        <i data-lucide="alert-circle" style="width:14px;height:14px;flex-shrink:0;"></i>
+        {{.Error}}
+      </div>
+      {{end}}
+
+      <form method="POST" action="/login">
+        <input type="hidden" name="next" value="{{.Next}}">
+
+        <div style="margin-bottom:1.25rem;">
+          <label class="form-label" for="password">Password</label>
+          <div style="position:relative;">
+            <input
+              id="password"
+              class="form-input"
+              type="password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="Master password"
+              autofocus
+              required
+              style="padding-right:2.5rem;"
+            >
+            <button
+              type="button"
+              onclick="togglePwd()"
+              tabindex="-1"
+              style="position:absolute;right:0.65rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#4b5563;padding:0;display:flex;align-items:center;"
+              aria-label="Toggle password visibility"
+            >
+              <i id="eye-icon" data-lucide="eye" style="width:15px;height:15px;"></i>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <i data-lucide="unlock" style="width:15px;height:15px;"></i>
+          Unlock
+        </button>
+      </form>
+    </div>
   </div>
 
   <script>
     function togglePwd() {
-      const inp = document.getElementById('password');
-      const icon = document.getElementById('eye-icon');
+      var inp = document.getElementById('password');
+      var icon = document.getElementById('eye-icon');
       if (inp.type === 'password') {
         inp.type = 'text';
         icon.setAttribute('data-lucide', 'eye-off');

@@ -1,0 +1,112 @@
+{{define "content"}}
+<div>
+  <h1 class="page-title">
+    <i data-lucide="help-circle" style="width:20px;height:20px;color:#1fcb4f;"></i>
+    Help &amp; Developer Info
+  </h1>
+
+  <!-- Environment -->
+  <div style="margin-bottom:0.6rem;">
+    <span class="section-title">Environment</span>
+  </div>
+  <div class="card" style="margin-bottom:2rem;padding:0;overflow:hidden;">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:160px;">Property</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:#6b7280;font-size:0.78rem;">DaemonHound version</td><td>{{.Version}}</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;">Daemon status</td><td>{{if .DaemonRun}}<span style="color:#1fcb4f;">Running</span>{{else}}<span style="color:#f87171;">Halted</span>{{end}}</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;">Go version</td><td>{{.GoVersion}}</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;">Operating System</td><td>{{.OS}} / {{.Arch}}</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;">Web UI port</td><td>{{.Port}}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CLI Reference -->
+  <div style="margin-bottom:0.6rem;">
+    <span class="section-title">CLI Reference</span>
+  </div>
+  <div class="card" style="margin-bottom:2rem;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div>
+        <h3 style="font-size:0.8rem;font-weight:600;color:#9ca3af;margin-bottom:0.6rem;">Vault Management</h3>
+        <table style="font-size:0.78rem;">
+          <tbody>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;width:130px;white-space:nowrap;"><code style="font-size:0.72rem;">dhd init</code></td><td style="color:#9ca3af;">Initialize a new vault</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd clone</code></td><td style="color:#9ca3af;">Clone an existing vault</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd track</code></td><td style="color:#9ca3af;">Add a file to the vault</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd untrack</code></td><td style="color:#9ca3af;">Remove a file from vault</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd discover</code></td><td style="color:#9ca3af;">Find trackable files</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-size:0.8rem;font-weight:600;color:#9ca3af;margin-bottom:0.6rem;">Secrets &amp; Config</h3>
+        <table style="font-size:0.78rem;">
+          <tbody>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;width:130px;white-space:nowrap;"><code style="font-size:0.72rem;">dhd secret</code></td><td style="color:#9ca3af;">Manage named secrets</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd rekey</code></td><td style="color:#9ca3af;">Rotate vault encryption key</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd export</code></td><td style="color:#9ca3af;">Export secrets to .env file</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd sync</code></td><td style="color:#9ca3af;">Trigger manual sync</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd machines</code></td><td style="color:#9ca3af;">List connected machines</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-size:0.8rem;font-weight:600;color:#9ca3af;margin-bottom:0.6rem;">Daemon &amp; Ops</h3>
+        <table style="font-size:0.78rem;">
+          <tbody>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;width:130px;white-space:nowrap;"><code style="font-size:0.72rem;">dhd daemon</code></td><td style="color:#9ca3af;">Start background daemon</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd status</code></td><td style="color:#9ca3af;">Show vault sync status</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd doctor</code></td><td style="color:#9ca3af;">Diagnose setup issues</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd diff</code></td><td style="color:#9ca3af;">Show local vs vault diff</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd logout</code></td><td style="color:#9ca3af;">Clear session keychain</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 style="font-size:0.8rem;font-weight:600;color:#9ca3af;margin-bottom:0.6rem;">Web UI</h3>
+        <table style="font-size:0.78rem;">
+          <tbody>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;width:130px;white-space:nowrap;"><code style="font-size:0.72rem;">dhd ui</code></td><td style="color:#9ca3af;">Launch web interface</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd ui --port</code></td><td style="color:#9ca3af;">Specify custom port</td></tr>
+            <tr><td style="padding:0.25rem 0.5rem 0.25rem 0;color:#6b7280;white-space:nowrap;"><code style="font-size:0.72rem;">dhd ui --no-browser</code></td><td style="color:#9ca3af;">Skip browser auto-open</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keyboard Shortcuts -->
+  <div style="margin-bottom:0.6rem;">
+    <span class="section-title">Keyboard Shortcuts</span>
+  </div>
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:200px;">Shortcut</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>?</kbd></td><td>Toggle shortcut reference overlay</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>D</kbd></td><td>Navigate to Dashboard</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>C</kbd></td><td>Navigate to Conflicts</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>L</kbd></td><td>Navigate to Live Status</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>F</kbd></td><td>Navigate to Tracked Files</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>S</kbd></td><td>Navigate to Secrets</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>T</kbd></td><td>Navigate to Settings</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>G</kbd> <kbd>H</kbd></td><td>Navigate to Help</td></tr>
+        <tr><td style="color:#6b7280;font-size:0.78rem;"><kbd>Escape</kbd></td><td>Close overlays &amp; dismiss toasts</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{{end}}

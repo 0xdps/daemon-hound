@@ -348,8 +348,10 @@
 
   <!-- Navigation -->
   <nav style="flex:1;overflow-y:auto;padding:0.75rem 0;">
+
+    <!-- Vault section -->
     <div style="padding: 0 0.75rem 0.4rem; margin-bottom: 0.25rem;">
-      <span class="section-title" style="padding-left:0.25rem;">Navigation</span>
+      <span class="section-title" style="padding-left:0.25rem;">Vault</span>
     </div>
 
     <a class="nav-item {{if eq .Active `dashboard`}}active{{end}}"
@@ -376,6 +378,11 @@
       Live Status
     </a>
 
+    <!-- Inventory section -->
+    <div style="padding: 0 0.75rem 0.4rem; margin-bottom: 0.25rem; margin-top: 0.75rem;">
+      <span class="section-title" style="padding-left:0.25rem;">Inventory</span>
+    </div>
+
     <a class="nav-item {{if eq .Active `files`}}active{{end}}"
        hx-get="/files" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
        href="/files">
@@ -390,33 +397,45 @@
       Secrets
     </a>
 
+    <!-- System section -->
+    <div style="padding: 0 0.75rem 0.4rem; margin-bottom: 0.25rem; margin-top: 0.75rem;">
+      <span class="section-title" style="padding-left:0.25rem;">System</span>
+    </div>
+
     <a class="nav-item {{if eq .Active `settings`}}active{{end}}"
        hx-get="/settings" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
        href="/settings">
       <i data-lucide="settings-2" style="width:16px;height:16px;flex-shrink:0;"></i>
       Settings
     </a>
+
+    <a class="nav-item {{if eq .Active `help`}}active{{end}}"
+       hx-get="/help" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true"
+       href="/help">
+      <i data-lucide="help-circle" style="width:16px;height:16px;flex-shrink:0;"></i>
+      Help
+    </a>
   </nav>
 
   <!-- Bottom: daemon status + logout -->
   <div style="border-top:1px solid #1e1e24;padding:0.75rem 1.25rem;">
     {{if .DaemonRunning}}
-      <div class="daemon-pill running" style="margin-bottom:0.75rem;">
+      <div class="daemon-pill running" style="margin-bottom:0.6rem;">
         <span class="dot"></span> Daemon running
       </div>
     {{else}}
-      <div class="daemon-pill halted" style="margin-bottom:0.75rem;">
+      <div class="daemon-pill halted" style="margin-bottom:0.6rem;">
         <span class="dot"></span> Daemon halted
       </div>
     {{end}}
-    <form method="POST" action="/logout" style="margin:0;">
-      <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;">
-        <i data-lucide="log-out" style="width:14px;height:14px;"></i>
-        Logout
-      </button>
-    </form>
-    <div style="margin-top:0.5rem;text-align:right;">
-      <button onclick="toggleKbd()" class="btn btn-ghost btn-sm" style="font-size:0.68rem;color:#4b5563;" title="Keyboard shortcuts (?)">
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <form method="POST" action="/logout" style="margin:0;flex:1;">
+        <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;justify-content:flex-start;">
+          <i data-lucide="log-out" style="width:14px;height:14px;"></i>
+          Logout
+        </button>
+      </form>
+      <button onclick="toggleKbd()" class="btn btn-ghost btn-sm" style="font-size:0.68rem;color:#4b5563;flex-shrink:0;" title="Keyboard shortcuts (?)">
         <kbd>?</kbd>
       </button>
     </div>
@@ -461,6 +480,7 @@
         <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>F</kbd></td><td style="color:#d1d5db;">Go to Tracked Files</td></tr>
         <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>S</kbd></td><td style="color:#d1d5db;">Go to Secrets</td></tr>
         <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>T</kbd></td><td style="color:#d1d5db;">Go to Settings</td></tr>
+        <tr><td style="padding:0.3rem 0;"><kbd>G</kbd> <kbd>H</kbd></td><td style="color:#d1d5db;">Go to Help</td></tr>
       </tbody>
     </table>
   </div>
@@ -542,7 +562,7 @@ function closeConfirm(confirmed) {
 let _kbdPending = null;
 let _kbdTimer   = null;
 
-const KBD_NAV = { d: '/', c: '/conflicts', l: '/status', f: '/files', s: '/secrets', t: '/settings' };
+const KBD_NAV = { d: '/', c: '/conflicts', l: '/status', f: '/files', s: '/secrets', t: '/settings', h: '/help' };
 
 document.addEventListener('keydown', function(e) {
   // Ignore when typing in inputs/textareas
@@ -584,7 +604,7 @@ function syncNav() {
   const path = window.location.pathname;
   const map = {
     '/': 'dashboard', '/conflicts': 'conflicts', '/status': 'status',
-    '/files': 'files', '/secrets': 'secrets', '/settings': 'settings'
+    '/files': 'files', '/secrets': 'secrets', '/settings': 'settings', '/help': 'help'
   };
   // Match longest prefix
   let active = 'dashboard';
@@ -592,8 +612,9 @@ function syncNav() {
     if (prefix !== '/' && path.startsWith(prefix)) { active = name; break; }
     if (prefix === '/' && path === '/') { active = 'dashboard'; break; }
   }
-  document.querySelectorAll('.nav-item').forEach(el => {
-    el.classList.toggle('active', el.getAttribute('hx-get') === (active === 'dashboard' ? '/' : `/${active}`) || (active === 'dashboard' && el.getAttribute('hx-get') === '/'));
+  document.querySelectorAll('.nav-item').forEach(function(el) {
+    var activePath = active === 'dashboard' ? '/' : '/' + active;
+    el.classList.toggle('active', el.getAttribute('hx-get') === activePath);
   });
 }
 

@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -120,6 +121,9 @@ func (s *Server) registerRoutes() {
 	// Settings
 	mux.HandleFunc("GET /settings", s.requireAuth(s.handleSettings))
 	mux.HandleFunc("POST /settings/untrack", s.requireAuth(s.handleUntrack))
+
+	// Help
+	mux.HandleFunc("GET /help", s.requireAuth(s.handleHelp))
 
 	s.mux = mux
 }
@@ -341,6 +345,9 @@ var templateFuncs = template.FuncMap{
 	},
 	"lines": func(s string) []string {
 		return strings.Split(s, "\n")
+	},
+	"urlquery": func(s string) string {
+		return url.QueryEscape(s)
 	},
 }
 
