@@ -1,0 +1,32 @@
+internal/web/templates/layout.html
+  s_c6341a6098b8a3::t_72ee47e6e1499f 787
+  s_c6341a6098b8a3::t_753c5e82fbb379 926-928
+  s_c6341a6098b8a3::t_5c5072d92ff513 780
+  s_c6341a6098b8a3::t_0e15a534852cae 1498-1559
+  s_c6341a6098b8a3::t_782c0b52fb9807 1016-1497,1560-1608
+  s_c6341a6098b8a3::t_6080a37bc19a38 842-843
+  s_c6341a6098b8a3::t_a0d1c9602a0afa 1614-1621
+  s_c6341a6098b8a3::t_cd932d3dad5941 1798-1820,1823-1831
+  s_c6341a6098b8a3::t_d948abe4926f85 859-860,862-863
+  s_c6341a6098b8a3::t_cc1c9fa2fe6dd1 814
+  s_c6341a6098b8a3::t_70386e2fb78120 147-149
+  s_c6341a6098b8a3::t_b9425ee49adf53 799
+  s_c6341a6098b8a3::t_75b056353081f7 856,858,861,864
+  s_c6341a6098b8a3::t_fffb4ea55bc478 1832
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "001ef5fdd26136b27d3e06294314f17f68dd0e64",
+  "prompts": {},
+  "sessions": {
+    "s_c6341a6098b8a3": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "5e723d30-7083-497d-82e1-5b5f8cf114c5",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
