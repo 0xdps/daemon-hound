@@ -1,0 +1,14 @@
+internal/web/templates/layout.html
+  h_95aea6b4aa8772 561,563-564
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "8d548f79039d69330c128add1c72eb930819006e",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
