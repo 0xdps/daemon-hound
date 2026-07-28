@@ -2,6 +2,29 @@
 
 DaemonHound ships as a single `dhd` binary plus optional package-manager artifacts from GitHub Releases.
 
+## Verifying Release Signatures
+
+All release artifacts are signed with the DaemonHound GPG key. Verify your download before installing:
+
+```bash
+# One-time: import the release signing key
+curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/daemon-hound-release.asc | gpg --import
+
+# Or fetch from keyserver
+gpg --keyserver keyserver.ubuntu.com --recv-keys BD008457A5BB88215C87FB8F1C32F11ADB0D7EF8
+
+# Verify the checksums file
+gpg --verify checksums.txt.asc checksums.txt
+
+# Then verify your downloaded binary
+sha256sum -c checksums.txt --ignore-missing
+```
+
+The release signing key fingerprint is:
+```
+BD00 8457 A5BB 8821 5C87  FB8F 1C32 F11A DB0D 7EF8
+```
+
 ## Linux
 
 ### Install Script

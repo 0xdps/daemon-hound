@@ -131,7 +131,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_PAT: ${{ secrets.GH_PAT }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+ 
       - name: Install APT repo dependencies
         run: |
           sudo apt-get update
