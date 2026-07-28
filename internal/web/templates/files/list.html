@@ -5,12 +5,12 @@
     Tracked Files
   </h1>
 
-  <div style="display:flex;gap:1rem;align-items:flex-start;">
+  <div class="split-layout">
     <!-- Left pane: file list -->
-    <div id="files-list-pane" style="flex:1;min-width:0;max-width:420px;">
+    <div class="split-left" id="files-list-pane">
       <!-- Search + stats bar -->
-      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
-        <div class="search-wrap" style="flex:1;">
+      <div class="search-bar fixed-search">
+        <div class="search-wrap">
           <i data-lucide="search" style="width:14px;height:14px;"></i>
           <input
             class="form-input"
@@ -25,10 +25,11 @@
             autocomplete="off"
           >
         </div>
-        <span style="font-size:0.72rem;color:#6b7280;white-space:nowrap;">{{.Filtered}}/{{.Total}}</span>
+        <span class="search-stats">{{.Filtered}}/{{.Total}}</span>
       </div>
 
-      {{if .Namespaces}}
+      <div class="scrollable-list">
+        {{if .Namespaces}}
         {{range .Namespaces}}
         <div style="margin-bottom:1.25rem;">
           <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.4rem;cursor:pointer;" onclick="toggleNamespace({{printf "%q" .Name}})">
@@ -68,14 +69,16 @@
         </div>
       </div>
       {{end}}
+      </div>
     </div>
 
     <!-- Right pane: file preview -->
-    <div id="files-view-pane" style="flex:1;min-width:0;">
-      <div class="card">
-        <div class="empty-state" style="padding:3rem 1rem;">
-          <i data-lucide="file-search" style="width:36px;height:36px;color:#374151;margin:0 auto 0.75rem;display:block;"></i>
-          <div style="font-size:0.875rem;color:#6b7280;">Select a file to preview</div>
+    <div class="split-right" id="files-view-pane">
+      <div class="card" style="height:100%;display:flex;flex-direction:column;">
+        <div class="empty-state">
+          <i data-lucide="file-search" style="color:#374151;"></i>
+          <div class="empty-title">Select a file to preview</div>
+          <div class="empty-subtitle">Choose any tracked file to view its decrypted contents</div>
         </div>
       </div>
     </div>

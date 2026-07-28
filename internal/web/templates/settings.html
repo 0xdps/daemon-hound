@@ -5,20 +5,20 @@
     Settings
   </h1>
 
-  <div style="margin-bottom:0.6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;">
-    <span class="section-title">
-      Tracked Files
-      {{if .Files}}<span class="badge badge-neutral" style="margin-left:0.4rem;">{{len .Files}}</span>{{end}}
-    </span>
+  <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;">
     <div style="display:flex;align-items:center;gap:0.5rem;">
-      <div style="position:relative;">
-        <i data-lucide="search" style="position:absolute;left:0.5rem;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#6b7280;pointer-events:none;"></i>
+      <span class="section-title" style="margin-bottom:0;">Tracked Files</span>
+      {{if .Files}}<span class="badge badge-neutral">{{len .Files}}</span>{{end}}
+    </div>
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <div class="search-wrap" style="width:240px;">
+        <i data-lucide="search" style="width:14px;height:14px;"></i>
         <input
           type="text"
           id="settings-search"
+          class="search-input"
           placeholder="Search files..."
           oninput="filterSettingsTable(this.value)"
-          style="padding:0.35rem 0.6rem 0.35rem 1.7rem;font-size:0.78rem;background:#0a0a0c;border:1px solid #1e1e24;border-radius:0.375rem;color:#d1d5db;width:220px;"
         >
       </div>
       <button
@@ -38,14 +38,36 @@
     <table>
       <thead>
         <tr>
-          <th style="width:32px;">
+          <th class="table-col-checkbox">
             <input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" style="cursor:pointer;">
           </th>
-          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(1)">Namespace <span class="sort-arrow" data-col="1"></span></th>
-          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(2)">Path <span class="sort-arrow" data-col="2"></span></th>
-          <th style="width:90px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(3)">Mode <span class="sort-arrow" data-col="3"></span></th>
-          <th style="width:170px;cursor:pointer;user-select:none;" onclick="sortSettingsTable(4)">Last Sync <span class="sort-arrow" data-col="4"><i data-lucide="arrow-down" style="width:10px;height:10px;display:inline-block;vertical-align:middle;"></i></span></th>
-          <th style="width:100px;"></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(1)">
+            <span style="display:flex;align-items:center;gap:0.25rem;">
+              Namespace 
+              <span class="sort-arrow" data-col="1"></span>
+            </span>
+          </th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(2)">
+            <span style="display:flex;align-items:center;gap:0.25rem;">
+              Path 
+              <span class="sort-arrow" data-col="2"></span>
+            </span>
+          </th>
+          <th class="table-col-mode" style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(3)">
+            <span style="display:flex;align-items:center;gap:0.25rem;">
+              Mode 
+              <span class="sort-arrow" data-col="3"></span>
+            </span>
+          </th>
+          <th class="table-col-time" style="cursor:pointer;user-select:none;" onclick="sortSettingsTable(4)">
+            <span style="display:flex;align-items:center;gap:0.25rem;">
+              Last Sync 
+              <span class="sort-arrow" data-col="4">
+                <i data-lucide="arrow-down" style="width:10px;height:10px;display:inline-block;vertical-align:middle;"></i>
+              </span>
+            </span>
+          </th>
+          <th class="table-col-action"></th>
         </tr>
       </thead>
       <tbody>

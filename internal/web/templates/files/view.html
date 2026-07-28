@@ -50,7 +50,7 @@
         </button>
       </div>
     </div>
-    <pre id="file-content"><code class="language-{{detectLang .File.RelPath}}">{{.Content}}</code></pre>
+    <pre id="file-content" style="max-height:calc(100vh - 320px);overflow-y:auto;"><code class="language-{{detectLang .File.RelPath}}">{{.Content}}</code></pre>
   </div>
   {{end}}
 </div>
