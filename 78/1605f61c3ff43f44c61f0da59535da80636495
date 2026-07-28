@@ -1,0 +1,26 @@
+INSTALL.md
+  h_95aea6b4aa8772 35,43,136
+install.sh
+  h_95aea6b4aa8772 3
+docs/README.md
+  h_95aea6b4aa8772 143
+website/src/pages/index.astro
+  h_95aea6b4aa8772 33-34
+website/src/pages/docs/getting-started/index.astro
+  h_95aea6b4aa8772 53
+RELEASE.md
+  h_95aea6b4aa8772 135,138,191,202
+README.md
+  h_95aea6b4aa8772 41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "781605f61c3ff43f44c61f0da59535da80636495",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
