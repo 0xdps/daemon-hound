@@ -1,0 +1,41 @@
+website/src/pages/docs/philosophy.astro
+  s_c43f01914c34d8::t_eee07081495e42 1-145
+website/src/pages/docs/getting-started/quickstart.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 16
+website/src/pages/docs/concepts.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 16
+website/src/pages/docs/commands.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 15
+website/src/pages/docs/getting-started/index.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 26-28
+website/src/pages/docs/merge.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 15
+  s_c43f01914c34d8::t_78773a222cb56e 24
+website/src/pages/docs/daemon.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 16
+website/src/pages/docs/secrets.astro
+  s_c43f01914c34d8::t_9fea28c4980d93 15
+website/src/layouts/BaseLayout.astro
+  h_95aea6b4aa8772 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "e5e4988cd8dfe6cac04c7d181efa338bb01cad7f",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c43f01914c34d8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "90c523e5-29bf-4ed6-a23a-f93ac6ddcb48",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
