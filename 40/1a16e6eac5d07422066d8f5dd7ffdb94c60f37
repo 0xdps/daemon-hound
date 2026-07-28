@@ -1,0 +1,21 @@
+scripts/update-apt-repo.sh
+  s_47784beab1fb8a::t_ee2b81768a39ec 229,234,238
+.github/workflows/release.yml
+  s_47784beab1fb8a::t_49a51baac47fbd 145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "401a16e6eac5d07422066d8f5dd7ffdb94c60f37",
+  "prompts": {},
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
