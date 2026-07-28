@@ -73,8 +73,8 @@ func GetDaemonPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get executable path: %w", err)
 	}
-	// If running from inside an app bundle, resolve to the real binary so
-	// ensureAppBundle can compare and refresh it when the source changes.
+	// If running from inside an app bundle, resolve to the real binary for
+	// proper path resolution and comparison when checking for updates.
 	if strings.Contains(exe, ".app/Contents/MacOS/") {
 		if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 			return resolved, nil

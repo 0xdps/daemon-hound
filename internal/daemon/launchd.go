@@ -18,14 +18,9 @@ package daemon
 import (
 	"bytes"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"text/template"
 )
@@ -69,15 +64,20 @@ func (l *LaunchdManager) Install() error {
 		return err
 	}
 
-	// Prefer the signed app bundle (from GitHub Releases DMG) over the raw
-	// binary. When installed via install.sh, the DMG is downloaded and the
+	// Check for the signed app bundle (from GitHub Releases DMG) first.
+	// When installed via install.sh, the DMG is downloaded and the
 	// app bundle extracted to ~/Applications/DaemonHound.app. This bundle
 	// is Developer ID-signed and notarized by CI, so macOS shows "Verified
 	// Developer" in System Settings with no TCC prompts for background use.
 	//
-	// The raw binary is a fallback for dev builds and non-macOS platforms.
+	// If the signed bundle doesn't exist, use the raw binary directly.
+	// This avoids creating locally-generated unsigned app bundles that
+	// trigger "Unverified Developer" warnings and TCC privacy prompts.
 	if bundlePath := GetAppBundlePath(); bundlePath != "" {
 		exePath = bundlePath
+		fmt.Printf("Using signed app bundle: %s\n", bundlePath)
+	} else {
+		fmt.Printf("Using raw binary (no signed app bundle found): %s\n", exePath)
 	}
 
 	// Create the plist content
@@ -98,7 +98,7 @@ func (l *LaunchdManager) Install() error {
 		return fmt.Errorf("failed to bootstrap plist with launchctl: %w", err)
 	}
 
-	// Force a fresh start so the daemon uses the just-written app bundle.
+	// Force a fresh start to ensure the daemon uses the correct executable.
 	_ = launchctlRun("kickstart", "-k", userLaunchService(launchdLabel))
 
 	return nil
@@ -181,6 +181,36 @@ func (l *LaunchdManager) generatePlist(exePath string) (string, error) {
 	
 	<key>StandardErrorPath</key>
 	<string>{{.ErrLogPath}}</string>
+	
+	<key>ThrottleInterval</key>
+	<integer>10</integer>
+	
+	<key>EnableTransactions</key>
+	<true/>
+	
+	<key>ProcessName</key>
+	<string>daemon-hound</string>
+	
+	<key>MachServices</key>
+	<dict>
+		<key>` + launchdLabel + `</key>
+		<true/>
+	</dict>
+	
+	<key>CFBundleDisplayName</key>
+	<string>DaemonHound</string>
+	
+	<key>CFBundleName</key>
+	<string>DaemonHound</string>
+	
+	<key>CFBundleIdentifier</key>
+	<string>` + launchdLabel + `</string>
+	
+	<key>Description</key>
+	<string>DaemonHound background sync service</string>
+	
+	<key>NSHumanReadableCopyright</key>
+	<string>DaemonHound Contributors</string>
 </dict>
 </plist>`
 
@@ -280,354 +310,11 @@ func launchctlRun(args ...string) error {
 	return nil
 }
 
-// ensureAppBundle creates a minimal macOS app bundle at
-// ~/Applications/DaemonHound.app if it does not already exist, or refreshes
-// the binary inside it if the source has changed.
-// It COPIES (not symlinks) the real dhd binary into the bundle so that
-// macOS TCC associates permissions with the bundle identifier
-// ("Daemon Hound" in Activity Monitor) instead of the raw binary.
-// Returns the path to the bundle's executable (MacOS/dhd).
-func ensureAppBundle(exePath string) (string, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
+// ExplainInstallationMethod returns a user-friendly explanation of how
+// the daemon was installed (signed app bundle vs raw binary).
+func ExplainInstallationMethod() string {
+	if GetAppBundlePath() != "" {
+		return "Using signed app bundle from GitHub releases (no security warnings)"
 	}
-
-	appDir := filepath.Join(home, "Applications", "DaemonHound.app")
-	contentsDir := filepath.Join(appDir, "Contents")
-	macOSDir := filepath.Join(contentsDir, "MacOS")
-	resourcesDir := filepath.Join(contentsDir, "Resources")
-	bundleExe := filepath.Join(macOSDir, "dhd")
-	plistPath := filepath.Join(contentsDir, "Info.plist")
-	iconPath := filepath.Join(resourcesDir, "AppIcon.icns")
-
-	// Compare source and destination to decide if a refresh is needed.
-	srcInfo, srcErr := os.Stat(exePath)
-	if srcErr != nil {
-		return "", fmt.Errorf("source binary not accessible: %w", srcErr)
-	}
-	dstInfo, dstErr := os.Stat(bundleExe)
-
-	needsRefresh := true
-	if dstErr == nil && !dstInfo.IsDir() {
-		if dstInfo.Size() == srcInfo.Size() && dstInfo.ModTime().Equal(srcInfo.ModTime()) {
-			if _, err := os.Stat(plistPath); err == nil {
-				if _, err := os.Stat(iconPath); err == nil {
-					needsRefresh = false
-				}
-			}
-		}
-	}
-
-	if !needsRefresh {
-		return bundleExe, nil
-	}
-
-	// Create bundle directories.
-	if err := os.MkdirAll(macOSDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create MacOS dir: %w", err)
-	}
-	if err := os.MkdirAll(resourcesDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create Resources dir: %w", err)
-	}
-
-	// Remove previous binary (symlink or copy) and write a fresh copy.
-	// A copy (not a symlink) is required so macOS TCC treats the process
-	// as running from within the app bundle.
-	_ = os.Remove(bundleExe)
-
-	srcFile, err := os.Open(exePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to open source binary: %w", err)
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.OpenFile(bundleExe, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return "", fmt.Errorf("failed to create bundle binary: %w", err)
-	}
-	defer dstFile.Close()
-
-	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		_ = os.Remove(bundleExe)
-		return "", fmt.Errorf("failed to copy binary into bundle: %w", err)
-	}
-
-	// Preserve the same modification time so future comparisons work.
-	_ = os.Chtimes(bundleExe, srcInfo.ModTime(), srcInfo.ModTime())
-
-	// Write Info.plist.
-	infoPlist := `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleExecutable</key>
-    <string>dhd</string>
-    <key>CFBundleIdentifier</key>
-	<string>` + appBundleID + `</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-	<string>` + appBundleName + `</string>
-    <key>CFBundleDisplayName</key>
-	<string>` + appBundleName + `</string>
-    <key>CFBundleIconFile</key>
-    <string>AppIcon</string>
-    <key>CFBundlePackageType</key>
-    <string>APPL</string>
-    <key>CFBundleShortVersionString</key>
-    <string>1.1.0</string>
-    <key>CFBundleVersion</key>
-    <string>1.1.0</string>
-    <key>LSBackgroundOnly</key>
-    <true/>
-    <key>LSMinimumSystemVersion</key>
-    <string>10.15</string>
-    <key>LSUIElement</key>
-    <true/>
-    <key>NSHighResolutionCapable</key>
-    <true/>
-    <key>NSRequiresAquaSystemAppearance</key>
-    <false/>
-</dict>
-</plist>
-`
-	if err := os.WriteFile(plistPath, []byte(infoPlist), 0644); err != nil {
-		return "", fmt.Errorf("failed to write Info.plist: %w", err)
-	}
-
-	if err := ensureBundleIcon(resourcesDir); err != nil {
-		return "", fmt.Errorf("failed to create app icon: %w", err)
-	}
-
-	if err := signAppBundleIfConfigured(appDir); err != nil {
-		return "", err
-	}
-
-	// Register the app bundle with Launch Services so macOS System Settings
-	// and Activity Monitor show "Daemon Hound" with the proper name. Without
-	// this, the launchd agent appears as a generic process with no metadata.
-	lsregister := "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"
-	if _, statErr := os.Stat(lsregister); statErr == nil {
-		// -f forces re-registration even if already registered.
-		_ = exec.Command(lsregister, "-f", appDir).Run()
-	}
-
-	return bundleExe, nil
-}
-
-func ensureBundleIcon(resourcesDir string) error {
-	iconPath := filepath.Join(resourcesDir, "AppIcon.icns")
-	if err := copyBundleIcon(iconPath); err == nil {
-		return nil
-	}
-
-	logoPath, err := findLogoPNG()
-	if err != nil {
-		return writeFallbackICNS(iconPath)
-	}
-
-	return generateICNSFromPNG(logoPath, iconPath)
-}
-
-func copyBundleIcon(iconPath string) error {
-	for _, candidate := range iconCandidates() {
-		if candidate == "" {
-			continue
-		}
-		if err := copyFile(candidate, iconPath, 0644); err == nil {
-			return nil
-		}
-	}
-	return fmt.Errorf("no existing AppIcon.icns asset found")
-}
-
-func iconCandidates() []string {
-	var candidates []string
-	if explicit := strings.TrimSpace(os.Getenv("DHD_APP_ICON_PATH")); explicit != "" {
-		candidates = append(candidates, explicit)
-	}
-
-	if exe, err := os.Executable(); err == nil {
-		exe = resolveExecutablePath(exe)
-		binDir := filepath.Dir(exe)
-		prefixDir := filepath.Dir(binDir)
-		candidates = append(candidates,
-			filepath.Join(prefixDir, "share", "daemon-hound", "AppIcon.icns"),
-			filepath.Join(prefixDir, "share", "daemon-hound", "resources", "AppIcon.icns"),
-			filepath.Join(prefixDir, "share", "daemon-hound", "build", "AppIcon.icns"),
-			filepath.Join(binDir, "AppIcon.icns"),
-		)
-	}
-
-	if _, file, _, ok := runtime.Caller(0); ok {
-		repoRoot := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
-		candidates = append(candidates,
-			filepath.Join(repoRoot, "build", "AppIcon.icns"),
-		)
-	}
-
-	return candidates
-}
-
-func findLogoPNG() (string, error) {
-	var candidates []string
-	if explicit := strings.TrimSpace(os.Getenv("DHD_APP_LOGO_PATH")); explicit != "" {
-		candidates = append(candidates, explicit)
-	}
-
-	if exe, err := os.Executable(); err == nil {
-		exe = resolveExecutablePath(exe)
-		binDir := filepath.Dir(exe)
-		prefixDir := filepath.Dir(binDir)
-		candidates = append(candidates,
-			filepath.Join(prefixDir, "share", "daemon-hound", "logo-trans.png"),
-			filepath.Join(prefixDir, "share", "daemon-hound", "images", "logo-trans.png"),
-			filepath.Join(binDir, "logo-trans.png"),
-		)
-	}
-
-	if _, file, _, ok := runtime.Caller(0); ok {
-		repoRoot := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
-		candidates = append(candidates,
-			filepath.Join(repoRoot, "images", "logo-trans.png"),
-		)
-	}
-
-	for _, candidate := range candidates {
-		if candidate == "" {
-			continue
-		}
-		if info, err := os.Stat(candidate); err == nil && !info.IsDir() {
-			return candidate, nil
-		}
-	}
-
-	return "", fmt.Errorf("no logo PNG asset found")
-}
-
-func resolveExecutablePath(exe string) string {
-	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
-		return resolved
-	}
-	return exe
-}
-
-func generateICNSFromPNG(srcPNG, dstICNS string) error {
-	iconutilPath, err := exec.LookPath("iconutil")
-	if err != nil {
-		return fmt.Errorf("iconutil unavailable: %w", err)
-	}
-	sipsPath, err := exec.LookPath("sips")
-	if err != nil {
-		return fmt.Errorf("sips unavailable: %w", err)
-	}
-
-	iconsetDir, err := os.MkdirTemp("", "dhd-iconset-*.iconset")
-	if err != nil {
-		return fmt.Errorf("failed to create temp iconset dir: %w", err)
-	}
-	defer os.RemoveAll(iconsetDir)
-
-	sizes := []struct {
-		name string
-		size int
-	}{
-		{name: "icon_16x16.png", size: 16},
-		{name: "icon_16x16@2x.png", size: 32},
-		{name: "icon_32x32.png", size: 32},
-		{name: "icon_32x32@2x.png", size: 64},
-		{name: "icon_128x128.png", size: 128},
-		{name: "icon_128x128@2x.png", size: 256},
-		{name: "icon_256x256.png", size: 256},
-		{name: "icon_256x256@2x.png", size: 512},
-		{name: "icon_512x512.png", size: 512},
-		{name: "icon_512x512@2x.png", size: 1024},
-	}
-
-	for _, item := range sizes {
-		target := filepath.Join(iconsetDir, item.name)
-		cmd := exec.Command(sipsPath, "-z", fmt.Sprintf("%d", item.size), fmt.Sprintf("%d", item.size), srcPNG, "--out", target)
-		if output, err := cmd.CombinedOutput(); err != nil {
-			return fmt.Errorf("failed to generate %s: %s", item.name, strings.TrimSpace(string(output)))
-		}
-	}
-
-	cmd := exec.Command(iconutilPath, "-c", "icns", iconsetDir, "-o", dstICNS)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to build AppIcon.icns: %s", strings.TrimSpace(string(output)))
-	}
-
-	return nil
-}
-
-func writeFallbackICNS(dstICNS string) error {
-	tempPNG, err := os.CreateTemp("", "dhd-fallback-*.png")
-	if err != nil {
-		return fmt.Errorf("failed to create fallback icon temp file: %w", err)
-	}
-	tempPath := tempPNG.Name()
-	defer os.Remove(tempPath)
-
-	img := image.NewRGBA(image.Rect(0, 0, 1024, 1024))
-	bg := color.RGBA{R: 24, G: 85, B: 180, A: 255}
-	inner := color.RGBA{R: 255, G: 184, B: 76, A: 255}
-	for y := 0; y < 1024; y++ {
-		for x := 0; x < 1024; x++ {
-			img.Set(x, y, bg)
-		}
-	}
-	for y := 180; y < 844; y++ {
-		for x := 180; x < 844; x++ {
-			if x < 300 || x > 724 || y < 300 || y > 724 {
-				img.Set(x, y, inner)
-			}
-		}
-	}
-	if err := png.Encode(tempPNG, img); err != nil {
-		tempPNG.Close()
-		return fmt.Errorf("failed to encode fallback icon: %w", err)
-	}
-	if err := tempPNG.Close(); err != nil {
-		return fmt.Errorf("failed to finalize fallback icon: %w", err)
-	}
-
-	return generateICNSFromPNG(tempPath, dstICNS)
-}
-
-func copyFile(srcPath, dstPath string, mode os.FileMode) error {
-	srcFile, err := os.Open(srcPath)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
-	if err != nil {
-		return err
-	}
-	defer dstFile.Close()
-
-	if _, err := io.Copy(dstFile, srcFile); err != nil {
-		_ = os.Remove(dstPath)
-		return err
-	}
-
-	return nil
-}
-
-func signAppBundleIfConfigured(appDir string) error {
-	identity := strings.TrimSpace(os.Getenv("APPLE_DEVELOPER_IDENTITY"))
-	if identity == "" {
-		return nil
-	}
-
-	cmd := exec.Command("codesign", "--force", "--deep", "--options", "runtime", "--sign", identity, appDir)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("failed to sign app bundle: %s", strings.TrimSpace(string(output)))
-	}
-
-	return nil
+	return "Using raw binary (no unsigned app bundle created to avoid security warnings)"
 }
