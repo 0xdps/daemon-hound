@@ -18,6 +18,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/daemon"
@@ -27,7 +28,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var cleanupForce bool
+var (
+	cleanupForce     bool
+	cleanupKeepVault bool
+)
 
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
@@ -36,7 +40,7 @@ var cleanupCmd = &cobra.Command{
 
 This command:
   1. Stops and uninstalls the background sync daemon
-  2. Removes the master password from the OS keychain (logout)
+  2. Removes the master password from the OS keychain
   3. Removes all local data under ~/.dh
      • vault/        — local vault clone
      • config.toml   — machine configuration
@@ -44,9 +48,16 @@ This command:
      • daemon logs   — daemon.log, daemon.error.log
      • sync.lock     — process lock file
      • audit.log     — audit log
+  4. Removes OS-specific artifacts
+     • macOS: launchd plist, app bundle
+     • Linux: systemd user service
+     • Windows: Task Scheduler task
+
+Use --keep-vault to preserve the local vault clone (useful if you
+want to re-init without re-cloning).
 
 This does NOT affect your remote vault repository. Your tracked files
-and secrets remain safe in the remote git repository.
+and secrets remain safe there.
 
 To re-initialize on this machine later, run:
   dhd init --remote <your-vault-url>`,
@@ -55,11 +66,13 @@ To re-initialize on this machine later, run:
 
 func init() {
 	cleanupCmd.Flags().BoolVar(&cleanupForce, "force", false, "Skip confirmation prompt")
+	cleanupCmd.Flags().BoolVar(&cleanupKeepVault, "keep-vault", false, "Preserve the local vault clone (~/.dh/vault/)")
 	rootCmd.AddCommand(cleanupCmd)
 }
 
 func runCleanup(cmd *cobra.Command, args []string) error {
 	appDir := config.AppDir()
+	vaultPath := config.VaultPath()
 
 	appDirExists := true
 	if _, err := os.Stat(appDir); os.IsNotExist(err) {
@@ -76,7 +89,10 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 		fmt.Printf("This will completely remove DaemonHound from this machine:\n")
 		fmt.Printf("  • Stop and uninstall the background sync daemon\n")
 		fmt.Printf("  • Remove the master password from keychain\n")
-		fmt.Printf("  • Delete all local data under %s\n\n", appDir)
+		if cleanupKeepVault {
+			fmt.Printf("  • Keep the local vault clone (%s)\n", vaultPath)
+		}
+		fmt.Printf("  • Delete all other local data under %s\n\n", appDir)
 		fmt.Println("Your remote vault repository will NOT be affected.")
 		confirm, err := utils.PromptInput("Are you sure? (yes/no): ")
 		if err != nil {
@@ -100,13 +116,14 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 		fmt.Println(output.Dim("  Daemon not installed, skipping"))
 	}
 
+	// Step 2: Remove OS-specific artifacts
 	if err := daemon.RemoveAppBundle(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to remove app bundle: %v\n", err)
 	} else {
-		fmt.Println(output.Green("✓") + " Removed macOS app bundle")
+		fmt.Println(output.Dim("  macOS app bundle removed (if present)"))
 	}
 
-	// Step 2: Remove master password from keychain (logout)
+	// Step 3: Remove master password from keychain
 	if keychain.IsSet() {
 		if err := keychain.Delete(); err != nil {
 			fmt.Fprintf(os.Stderr, "Warning: failed to remove keychain entry: %v\n", err)
@@ -117,16 +134,39 @@ func runCleanup(cmd *cobra.Command, args []string) error {
 		fmt.Println(output.Dim("  No keychain entry, skipping"))
 	}
 
-	// Step 3: Remove all local data
+	// Step 4: Remove local data
 	if appDirExists {
-		if err := os.RemoveAll(appDir); err != nil {
-			return fmt.Errorf("failed to remove %s: %w", appDir, err)
+		if cleanupKeepVault {
+			// Remove everything except the vault directory
+			entries, err := os.ReadDir(appDir)
+			if err != nil {
+				return fmt.Errorf("failed to read %s: %w", appDir, err)
+			}
+			for _, entry := range entries {
+				if entry.Name() == "vault" {
+					continue
+				}
+				path := filepath.Join(appDir, entry.Name())
+				if err := os.RemoveAll(path); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: failed to remove %s: %v\n", path, err)
+				}
+			}
+			fmt.Printf("%s Removed local data (vault preserved at %s)\n", output.Green("✓"), vaultPath)
+		} else {
+			if err := os.RemoveAll(appDir); err != nil {
+				return fmt.Errorf("failed to remove %s: %w", appDir, err)
+			}
+			fmt.Printf("%s Removed local data (%s)\n", output.Green("✓"), appDir)
 		}
-		fmt.Printf("%s Removed local data (%s)\n", output.Green("✓"), appDir)
 	}
 
 	fmt.Println("\n" + output.Bold("DaemonHound has been completely removed from this machine."))
 	fmt.Println(output.Dim("Your remote vault repository remains intact."))
-	fmt.Printf("\nTo re-initialize, run: %s\n", output.Cyan("dhd init --remote <your-vault-url>"))
+	if cleanupKeepVault {
+		fmt.Printf("\nThe vault clone was preserved at: %s\n", output.Cyan(vaultPath))
+		fmt.Printf("To re-initialize with this vault, run: %s\n", output.Cyan("dhd init --force"))
+	} else {
+		fmt.Printf("\nTo re-initialize, run: %s\n", output.Cyan("dhd init --remote <your-vault-url>"))
+	}
 	return nil
 }
