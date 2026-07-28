@@ -226,16 +226,16 @@ if [ -n "$GPG_KEY" ]; then
     echo "  Signing individual .deb packages..."
     for deb_path in "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}/"*.deb; do
         [ -f "$deb_path" ] || continue
-        gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
+        gpg --batch --yes --no-tty --pinentry-mode loopback --passphrase "${APT_GPG_PASSPHRASE:-}" --armor \
             --detach-sign --output "${deb_path}.sig" "$deb_path"
     done
 
     # Sign the Release file (detached signature)
-    gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
+    gpg --batch --yes --no-tty --pinentry-mode loopback --passphrase "${APT_GPG_PASSPHRASE:-}" --armor \
         --detach-sign --output "${RELEASE_FILE}.gpg" "$RELEASE_FILE"
 
     # Generate InRelease (clearsigned inline — what modern APT checks first)
-    gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
+    gpg --batch --yes --no-tty --pinentry-mode loopback --passphrase "${APT_GPG_PASSPHRASE:-}" --armor \
         --clearsign --output "${OUT_DIR}/${APT_DIR}/dists/${DIST}/InRelease" "$RELEASE_FILE"
 
     echo "  Signed by GPG key: ${GPG_KEY_ID}"
