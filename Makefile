@@ -42,13 +42,13 @@ launch-daemon: install-macos
 build-macos-icon:
 	@mkdir -p build/AppIcon.iconset
 	@if [ ! -f build/AppIcon.icns ]; then \
-		magick images/logo.png -resize 16x16 build/AppIcon.iconset/icon_16x16.png; \
-		magick images/logo.png -resize 32x32 build/AppIcon.iconset/icon_32x32.png; \
-		magick images/logo.png -resize 64x64 build/AppIcon.iconset/icon_64x64.png; \
-		magick images/logo.png -resize 128x128 build/AppIcon.iconset/icon_128x128.png; \
-		magick images/logo.png -resize 256x256 build/AppIcon.iconset/icon_256x256.png; \
-		magick images/logo.png -resize 512x512 build/AppIcon.iconset/icon_512x512.png; \
-		magick images/logo.png -resize 1024x1024 build/AppIcon.iconset/icon_1024x1024.png; \
+		magick images/logo-trans.png -resize 16x16 build/AppIcon.iconset/icon_16x16.png; \
+		magick images/logo-trans.png -resize 32x32 build/AppIcon.iconset/icon_32x32.png; \
+		magick images/logo-trans.png -resize 64x64 build/AppIcon.iconset/icon_64x64.png; \
+		magick images/logo-trans.png -resize 128x128 build/AppIcon.iconset/icon_128x128.png; \
+		magick images/logo-trans.png -resize 256x256 build/AppIcon.iconset/icon_256x256.png; \
+		magick images/logo-trans.png -resize 512x512 build/AppIcon.iconset/icon_512x512.png; \
+		magick images/logo-trans.png -resize 1024x1024 build/AppIcon.iconset/icon_1024x1024.png; \
 		iconutil -c icns build/AppIcon.iconset -o build/AppIcon.icns; \
 		echo "✓ App icon generated"; \
 	fi

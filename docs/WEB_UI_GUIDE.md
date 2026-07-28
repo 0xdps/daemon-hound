@@ -87,7 +87,7 @@ internal/web/
 ├── handler_status.go      # Status page and SSE log streaming
 ├── util.go                # File read helper
 ├── static/
-│   └── logo.png           # Brand logo / favicon
+│   └── logo-trans.png           # Brand logo / favicon
 └── templates/
     ├── layout.html        # Base layout (sidebar, nav, CSS, JS)
     ├── login.html         # Standalone login page

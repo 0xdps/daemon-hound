@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.png" alt="DaemonHound" width="160" />
+  <img src="images/logo-trans.png" alt="DaemonHound" width="160" />
 </p>
 
 <h1 align="center">DaemonHound</h1>

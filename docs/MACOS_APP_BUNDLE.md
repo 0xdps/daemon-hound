@@ -63,7 +63,7 @@ The `build/Info.plist` includes:
 
 ## App Icon
 
-The icon is automatically generated from `images/logo.png` and includes:
+The icon is automatically generated from `images/logo-trans.png` and includes:
 - 16×16 (standard)
 - 32×32 (standard)
 - 64×64 (for compatibility)

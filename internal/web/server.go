@@ -103,7 +103,7 @@ func (s *Server) registerRoutes() {
 
 	// Favicon
 	mux.HandleFunc("GET /favicon.ico", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/static/logo.png", http.StatusMovedPermanently)
+		http.Redirect(w, r, "/static/logo-trans.png", http.StatusMovedPermanently)
 	})
 
 	// Auth

@@ -10,7 +10,7 @@ Your **daemon-hound** codebase now supports installation on **macOS, Linux, and 
 
 ### 1. **macOS App Bundle** ✅
 - **File**: `build/DaemonHound.app/`
-- **Icon**: Auto-generated from `images/logo.png` → `build/AppIcon.icns`
+- **Icon**: Auto-generated from `images/logo-trans.png` → `build/AppIcon.icns`
 - **Metadata**: `build/Info.plist` with proper app name and settings
 - **Result**: When running, shows as "Daemon Hound" with your logo in Activity Monitor
 
@@ -150,7 +150,7 @@ DaemonHound.app/
 daemon-hound/
 ├─ cmd/dhd/main.go           ← Source code
 ├─ internal/...             ← Implementation
-├─ images/logo.png          ← Your logo (1254×1254)
+├─ images/logo-trans.png          ← Your logo (1254×1254)
 │
 ├─ Makefile                 ← Build targets
 │  ├─ make build                → bin/dhd

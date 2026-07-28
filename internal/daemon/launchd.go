@@ -487,16 +487,16 @@ func findLogoPNG() (string, error) {
 		binDir := filepath.Dir(exe)
 		prefixDir := filepath.Dir(binDir)
 		candidates = append(candidates,
-			filepath.Join(prefixDir, "share", "daemon-hound", "logo.png"),
-			filepath.Join(prefixDir, "share", "daemon-hound", "images", "logo.png"),
-			filepath.Join(binDir, "logo.png"),
+			filepath.Join(prefixDir, "share", "daemon-hound", "logo-trans.png"),
+			filepath.Join(prefixDir, "share", "daemon-hound", "images", "logo-trans.png"),
+			filepath.Join(binDir, "logo-trans.png"),
 		)
 	}
 
 	if _, file, _, ok := runtime.Caller(0); ok {
 		repoRoot := filepath.Clean(filepath.Join(filepath.Dir(file), "..", ".."))
 		candidates = append(candidates,
-			filepath.Join(repoRoot, "images", "logo.png"),
+			filepath.Join(repoRoot, "images", "logo-trans.png"),
 		)
 	}
 
