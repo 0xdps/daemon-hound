@@ -1,0 +1,31 @@
+daemon-hound-release.asc
+  s_47784beab1fb8a::t_7d53ece88d13fd 1-30
+.goreleaser.yaml
+  s_47784beab1fb8a::t_956de3f7401598 63-70,72,74
+.github/workflows/release.yml
+  s_47784beab1fb8a::t_379c42f9d66af9 134
+  h_95aea6b4aa8772 135
+INSTALL.md
+  s_47784beab1fb8a::t_98956b339905fd 5-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "e5977edfb1275d648010f207a03bd610a52eee2b",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
