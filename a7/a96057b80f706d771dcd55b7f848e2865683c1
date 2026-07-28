@@ -1,0 +1,32 @@
+docs/CROSS_PLATFORM_SETUP.md
+  h_95aea6b4aa8772 13,153
+internal/web/templates/login.html
+  h_95aea6b4aa8772 59
+Makefile
+  h_95aea6b4aa8772 45-51
+internal/web/templates/layout.html
+  h_95aea6b4aa8772 562
+internal/web/server.go
+  h_95aea6b4aa8772 106
+docs/WEB_UI_GUIDE.md
+  h_95aea6b4aa8772 90
+internal/daemon/launchd.go
+  h_95aea6b4aa8772 490-492,499
+website/src/layouts/BaseLayout.astro
+  h_95aea6b4aa8772 18,36,59
+docs/MACOS_APP_BUNDLE.md
+  h_95aea6b4aa8772 66
+README.md
+  h_95aea6b4aa8772 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a7a96057b80f706d771dcd55b7f848e2865683c1",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
