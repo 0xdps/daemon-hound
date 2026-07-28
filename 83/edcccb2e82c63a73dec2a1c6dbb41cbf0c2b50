@@ -1,0 +1,78 @@
+website/src/pages/docs/getting-started/quickstart.astro
+  s_c43f01914c34d8::t_158926db0c8463 8
+  s_c43f01914c34d8::t_2cae42057ce6c4 1-7,9-85
+website/astro.config.mjs
+  s_c43f01914c34d8::t_044bcf6359e8e6 4-6
+  s_c43f01914c34d8::t_a9063472ac4c3f 1-3
+website/src/styles/global.css
+  s_c43f01914c34d8::t_742367d27dc090 1-5,34-78,91-160,162-210
+  s_c43f01914c34d8::t_e29cf6c2bf6f8e 6,9,13,16,19,22
+  s_c43f01914c34d8::t_9739543defed3f 79-90
+  s_c43f01914c34d8::t_d29f1d2e65c3d1 7-8,10-12,14-15,17-18,20-21,23-33
+  h_95aea6b4aa8772 161
+website/package.json
+  s_c43f01914c34d8::t_e9e773d235559c 1,8,16-17
+  s_c43f01914c34d8::t_eb17ba64f1a1c5 2-7
+  s_c43f01914c34d8::t_331e3474b8ecf8 9-11,13-15
+  s_c43f01914c34d8::t_473289d4cddbc2 12
+website/src/pages/index.astro
+  s_c43f01914c34d8::t_5b31ad6a750974 1-99
+website/src/pages/docs/merge.astro
+  s_c43f01914c34d8::t_5ac838c221fdbd 1-85
+website/src/layouts/BaseLayout.astro
+  s_c43f01914c34d8::t_1d6d2daf4cfc65 45
+  s_c43f01914c34d8::t_72799c8f6476eb 33
+  s_c43f01914c34d8::t_23502a9d4eae96 68
+  s_c43f01914c34d8::t_a405f123714f5b 1,6-29,31-32,34-44,46-67,69-70
+  s_c43f01914c34d8::t_6874c2e17ba972 4-5
+  s_c43f01914c34d8::t_3fb59edde3f92a 2,30
+  s_c43f01914c34d8::t_1f8c7439c4c0c5 3
+website/src/pages/docs/daemon.astro
+  s_c43f01914c34d8::t_fe4de199952bc6 1-89
+website/src/components/GitHubStars.astro
+  s_c43f01914c34d8::t_9f8ebb49bf8a78 1-34
+website/src/components/CodeBlock.astro
+  s_c43f01914c34d8::t_a5ee4d39f00659 1-25
+website/src/pages/docs/secrets.astro
+  s_c43f01914c34d8::t_93bbe8975e2894 1-85
+website/src/pages/docs/getting-started/index.astro
+  s_c43f01914c34d8::t_ff32edcf7d75f8 1,5-90
+  s_c43f01914c34d8::t_46a03a8a164f96 2-4
+website/src/pages/docs/concepts.astro
+  s_c43f01914c34d8::t_03a5435db146c7 1-105
+website/src/pages/docs/commands.astro
+  s_c43f01914c34d8::t_7e06b2bfec77bd 1-105
+website/src/components/Callout.astro
+  s_c43f01914c34d8::t_5693bb86d0bdd9 1-13
+website/src/layouts/DocsLayout.astro
+  s_c43f01914c34d8::t_75c9d9c67e896a 1-53
+website/.gitignore
+  s_c43f01914c34d8::t_e0575745c59641 1-24
+website/README.md
+  s_c43f01914c34d8::t_21e7cbc1275e2b 1-43
+website/package-lock.json
+  s_c43f01914c34d8::t_8183e860ca4935 1-4369
+website/tsconfig.json
+  s_c43f01914c34d8::t_034adc46794ba8 1-5
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "83edcccb2e82c63a73dec2a1c6dbb41cbf0c2b50",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c43f01914c34d8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "90c523e5-29bf-4ed6-a23a-f93ac6ddcb48",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
