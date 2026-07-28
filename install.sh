@@ -62,7 +62,33 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 curl -fsSL "$DOWNLOAD_URL" -o "${TMP_DIR}/${ASSET_NAME}"
 
-# Extract
+# ─── macOS: also download the signed DMG for the notarized app bundle ───
+if [ "$OS" = "Darwin" ]; then
+    DMG_ARCH="$ARCH"
+    case "$ARCH" in
+        x86_64) DMG_ARCH="x86_64" ;;
+        arm64)  DMG_ARCH="arm64" ;;
+    esac
+    DMG_NAME="daemon-hound_${VERSION}_macOS_${DMG_ARCH}.dmg"
+    DMG_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${DMG_NAME}"
+    echo "Downloading signed & notarized DMG: ${DMG_NAME}..."
+    curl -fsSL "$DMG_URL" -o "${TMP_DIR}/${DMG_NAME}"
+
+    echo "Mounting DMG..."
+    DMG_MOUNT=$(hdiutil attach "${TMP_DIR}/${DMG_NAME}" -nobrowse -readonly -mountrandom /tmp 2>&1 | tail -1 | awk '{print $NF}')
+    if [ -z "$DMG_MOUNT" ]; then
+        echo "Warning: could not mount DMG, falling back to raw binary"
+    else
+        trap 'hdiutil detach "$DMG_MOUNT" 2>/dev/null; rm -rf "$TMP_DIR"' EXIT
+        echo "Installing signed app bundle to ~/Applications/DaemonHound.app..."
+        rm -rf "${HOME}/Applications/DaemonHound.app"
+        cp -R "${DMG_MOUNT}/DaemonHound.app" "${HOME}/Applications/DaemonHound.app"
+        hdiutil detach "$DMG_MOUNT" 2>/dev/null
+        echo "  ✓ Notarized app bundle installed (Verified Developer)"
+    fi
+fi
+
+# Extract tarball for the CLI binary
 echo "Extracting..."
 cd "$TMP_DIR"
 if [ "$EXT" = "zip" ]; then
@@ -71,12 +97,31 @@ else
     tar -xzf "$ASSET_NAME"
 fi
 
-# Install binary
+# Install binary (symlink into signed bundle on macOS if available)
 echo "Installing to ${INSTALL_DIR}..."
-if [ -w "$INSTALL_DIR" ]; then
-    mv "${BINARY}" "${INSTALL_DIR}/${BINARY}"
+BUNDLE_BIN="${HOME}/Applications/DaemonHound.app/Contents/MacOS/dhd"
+if [ "$OS" = "Darwin" ] && [ -f "$BUNDLE_BIN" ]; then
+    chmod +x "$BUNDLE_BIN"
+    rm -f "${INSTALL_DIR}/${BINARY}"
+    rm -f "${INSTALL_DIR}/daemon-hound"
+    if [ -w "$INSTALL_DIR" ]; then
+        ln -sf "$BUNDLE_BIN" "${INSTALL_DIR}/${BINARY}"
+        ln -sf "$BUNDLE_BIN" "${INSTALL_DIR}/daemon-hound"
+    else
+        sudo ln -sf "$BUNDLE_BIN" "${INSTALL_DIR}/${BINARY}"
+        sudo ln -sf "$BUNDLE_BIN" "${INSTALL_DIR}/daemon-hound"
+    fi
+    echo "  ✓ Symlinked /usr/local/bin/dhd → signed app bundle"
+    echo "  ✓ Symlinked /usr/local/bin/daemon-hound → signed app bundle"
 else
-    sudo mv "${BINARY}" "${INSTALL_DIR}/${BINARY}"
+    if [ -w "$INSTALL_DIR" ]; then
+        mv "${BINARY}" "${INSTALL_DIR}/${BINARY}"
+        ln -sf "${INSTALL_DIR}/${BINARY}" "${INSTALL_DIR}/daemon-hound"
+    else
+        sudo mv "${BINARY}" "${INSTALL_DIR}/${BINARY}"
+        sudo ln -sf "${INSTALL_DIR}/${BINARY}" "${INSTALL_DIR}/daemon-hound"
+    fi
+    echo "  ✓ Installed dhd (alias: daemon-hound)"
 fi
 
 # Verify installation

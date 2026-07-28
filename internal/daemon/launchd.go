@@ -69,14 +69,16 @@ func (l *LaunchdManager) Install() error {
 		return err
 	}
 
-	// NOTE: We intentionally do NOT use the app bundle for the background
-	// daemon. Launching through an .app bundle triggers macOS TCC privacy
-	// prompts (Desktop, Documents, Downloads, etc.) because the system
-	// treats app-bundled processes as interactive applications instead
-	// of background services. The raw binary avoids this behavior.
+	// Prefer the signed app bundle (from GitHub Releases DMG) over the raw
+	// binary. When installed via install.sh, the DMG is downloaded and the
+	// app bundle extracted to ~/Applications/DaemonHound.app. This bundle
+	// is Developer ID-signed and notarized by CI, so macOS shows "Verified
+	// Developer" in System Settings with no TCC prompts for background use.
 	//
-	// The app bundle is still available for interactive use (web UI) via
-	// `make install-macos` or by running `open ~/Applications/DaemonHound.app`.
+	// The raw binary is a fallback for dev builds and non-macOS platforms.
+	if bundlePath := GetAppBundlePath(); bundlePath != "" {
+		exePath = bundlePath
+	}
 
 	// Create the plist content
 	plistContent, err := l.generatePlist(exePath)
