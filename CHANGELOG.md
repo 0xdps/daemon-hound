@@ -10,72 +10,83 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## v1.1.0
 
 ### Added
-- **Background Daemon Service** — automatic, always-running synchronization
-  - `dhd daemon run` — run daemon in foreground (for testing/debugging)
-  - `dhd daemon status` — check if daemon is installed and running
-  - `dhd daemon logs` — view recent sync activity logs
-    - `dhd daemon logs -f` to follow logs in real-time
-    - `dhd daemon logs -n 100` to view last N lines
-  - `dhd daemon errors` — view daemon error logs for troubleshooting
-  - `dhd daemon stop` — stop the daemon service
-  - `dhd daemon restart` — restart the daemon service
-- **Automatic Daemon Installation** — installed during `dhd init` with no manual setup required
-  - macOS: Registers with launchd (`~/Library/LaunchAgents/com.daemon-hound.plist`)
-  - Linux: Registers with systemd (`~/.config/systemd/user/daemon-hound.service`)
-  - Windows: Registers with Task Scheduler (`DaemonHound` task)
-  - Auto-starts on system boot
-  - Auto-restarts if crashed
-- **File Watching** — detects local vault changes in real-time
-  - Uses `fsnotify` for efficient OS-level file monitoring
-  - 2-second debounce to batch rapid changes
-  - Ignores `.git` directory and temporary files (ending with `~`)
-  - Automatically commits and pushes changes to remote
-- **Remote Polling** — checks for new commits from remote every 30 seconds
-  - Fetches from remote vault without blocking other operations
-  - Pulls new commits and applies them locally
-  - Detects and resolves merge conflicts automatically
-- **Automatic Conflict Resolution** — handles concurrent edits gracefully
-  - Detects merge conflicts from concurrent changes on multiple machines
-  - Resolves using "local" strategy (keeps local changes as default)
-  - Automatically commits conflict resolution with message `[daemon] Resolve merge conflicts`
-  - Logs conflicted files for audit trail
-  - Extensible to support "remote", "ask", and "merge" strategies in future releases
-- **Log Rotation & Cleanup** — keeps log files manageable
-  - Hourly log rotation checks
-  - Rotates `~/.dh/daemon.log` when exceeding 10MB
-  - Rotates `~/.dh/daemon.error.log` when exceeding 5MB
-  - Rotated files named `daemon.YYYY-MM-DD-HH-MM-SS.log`
-  - Automatically removes logs older than 30 days
-  - Configurable size and retention limits (via config in v1.2.0+)
-- **Comprehensive Logging** — detailed audit trail of all operations
-  - Sync logs with timestamps: "Pulled from remote", "Detected conflicts", etc.
-  - Error logs for troubleshooting: watcher errors, permission issues, etc.
-  - Both logs viewable via `dhd daemon logs` and `dhd daemon errors` commands
+
+#### Web UI
+- **Browser-based dashboard** — full-featured web interface for vault management
+  - `dhd ui` — starts the web server and opens the browser
+  - Login protected by master password with 12-hour HMAC session
+  - **Dashboard** — vault health overview with conflict/secret/file counts
+  - **Conflict Resolver** — 3-way diff view (base | local | remote) with smart key-value parsing for `.env` files
+  - **Tracked Files Browser** — namespace-grouped file list with search, content preview, and syntax highlighting
+  - **Secrets Manager** — version-controlled secret viewer with rotation, history, and diff comparison
+  - **Live Status** — real-time SSE log streaming with daemon health monitoring and log level filtering
+  - **Settings** — bulk untrack operations with sortable table
+  - **Help** — environment info, clipboard debug dump, and CLI reference
+  - Dark theme with green accent, Lucide icons, HTMX for SPA-like navigation
+
+#### Smart Merge
+- **Semantic merge drivers** for encrypted vault files — resolves conflicts at the content level
+  - `.env` files — key-value aware merge (adds, removes, conflicts by key)
+  - JSON files — structural merge with conflict markers
+  - CSV files — row-level merge
+  - TOML/plaintext — line-based merge
+  - Secret files — version-aware merge for per-secret TOML files
+- **Git integration** — `dhd git setup` configures merge driver, diff driver, clean/smudge filters
+- **Git hooks** — `dhd git hook` installs pre-commit, post-merge, post-checkout, pre-push hooks
+- **Daemon auto-recovery** — daemon attempts smart merge on stuck in-progress merges before falling back to remote
+
+#### Lightweight Vault Access
+- **`dhd clone`** — clone a vault without full machine initialization (no config, no daemon, no keychain)
+  - Partial clone support: `--namespace` and `--secret` sparse checkout
+- **`dhd read`** — decrypt and read tracked files or secrets from any cloned vault
+
+#### Background Daemon
+- **Automatic sync** — `dhd daemon run` for foreground, `dhd daemon start` for background
+  - 30-second polling: fetches remote, restores files, pushes local changes
+  - Halt-on-conflict: pauses sync when true conflicts are detected, resumes via `dhd daemon resume`
+- **Daemon management** — `status`, `stop`, `restart`, `logs`, `errors` subcommands
+- **Automatic installation** — daemon registered during `dhd init`
+  - macOS: launchd (`~/Library/LaunchAgents/com.daemon-hound.plist`)
+  - Linux: systemd (`~/.config/systemd/user/daemon-hound.service`)
+  - Windows: Task Scheduler
+- **Log rotation** — hourly checks; rotates at 10MB (daemon.log) / 5MB (daemon.error.log); 30-day retention
+
+#### Expanded Secret Management
+- **11 secret subcommands** — `set`, `get`, `list`, `rotate`, `delete`, `rename`, `history`, `rollback`, `ref`, `unref`, `diff`
+- **Per-secret files** — secrets stored as individual encrypted TOML files (migrated from legacy inline format)
+- **Version history** — full audit trail with timestamps, reasons, and version comparison
+
+#### macOS Release
+- **Signed & notarized DMG** — Apple Developer ID signing, notarization via notarytool
+- **App bundle** — `.app` bundle in `~/Applications` for launchd
+- **GPG-signed checksums** — release artifacts verified with GPG
+- **APT repository** — signed with GPG keyring for Debian/Ubuntu
+
+#### Other
+- `dhd doctor` — expanded to verify git merge driver, diff driver, filters, hooks, .gitattributes, .gitignore, rerere
+- `dhd discover` — scan directories for git repos and auto-track known namespaces
 
 ### Changed
 - `dhd init` now automatically installs the daemon service
-  - No separate `dhd daemon install` command needed
-  - Daemon starts on next system boot automatically
-  - Manual `dhd sync` is now optional (daemon syncs continuously)
-- Service registration abstracted to factory pattern
-  - Single `daemon.ServiceManager` interface handles all OS-specific details
-  - Easy to add support for additional service managers in future
+- `dhd export` — now exports both files and secrets in a mirror directory structure
+- `dhd cleanup` — now removes legacy launch agents and macOS app bundle
+- Service registration uses factory pattern (`daemon.ServiceManager` interface)
 
 ### Security
-- Daemon service runs with same user permissions as `dhd` CLI (no escalation)
-- Log files stored in `~/.dh/` (user-private directory, mode 0700)
-- Global salt remains plaintext in config (correct design for multi-machine consistency)
+- Daemon runs with same user permissions as CLI (no escalation)
+- Log files stored in `~/.dh/` (user-private, mode 0700)
+- HMAC-signed session tokens for web UI (per-process random key, 12-hour TTL)
 
 ### Performance
-- **Local change latency**: ~2-4 seconds (file detection + debounce + commit + push)
-- **Remote change latency**: ~30 seconds (polling interval) + ~2 seconds (pull + apply)
-- **Resource usage**: ~20-30MB memory, minimal CPU when idle, active only during sync operations
+- **Sync latency**: ~30 seconds (polling interval) + ~2 seconds (pull + apply + push)
+- **Resource usage**: ~20-30MB memory, minimal CPU when idle
 
 ### Known Limitations
-- Conflict strategy fixed to "local" in v1.1.0 (configurable in v1.2.0+)
-- Daemon syncs entire vault (partial sync by namespace in v1.2.0+)
-- No real-time collaboration conflict detection (30-second polling is best-effort)
-- Conflict resolution runs silently; no user prompts yet (planned for v1.2.0+)
+- No file-watching (polling-only at 30-second intervals)
+- Conflict strategy is always smart-merge where possible; true conflicts halt the daemon
+- Full vault sync only (partial sync by namespace planned for v1.2.0)
+- Conflict resolution runs automatically without user prompts for non-conflicting merges
+- Web UI uses CDN for Tailwind, Lucide, Highlight.js (offline-first planned for v1.2.0)
 
 ---
 

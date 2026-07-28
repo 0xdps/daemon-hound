@@ -11,13 +11,11 @@ const (
 )
 
 // DaemonConfig holds daemon-specific settings.
+// Most daemon behaviour uses hardcoded defaults (30s poll, 10MB/5MB log rotation,
+// 30-day retention, smart-merge conflict strategy). These are reserved for
+// future configuration in v1.2.0+.
 type DaemonConfig struct {
-	WatchInterval    int    `toml:"watch_interval"`     // file watch debounce in seconds (default 2)
-	PollInterval     int    `toml:"poll_interval"`      // remote poll interval in seconds (default 30)
-	ConflictStrategy string `toml:"conflict_strategy"`  // "local" or "ask" (default "ask")
-	MaxLogSize       int    `toml:"max_log_size"`       // max log file size in MB (default 10)
-	MaxErrorLogSize  int    `toml:"max_error_log_size"` // max error log file size in MB (default 5)
-	LogRetentionDays int    `toml:"log_retention_days"` // keep logs for N days (default 30)
+	PollInterval int `toml:"poll_interval"` // reserved: remote poll interval in seconds (default 30)
 }
 
 // MachineConfig holds per-machine DaemonHound configuration.
