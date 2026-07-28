@@ -1,0 +1,22 @@
+internal/daemon/launchd.go
+  s_47784beab1fb8a::t_11fb1993712b21 72-76,78-81
+install.sh
+  s_47784beab1fb8a::t_58a1536a2501f6 65-91,100,102-105,107-108,110-111,113-114,117-118,120-121,123
+  s_47784beab1fb8a::t_bfce2c23d49f73 106,109,112,115,119,122,124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "f8dc26aaa6c18b06b4050e0d64d3fdf12e2ab809",
+  "prompts": {},
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
