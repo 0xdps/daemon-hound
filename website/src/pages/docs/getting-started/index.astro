@@ -1,0 +1,90 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
+import Callout from '../../../components/Callout.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation', active: true },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [
+    { href: '/docs/commands/', label: 'Overview' },
+  ]},
+  { title: 'Concepts', links: [
+    { href: '/docs/concepts/', label: 'Namespaces & Vault' },
+  ]},
+  { title: 'Daemon', links: [
+    { href: '/docs/daemon/', label: 'Setup & Management' },
+  ]},
+  { title: 'Secrets', links: [
+    { href: '/docs/secrets/', label: 'Managing Secrets' },
+  ]},
+  { title: 'Merge & Conflicts', links: [
+    { href: '/docs/merge/', label: 'Smart Merge Engine' },
+  ]},
+];
+---
+
+<DocsLayout
+  title="Getting Started"
+  description="Install, initialize, and set up DaemonHound on your machine."
+  sidebarGroups={sidebarGroups}
+  nextLink={{ href: '/docs/getting-started/quickstart/', label: 'Quickstart' }}
+>
+  <h1>Getting Started</h1>
+  <p>DaemonHound ships as a single <code>dhd</code> binary. Install it in seconds and start syncing your configs across machines.</p>
+
+  <h2>Installation</h2>
+
+  <h3>macOS</h3>
+  <CodeBlock code="brew install 0xdps/tap/daemon-hound" lang="Homebrew" />
+  <p>macOS releases are signed with a Developer ID and notarized. You can also use the install script or download the DMG from <a href="https://github.com/0xdps/daemon-hound/releases" target="_blank" rel="noopener">GitHub Releases</a>.</p>
+
+  <h3>Linux</h3>
+  <CodeBlock code={`curl -fsSL https://dhd.0xdps.dev/apt-repo.sh | sudo bash
+sudo apt install daemon-hound`} lang="APT" />
+
+  <h3>Windows</h3>
+  <CodeBlock code={`scoop bucket add 0xdps https://github.com/0xdps/scoop-bucket
+scoop install daemon-hound`} lang="Scoop" />
+
+  <h3>Install Script (all platforms)</h3>
+  <CodeBlock code="curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh" />
+
+  <Callout type="tip">
+    <strong>Verify your download.</strong> All release artifacts are GPG-signed. Import the signing key and verify checksums before installing. See the <a href="https://github.com/0xdps/daemon-hound/blob/trunk/INSTALL.md" target="_blank" rel="noopener">install guide</a> for details.
+  </Callout>
+
+  <h3>Verifying the binary</h3>
+  <CodeBlock code={`curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/daemon-hound-release.asc | gpg --import\\ngpg --verify checksums.txt.asc checksums.txt\\nsha256sum -c checksums.txt --ignore-missing`} lang="Shell" />
+
+  <h2>First-time setup</h2>
+  <p>After installing, initialize DaemonHound with your private Git vault repository:</p>
+  <CodeBlock code="dhd init --remote git@github.com:you/my-vault.git" />
+
+  <p>This command:</p>
+  <ol>
+    <li>Generates a stable <strong>machine UUID</strong> stored in <code>~/.dh/config.toml</code></li>
+    <li>Creates an <strong>age identity key</strong> — encrypted with your master password</li>
+    <li>Clones (or creates) your vault repo at <code>~/.dh/vault/</code></li>
+    <li>Saves your master password in the OS keychain</li>
+    <li>Installs the background sync daemon</li>
+  </ol>
+
+  <Callout type="warning">
+    <strong>Back up your identity.</strong> The file <code>~/.dh/identity.age</code> is <em>never</em> stored in the vault. Without it, your encrypted data <strong>cannot be recovered</strong>.
+  </Callout>
+
+  <h2>Setting up a second machine</h2>
+  <p>On your first machine, export the shared identity:</p>
+  <CodeBlock code="dhd export-identity\n# → AGE-SECRET-KEY-1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+
+  <p>On the second machine:</p>
+  <CodeBlock code="dhd init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-1..." />
+
+  <h2>Re-initializing</h2>
+  <p>If you need to reconfigure DaemonHound on an existing machine:</p>
+  <CodeBlock code={`dhd init --force
+# Vault repository URL [git@github.com:you/my-vault.git]:   ← pre-filled`} />
+</DocsLayout>

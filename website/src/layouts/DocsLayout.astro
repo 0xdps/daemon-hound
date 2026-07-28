@@ -1,0 +1,53 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+export interface SidebarGroup {
+  title: string;
+  links: { href: string; label: string; active?: boolean }[];
+}
+
+interface Props {
+  title: string;
+  description?: string;
+  sidebarGroups: SidebarGroup[];
+  prevLink?: { href: string; label: string };
+  nextLink?: { href: string; label: string };
+}
+const { title, description, sidebarGroups, prevLink, nextLink } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} activeNav="docs">
+  <div class="docs-container">
+    <aside class="docs-sidebar">
+      {sidebarGroups.map(group => (
+        <div class="sidebar-group">
+          <div class="sidebar-group-title">{group.title}</div>
+          {group.links.map(link => (
+            <a href={link.href} class:list={['sidebar-link', { active: link.active }]}>{link.label}</a>
+          ))}
+        </div>
+      ))}
+    </aside>
+
+    <main class="docs-main">
+      <slot />
+
+      {(prevLink || nextLink) && (
+        <div class="docs-page-nav">
+          {prevLink ? (
+            <a href={prevLink.href}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              {prevLink.label}
+            </a>
+          ) : <span></span>}
+          {nextLink ? (
+            <a href={nextLink.href}>
+              {nextLink.label}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          ) : <span></span>}
+        </div>
+      )}
+    </main>
+  </div>
+</BaseLayout>

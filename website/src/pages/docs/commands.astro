@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview', active: true }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault' }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine' }]},
+];
+---
+
+<DocsLayout
+  title="Commands"
+  description="Complete CLI reference for DaemonHound."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/getting-started/quickstart/', label: 'Quickstart' }}
+  nextLink={{ href: '/docs/concepts/', label: 'Concepts' }}
+>
+  <h1>Command Reference</h1>
+  <p>All commands are under the <code>dhd</code> binary.</p>
+
+  <h2>Core</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>dhd init</code></td><td>Initialize DaemonHound and connect a vault</td></tr>
+      <tr><td><code>dhd track &lt;file&gt;</code></td><td>Start tracking a file (encrypts &amp; commits)</td></tr>
+      <tr><td><code>dhd untrack &lt;file&gt;</code></td><td>Stop tracking and remove from vault</td></tr>
+      <tr><td><code>dhd untrack --local</code></td><td>Remove tracking from this machine only</td></tr>
+      <tr><td><code>dhd untrack --missing</code></td><td>Ignore tracked files absent on this machine</td></tr>
+      <tr><td><code>dhd sync</code></td><td>Push and pull tracked files</td></tr>
+      <tr><td><code>dhd status</code></td><td>Show tracked file status (clean/dirty/pending)</td></tr>
+      <tr><td><code>dhd discover [path]</code></td><td>Scan Git repos and sync known namespaces</td></tr>
+      <tr><td><code>dhd clone</code></td><td>Clone a vault without machine initialization</td></tr>
+      <tr><td><code>dhd read</code></td><td>Decrypt and read tracked files from a vault</td></tr>
+      <tr><td><code>dhd export</code></td><td>Export decrypted files and secrets</td></tr>
+      <tr><td><code>dhd export-identity</code></td><td>Print the age identity for sharing</td></tr>
+      <tr><td><code>dhd rekey</code></td><td>Change the master password</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Secrets</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>dhd secret set &lt;key&gt;</code></td><td>Store or update a secret</td></tr>
+      <tr><td><code>dhd secret get &lt;key&gt;</code></td><td>Retrieve a secret value</td></tr>
+      <tr><td><code>dhd secret list [key]</code></td><td>List secrets or mappings</td></tr>
+      <tr><td><code>dhd secret ref &lt;k&gt; &lt;f&gt; &lt;V&gt;</code></td><td>Map secret to env var in a file</td></tr>
+      <tr><td><code>dhd secret unref &lt;k&gt; &lt;f&gt;</code></td><td>Remove a secret mapping</td></tr>
+      <tr><td><code>dhd secret rename &lt;o&gt; &lt;n&gt;</code></td><td>Rename a secret, preserving mappings</td></tr>
+      <tr><td><code>dhd secret delete &lt;key&gt;</code></td><td>Delete a secret and all mappings</td></tr>
+      <tr><td><code>dhd secret rotate &lt;key&gt;</code></td><td>Rotate a secret value</td></tr>
+      <tr><td><code>dhd secret history &lt;key&gt;</code></td><td>View version history</td></tr>
+      <tr><td><code>dhd secret rollback &lt;key&gt;</code></td><td>Roll back to a previous version</td></tr>
+      <tr><td><code>dhd secret diff &lt;key&gt;</code></td><td>Show diff between versions</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Daemon</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>dhd daemon run</code></td><td>Run in foreground (debugging)</td></tr>
+      <tr><td><code>dhd daemon start</code></td><td>Start background daemon</td></tr>
+      <tr><td><code>dhd daemon status</code></td><td>Check installation &amp; running state</td></tr>
+      <tr><td><code>dhd daemon stop</code></td><td>Stop background daemon</td></tr>
+      <tr><td><code>dhd daemon restart</code></td><td>Restart background daemon</td></tr>
+      <tr><td><code>dhd daemon logs [-f] [-n N]</code></td><td>View daemon logs</td></tr>
+      <tr><td><code>dhd daemon errors [-f] [-n N]</code></td><td>View daemon error logs</td></tr>
+      <tr><td><code>dhd daemon resume</code></td><td>Resume after conflict halt</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Conflicts &amp; Merge</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>dhd conflicts list</code></td><td>List pending conflicts</td></tr>
+      <tr><td><code>dhd conflicts show &lt;file&gt;</code></td><td>Show conflict details</td></tr>
+      <tr><td><code>dhd conflicts resolve &lt;f&gt;</code></td><td>Resolve with local|remote strategy</td></tr>
+      <tr><td><code>dhd conflicts clear</code></td><td>Clear resolved conflicts</td></tr>
+      <tr><td><code>dhd merge resolve</code></td><td>Interactive merge TUI</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Utility</h2>
+  <table>
+    <thead><tr><th>Command</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td><code>dhd ui</code></td><td>Launch web UI dashboard</td></tr>
+      <tr><td><code>dhd doctor [--fix]</code></td><td>Check setup &amp; repair issues</td></tr>
+      <tr><td><code>dhd machines</code></td><td>List machines with backup files</td></tr>
+      <tr><td><code>dhd cleanup [--force]</code></td><td>Remove local DaemonHound state</td></tr>
+      <tr><td><code>dhd logout</code></td><td>Clear cached password from keychain</td></tr>
+      <tr><td><code>dhd version</code></td><td>Print version</td></tr>
+    </tbody>
+  </table>
+</DocsLayout>

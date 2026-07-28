@@ -1,0 +1,89 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+import Callout from '../../components/Callout.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview' }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault' }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management', active: true }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine' }]},
+];
+---
+
+<DocsLayout
+  title="Background Daemon"
+  description="Set up and manage the auto-sync daemon — automatic file syncing across machines."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/concepts/', label: 'Concepts' }}
+  nextLink={{ href: '/docs/secrets/', label: 'Secrets' }}
+>
+  <h1>Background Daemon</h1>
+  <p>The daemon runs in the background, polling your vault and automatically syncing files. Installed by default during <code>dhd init</code>.</p>
+
+  <h2>Installation</h2>
+  <table>
+    <thead><tr><th>Platform</th><th>Service</th><th>Location</th></tr></thead>
+    <tbody>
+      <tr><td>macOS</td><td>launchd</td><td><code>~/Library/LaunchAgents/com.daemon-hound.plist</code></td></tr>
+      <tr><td>Linux</td><td>systemd</td><td><code>~/.config/systemd/user/daemon-hound.service</code></td></tr>
+      <tr><td>Windows</td><td>Task Scheduler</td><td>User-level task</td></tr>
+    </tbody>
+  </table>
+
+  <h2>How it works</h2>
+  <ol>
+    <li><strong>Every 30 seconds</strong>, fetch from the Git remote</li>
+    <li>Compare local vs. remote state</li>
+    <li>Pull new files, restore to correct local paths</li>
+    <li>Detect local changes and push</li>
+    <li>On conflict: attempt <strong>smart merge</strong>; if unresolvable, <strong>halt</strong></li>
+  </ol>
+
+  <h2>Management</h2>
+  <CodeBlock code={`dhd daemon run              # Run in foreground (debugging)
+dhd daemon start            # Start background daemon
+dhd daemon status           # Check state
+dhd daemon stop             # Stop daemon
+dhd daemon restart          # Restart daemon
+dhd daemon logs -f          # Follow logs
+dhd daemon errors -f        # Follow error logs
+dhd daemon resume           # Resume after halt`} />
+
+  <h2>Conflict behavior</h2>
+  <p>When the daemon can smart-merge, it does. True conflicts <strong>halt</strong> the daemon:</p>
+  <ul>
+    <li>Syncing pauses for the conflicted namespace</li>
+    <li>Halt reason visible in <code>dhd status</code> and web UI</li>
+    <li>Resolve with <code>dhd conflicts resolve</code> or the web UI</li>
+    <li><code>dhd daemon resume</code> to restart syncing</li>
+  </ul>
+
+  <h2>Logging</h2>
+  <ul>
+    <li><code>daemon.log</code> — general output (rotated at 10 MB)</li>
+    <li><code>daemon.error.log</code> — errors only (rotated at 5 MB)</li>
+    <li>30-day retention, hourly rotation</li>
+  </ul>
+
+  <h2>Security</h2>
+  <ul>
+    <li>Runs as <strong>current user</strong> — no elevation</li>
+    <li>Only contacts your configured Git remote</li>
+    <li>Logs at <code>~/.dh/</code> (<code>0700</code>)</li>
+    <li>No telemetry, no third-party connections</li>
+  </ul>
+
+  <Callout type="note">
+    <strong>No file watching.</strong> Polling-only at 30s intervals. Watch-based mode planned for v1.2.0.
+  </Callout>
+
+  <h2>Removal</h2>
+  <CodeBlock code="dhd cleanup --force" />
+  <p>Stops and uninstalls the daemon, removes <code>~/.dh/</code>, clears keychain. Does <em>not</em> affect the remote vault.</p>
+</DocsLayout>

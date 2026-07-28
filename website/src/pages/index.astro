@@ -1,0 +1,99 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Local-First Secret & Config Management"
+  description="DaemonHound encrypts, tracks, and syncs your .env files, API keys, and machine configs across all your machines — using your own private Git repo."
+>
+  <main class="page-home">
+    <section class="hero">
+      <div class="hero-inner">
+        <div class="hero-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1fcb4f" stroke-width="2" width="14" height="14"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Open Source · MIT Licensed
+        </div>
+        <h1>Your secrets.<br>Your repo. <span>Your rules.</span></h1>
+        <p class="hero-p">
+          DaemonHound encrypts, tracks, and syncs your <code>.env</code> files, API keys,
+          and machine configs across all your machines — using <strong>your own private Git repo</strong>
+          as the backend. No SaaS. No accounts. No third-party servers.
+        </p>
+        <div class="hero-actions">
+          <a href="/docs/getting-started/" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            Get started
+          </a>
+          <a href="https://github.com/0xdps/daemon-hound" class="btn btn-secondary" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            View on GitHub
+          </a>
+        </div>
+        <div class="hero-install" style="border-radius:var(--radius-lg);">
+          <span class="install-cmd">curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh</span>
+          <button style="flex-shrink:0;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 1.2rem;background:var(--accent);color:#000;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);" data-copy="curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="features-strip">
+      <div class="features-strip-inner">
+        <div class="fs-item"><h4>🔐 Age encryption</h4><p>Every file encrypted with <a href="https://age-encryption.org/" target="_blank" rel="noopener">age</a> before it touches disk. Keys never leave your machine.</p></div>
+        <div class="fs-item"><h4>🔄 Auto-sync daemon</h4><p>Optional background daemon polls your vault every 30s. Changes propagate automatically.</p></div>
+        <div class="fs-item"><h4>🧠 Smart merge</h4><p>Git conflicts? Semantic drivers understand <code>.env</code>, JSON, CSV, and TOML structure.</p></div>
+        <div class="fs-item"><h4>🌐 Web UI dashboard</h4><p>Browse files, manage secrets, resolve conflicts — all from your browser. <code>dhd ui</code></p></div>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <div class="home-section-inner">
+        <div class="home-section-header"><h2>Why DaemonHound?</h2><p>Most solutions are either SaaS subscriptions or overly complex. Own your toolchain.</p></div>
+        <div class="compare-grid">
+          <div class="compare-card without"><h3>Without DaemonHound</h3><ul><li>Manually copy-paste <code>.env</code> files</li><li>Secrets accidentally committed</li><li>Rotating an API key means hunting every file</li><li>No idea which machine has what version</li><li>Pay for yet another SaaS subscription</li></ul></div>
+          <div class="compare-card with"><h3>With DaemonHound</h3><ul><li>One command to track, encrypt, and sync</li><li>Everything encrypted before Git sees it</li><li>Rotate a secret — all files update automatically</li><li><code>dhd status</code> shows clean, dirty, pending</li><li>Free and open source forever</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section" style="background:var(--bg-raised);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+      <div class="home-section-inner">
+        <div class="home-section-header"><h2>How it works</h2><p>Namespace-based routing. Age encryption. Your own Git repo.</p></div>
+        <div class="hw-steps">
+          <div class="hw-step"><div class="hw-step-num">1</div><div class="hw-step-body"><h4>Initialize</h4><p><code>dhd init --remote git@github.com:you/my-vault.git</code> generates an age identity, clones your vault, and installs the daemon. Under 30 seconds.</p></div></div>
+          <div class="hw-connector"></div>
+          <div class="hw-step"><div class="hw-step-num">2</div><div class="hw-step-body"><h4>Track files</h4><p><code>dhd track .env.local</code> reads the Git remote, derives a namespace, encrypts with age, and stores it in your vault.</p></div></div>
+          <div class="hw-connector"></div>
+          <div class="hw-step"><div class="hw-step-num">3</div><div class="hw-step-body"><h4>Sync across machines</h4><p><code>dhd discover ~/projects</code> scans repos and restores tracked files to correct local paths.</p></div></div>
+          <div class="hw-connector"></div>
+          <div class="hw-step"><div class="hw-step-num">4</div><div class="hw-step-body"><h4>Let the daemon run</h4><p>Polls every 30s. Changes from any machine pulled and applied. Conflicts resolved with smart merge.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section">
+      <div class="home-section-inner">
+        <div class="home-section-header"><h2>Everything you need</h2><p>Opinionated defaults. Minimal config. Maximum productivity.</p></div>
+        <div class="highlight-grid">
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div><h3>Named secrets</h3><p>Store once, map to different env var names per project. Rotate a secret and every referenced file rewrites instantly.</p></div>
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M13 12H3"/></svg></div><h3>Smart merge engine</h3><p>Semantic merge drivers resolve <code>.env</code>, JSON, CSV, and TOML conflicts at the content level.</p></div>
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><h3>Web UI</h3><p>Browser dashboard: 3-way conflict diff, file browser with syntax highlighting, secret history, live daemon logs.</p></div>
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><h3>Background daemon</h3><p>30s polling. Auto-pull, auto-push, auto-merge. Native launchd, systemd, and Task Scheduler integration.</p></div>
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><h3>Cross-platform</h3><p>macOS (Homebrew), Linux (APT), Windows (Scoop). Signed & notarized DMG, GPG-verified releases.</p></div>
+          <div class="highlight-card"><div class="highlight-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><h3>Lightweight vault access</h3><p><code>dhd clone</code> and <code>dhd read</code> let you access vault contents without full machine init. Partial clone with sparse checkout.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-banner">
+      <h2>Ready to own your secrets?</h2>
+      <p>One command. Your repo. No SaaS. Forever free.</p>
+      <a href="/docs/getting-started/" class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        Get started in 30 seconds
+      </a>
+    </section>
+  </main>
+</BaseLayout>

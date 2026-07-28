@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+import Callout from '../../components/Callout.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview' }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault', active: true }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine' }]},
+];
+---
+
+<DocsLayout
+  title="Concepts"
+  description="Core abstractions — namespaces, vault layout, file modes, and architecture."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/commands/', label: 'Commands' }}
+  nextLink={{ href: '/docs/daemon/', label: 'Daemon' }}
+>
+  <h1>Concepts</h1>
+  <p>Understand the core abstractions that power DaemonHound.</p>
+
+  <h2>Namespaces</h2>
+  <p>A <strong>namespace</strong> is derived from the <code>origin</code> Git remote:</p>
+  <CodeBlock code="git@github.com:you/pingpong-api.git  →  github.com/you/pingpong-api" />
+
+  <p>The same file can live at <strong>different physical paths</strong> on different machines:</p>
+  <table>
+    <thead><tr><th>Machine</th><th>Local path</th><th>Namespace</th></tr></thead>
+    <tbody>
+      <tr><td>MacBook</td><td><code>~/projects/pingpong-api/.env.local</code></td><td><code>github.com/you/pingpong-api</code></td></tr>
+      <tr><td>Work PC</td><td><code>~/work/pingpong-api/.env.local</code></td><td><code>github.com/you/pingpong-api</code></td></tr>
+      <tr><td>Windows</td><td><code>D:\code\pingpong-api\.env.local</code></td><td><code>github.com/you/pingpong-api</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Global namespace</h3>
+  <p>Files outside a Git repo use the <code>global</code> namespace:</p>
+  <CodeBlock code={`dhd track ~/.zshrc --mode backup
+dhd track ~/.gitconfig`} />
+
+  <h2>File modes</h2>
+  <table>
+    <thead><tr><th>Mode</th><th>Behavior</th><th>Use case</th></tr></thead>
+    <tbody>
+      <tr><td><code>sync</code></td><td>Shared across all machines</td><td>Project <code>.env</code> files</td></tr>
+      <tr><td><code>backup</code></td><td>Machine-specific, no cross-machine merge</td><td>Shell configs</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Vault layout</h2>
+  <CodeBlock code={`vault/
+├── sync/
+│   └── github.com/you/pingpong-api/
+│       ├── .env.local.age
+│       └── .env.test.age
+├── backup/
+│   └── <machine-uuid>/
+│       └── global/
+│           └── zshrc.age
+└── secrets/
+    ├── openai-key.age
+    └── github-token.age`} lang="Vault" />
+
+  <h2>Encryption</h2>
+  <p>DaemonHound uses <a href="https://age-encryption.org/" target="_blank" rel="noopener">age</a> for encryption. The vault only contains <code>.age</code> files.</p>
+  <p>The <strong>age identity key</strong> (<code>~/.dh/identity.age</code>) is:</p>
+  <ul>
+    <li>Generated once at <code>dhd init</code></li>
+    <li>Encrypted with your master password</li>
+    <li><strong>Never</strong> stored in the vault</li>
+    <li><strong>Never</strong> transmitted anywhere</li>
+  </ul>
+
+  <Callout type="warning">
+    <strong>If you lose this key, your data cannot be recovered.</strong> Back it up.
+  </Callout>
+
+  <h2>Machine identity</h2>
+  <p>Each machine gets a stable UUID at <code>dhd init</code>. Hostnames are not used — they change across renames and MDM.</p>
+
+  <h2>Architecture</h2>
+  <CodeBlock code={`DaemonHound
+├── Namespace Resolver   → Derives namespace from git origin
+├── File Tracker         → Maps namespace + path + mode
+├── Secret Store         → Encrypted key-value with file refs
+├── Encryption Layer     → age (filippo.io/age)
+├── Sync Engine          → Diff, encrypt, push/pull, restore
+└── Git Backend          → Your own private Git repository`} lang="Architecture" />
+
+  <h2>Non-goals</h2>
+  <p>DaemonHound is <strong>not</strong>:</p>
+  <ul>
+    <li>An enterprise secret management platform</li>
+    <li>A team collaboration / RBAC tool</li>
+    <li>A secret leasing or rotation policy engine</li>
+    <li>A Kubernetes or cloud infrastructure tool</li>
+  </ul>
+</DocsLayout>

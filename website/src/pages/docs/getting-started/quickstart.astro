@@ -1,0 +1,85 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/CodeBlock.astro';
+import Callout from '../../../components/Callout.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart', active: true },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview' }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault' }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine' }]},
+];
+---
+
+<DocsLayout
+  title="Quickstart"
+  description="Track your first files, sync them across machines, and set up the daemon."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/getting-started/', label: 'Installation' }}
+  nextLink={{ href: '/docs/commands/', label: 'Commands' }}
+>
+  <h1>Quickstart</h1>
+  <p>Follow this guide to track your first files and sync them across machines. Prerequisite: <a href="/docs/getting-started/">DaemonHound installed</a>.</p>
+
+  <h2>1. Initialize DaemonHound</h2>
+  <p>Create a <strong>private Git repository</strong> on GitHub. This is your encrypted vault.</p>
+  <CodeBlock code={`dhd init --remote git@github.com:you/my-vault.git
+# Enter master password: ••••••••
+# Confirm master password: ••••••••`} />
+
+  <h2>2. Track files</h2>
+  <p>Navigate into any project with a Git remote:</p>
+  <CodeBlock code={`cd ~/projects/my-api
+dhd track .env.local
+# ✓ Tracking .env.local → github.com/you/my-api
+
+dhd track .env.test
+# ✓ Tracking .env.test → github.com/you/my-api`} />
+
+  <Callout type="note">
+    <strong>Files outside a repo?</strong> Use <code>dhd track ~/.gitconfig</code> (global namespace). Use <code>--mode backup</code> for machine-specific files.
+  </Callout>
+
+  <h2>3. Sync with the vault</h2>
+  <CodeBlock code={`dhd sync
+# ✓ Pushed 2 files to vault
+#   github.com/you/my-api: .env.local, .env.test`} />
+
+  <h2>4. Check status</h2>
+  <CodeBlock code={`dhd status
+# github.com/you/my-api
+#   .env.local    clean
+#   .env.test     dirty  (modified locally, not yet pushed)`} />
+
+  <h2>5. Set up a second machine</h2>
+  <p>On the first machine:</p>
+  <CodeBlock code={`dhd export-identity
+# → AGE-SECRET-KEY-1xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`} />
+  <p>On the second machine:</p>
+  <CodeBlock code={`dhd init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-1...
+dhd discover ~/projects
+# Scanning ~/projects (depth 4)...
+# github.com/you/my-api   2 tracked files  ✓ restored`} />
+  <p>No need to re-run <code>dhd track</code>. <code>dhd discover</code> restores everything in one step.</p>
+
+  <h2>6. Store a named secret</h2>
+  <CodeBlock code={`dhd secret set openai-key
+# Enter secret value: ••••••••
+# ✓ Secret stored
+
+dhd secret ref openai-key .env.local OPENAI_API_KEY
+# ✓ Mapped openai-key → OPENAI_API_KEY in .env.local`} />
+  <p>Rotate it once, every file updates. See <a href="/docs/secrets/">Managing Secrets</a>.</p>
+
+  <h2>What's next?</h2>
+  <ul>
+    <li><a href="/docs/daemon/">Set up the background daemon</a></li>
+    <li><a href="/docs/commands/">Explore the full CLI</a></li>
+    <li><a href="/docs/concepts/">Understand namespaces and vault layout</a></li>
+  </ul>
+</DocsLayout>

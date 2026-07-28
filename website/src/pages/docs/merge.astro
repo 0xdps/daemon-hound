@@ -1,0 +1,85 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/CodeBlock.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview' }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault' }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine', active: true }]},
+];
+---
+
+<DocsLayout
+  title="Merge & Conflicts"
+  description="Smart merge engine — semantic conflict resolution for .env, JSON, CSV, and TOML files."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/secrets/', label: 'Secrets' }}
+>
+  <h1>Smart Merge Engine</h1>
+  <p>When multiple machines push changes, Git may produce merge conflicts. DaemonHound understands file <em>content</em> — not just raw text.</p>
+
+  <h2>How it works</h2>
+  <ol>
+    <li>Engine identifies the file type</li>
+    <li>Selects the appropriate merge driver</li>
+    <li>Performs a <strong>3-way merge</strong> (base | local | remote)</li>
+    <li>If a <strong>true conflict</strong> remains (same key changed), flags for manual resolution</li>
+  </ol>
+
+  <h2>Merge drivers</h2>
+  <table>
+    <thead><tr><th>Driver</th><th>File types</th><th>Strategy</th></tr></thead>
+    <tbody>
+      <tr><td><strong>EnvDriver</strong></td><td><code>.env</code>, <code>.env.local</code></td><td>Key-value aware. Both sides modify same key = true conflict.</td></tr>
+      <tr><td><strong>JSONDriver</strong></td><td><code>.json</code></td><td>Structural merge at property level.</td></tr>
+      <tr><td><strong>CSVDriver</strong></td><td><code>.csv</code></td><td>Row-level merge.</td></tr>
+      <tr><td><strong>SecretDriver</strong></td><td>Secret TOML</td><td>Version-aware. Latest version wins.</td></tr>
+      <tr><td><strong>StateDriver</strong></td><td><code>state.toml.age</code></td><td>Vault state merge (highest priority).</td></tr>
+      <tr><td><strong>TextDriver</strong></td><td>Plaintext</td><td>Line-based fallback.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Example: .env merge</h2>
+  <p>Machine A adds <code>STRIPE_KEY</code>, Machine B rotates <code>API_KEY</code>:</p>
+  <CodeBlock code={`# Machine A added STRIPE_KEY
+DATABASE_URL=postgres://localhost/mydb
+REDIS_URL=redis://localhost:6379
+API_KEY=sk-old
+STRIPE_KEY=pk_test_a
+
+# Machine B rotated API_KEY
+DATABASE_URL=postgres://localhost/mydb
+REDIS_URL=redis://localhost:6379
+API_KEY=sk-new
+
+# Smart merged result:
+DATABASE_URL=postgres://localhost/mydb
+REDIS_URL=redis://localhost:6379
+API_KEY=sk-new
+STRIPE_KEY=pk_test_a`} lang="Merge" />
+  <p>Both changes apply cleanly — different keys. No manual intervention needed.</p>
+
+  <h2>Resolving conflicts</h2>
+  <h3>CLI</h3>
+  <CodeBlock code={`dhd conflicts list
+dhd conflicts show .env.local
+dhd conflicts resolve .env.local --strategy local
+dhd conflicts resolve .env.local --strategy remote
+dhd conflicts clear`} />
+
+  <h3>Web UI</h3>
+  <p>Run <code>dhd ui</code> — 3-way diff view with side-by-side comparison.</p>
+
+  <h3>Interactive TUI</h3>
+  <CodeBlock code="dhd merge resolve" />
+
+  <h2>Git integration</h2>
+  <CodeBlock code={`dhd git setup      # Configure merge drivers, diff, filters
+dhd git hook       # Install pre-commit, post-merge hooks`} />
+</DocsLayout>
