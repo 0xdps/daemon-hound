@@ -1,0 +1,21 @@
+.goreleaser.yaml
+  s_47784beab1fb8a::t_e5f54a8dc84508 102-103
+  s_47784beab1fb8a::t_536ff17e3d1c3a 63-67,69-70,72-76
+  s_47784beab1fb8a::t_16b221587b6826 122-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "72ceb6c63ed314fa2b78711f1e590727b0e452cf",
+  "prompts": {},
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
