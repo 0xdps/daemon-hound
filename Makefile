@@ -15,11 +15,11 @@ build:
 	PAGER=cat BAT_PAGER=cat go build -ldflags "$(LDFLAGS)" -o bin/dhd ./cmd/dhd
 
 .PHONY: build-macos
-build-macos: build-macos-icon
+build-macos:
 	@mkdir -p build/DaemonHound.app/Contents/{MacOS,Resources}
 	cp bin/dhd build/DaemonHound.app/Contents/MacOS/dhd
-	cp build/Info.plist build/DaemonHound.app/Contents/
-	cp build/AppIcon.icns build/DaemonHound.app/Contents/Resources/
+	cp macos/Info.plist build/DaemonHound.app/Contents/
+	cp macos/AppIcon.icns build/DaemonHound.app/Contents/Resources/
 	@if [ -n "$$APPLE_DEVELOPER_IDENTITY" ]; then \
 		codesign --force --deep --options runtime --sign "$$APPLE_DEVELOPER_IDENTITY" build/DaemonHound.app; \
 		echo "✓ Signed macOS app bundle with $$APPLE_DEVELOPER_IDENTITY"; \
@@ -38,20 +38,6 @@ launch-daemon: install-macos
 	@open ~/Applications/DaemonHound.app
 	@echo "✓ Daemon Hound launched"
 
-.PHONY: build-macos-icon
-build-macos-icon:
-	@mkdir -p build/AppIcon.iconset
-	@if [ ! -f build/AppIcon.icns ]; then \
-		magick images/logo-trans.png -resize 16x16 build/AppIcon.iconset/icon_16x16.png; \
-		magick images/logo-trans.png -resize 32x32 build/AppIcon.iconset/icon_32x32.png; \
-		magick images/logo-trans.png -resize 64x64 build/AppIcon.iconset/icon_64x64.png; \
-		magick images/logo-trans.png -resize 128x128 build/AppIcon.iconset/icon_128x128.png; \
-		magick images/logo-trans.png -resize 256x256 build/AppIcon.iconset/icon_256x256.png; \
-		magick images/logo-trans.png -resize 512x512 build/AppIcon.iconset/icon_512x512.png; \
-		magick images/logo-trans.png -resize 1024x1024 build/AppIcon.iconset/icon_1024x1024.png; \
-		iconutil -c icns build/AppIcon.iconset -o build/AppIcon.icns; \
-		echo "✓ App icon generated"; \
-	fi
 
 .PHONY: test
 test:

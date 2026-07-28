@@ -12,7 +12,6 @@ Thumbs.db
 /target/
 /dist/
 /build/
-!/build/Info.plist
 /bin/
 /obj/
 *.o

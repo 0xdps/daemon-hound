@@ -46,8 +46,6 @@ PLIST_BUDDY="/usr/libexec/PlistBuddy"
 mkdir -p "$BIN_DIR"
 rm -rf "$APP_DIR" "$STAGE_DIR" "$DMG_PATH"
 
-make build-macos-icon
-
 GOOS=darwin GOARCH="$ARCH" CGO_ENABLED=0 \
     go build \
     -ldflags "-s -w -X github.com/0xdps/daemon-hound/internal/cmd.version=$VERSION -X github.com/0xdps/daemon-hound/internal/cmd.commit=$COMMIT -X github.com/0xdps/daemon-hound/internal/cmd.date=$DATE" \
@@ -55,8 +53,8 @@ GOOS=darwin GOARCH="$ARCH" CGO_ENABLED=0 \
 
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources" "$STAGE_DIR"
 cp "$BIN_PATH" "$APP_DIR/Contents/MacOS/dhd"
-cp build/Info.plist "$APP_DIR/Contents/Info.plist"
-cp build/AppIcon.icns "$APP_DIR/Contents/Resources/AppIcon.icns"
+cp macos/Info.plist "$APP_DIR/Contents/Info.plist"
+cp macos/AppIcon.icns "$APP_DIR/Contents/Resources/AppIcon.icns"
 chmod +x "$APP_DIR/Contents/MacOS/dhd"
 
 "$PLIST_BUDDY" -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist"
