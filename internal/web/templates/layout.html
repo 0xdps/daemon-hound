@@ -558,8 +558,10 @@
 <aside id="sidebar">
   <!-- Brand -->
   <div style="padding: 1rem 1.25rem; border-bottom: 1px solid #1e1e24; display: flex; align-items: center; gap: 0.6rem;">
-    <img src="/static/logo.png" alt="DaemonHound" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
-    <span style="font-size:0.95rem;font-weight:700;color:#f3f4f6;letter-spacing:-0.01em;">DaemonHound</span>
+    <a href="/" hx-get="/" hx-target="#app-content" hx-swap="innerHTML" hx-push-url="true" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;">
+      <img src="/static/logo.png" alt="DaemonHound" style="width:28px;height:28px;border-radius:6px;object-fit:cover;">
+      <span style="font-size:0.95rem;font-weight:700;color:#f3f4f6;letter-spacing:-0.01em;">DaemonHound</span>
+    </a>
   </div>
 
   <!-- Navigation -->
