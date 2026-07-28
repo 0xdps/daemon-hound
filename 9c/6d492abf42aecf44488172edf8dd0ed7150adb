@@ -1,0 +1,31 @@
+internal/daemon/launchd.go
+  s_c56d97138a2591::t_94a9a24064e9b0 208-213
+  s_c56d97138a2591::t_3da06ab860e0b0 193-207
+  s_c56d97138a2591::t_51206966320f80 190-192
+  s_c56d97138a2591::t_5cd6fb8df6d5eb 313-317,319
+  s_c56d97138a2591::t_d95ca2b0391f43 184-189
+  s_c56d97138a2591::t_1d9a7473ad0d80 67-68,73-75,78-80,101
+internal/daemon/service.go
+  s_c56d97138a2591::t_0b0085618e5e95 76-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "9c6d492abf42aecf44488172edf8dd0ed7150adb",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c56d97138a2591": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d932fece-c396-44b9-8cff-99adea648a77",
+        "model": "anthropic/claude-sonnet-4"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
