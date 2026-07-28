@@ -1,0 +1,173 @@
+website/src/layouts/BaseLayout.astro
+  h_95aea6b4aa8772 59
+  s_17d1351871b0d4::t_add45a51b0b9aa 65
+internal/utils/utils_test.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/diff.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/machines.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+LICENSE
+  s_17d1351871b0d4::t_e3da04ac2d6891 1-659
+internal/cmd/secret.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/vault_ops.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_settings.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/storage/storage.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_status.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/discover.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/launchd.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/secret.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+.goreleaser.yaml
+  s_17d1351871b0d4::t_786306b7fad4eb 102,121,134
+internal/cmd/root.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/tracker/tracker_test.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/read.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/json.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/sync/sync.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/status.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/daemon.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_secrets.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+website/src/styles/global.css
+  s_17d1351871b0d4::t_96c3f12565802f 102-103
+internal/storage/storage_test.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_conflicts.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/utils/crypto.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/doctor.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/utils/utils.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/logout.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/export.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/git.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/runner.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/lock/lock.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/driver.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_dashboard.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/conflicts.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/clone.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/git/git.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/helpers.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/utils/crypto_test.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/server.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/conflicts/tui.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+README.md
+  s_17d1351871b0d4::t_e3da04ac2d6891 291
+internal/cmd/ui.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/logrotator.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/conflicts/conflicts.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/state.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/config/config_test.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+cmd/dhd/main.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/tracker/tracker.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_help.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/untrack.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/env.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_auth.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/sync.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/models/models.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/cleanup.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/service.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/windows.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/rekey.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/keychain/keychain.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/config/config.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/export_identity.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/output/output.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/filter.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/handler_files.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/audit/audit.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/text.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/track.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/merge.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/cmd/init.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/daemon/systemd.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/merge/csv.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+internal/web/util.go
+  s_17d1351871b0d4::t_093f9ac42c7dd3 1-15
+website/src/pages/index.astro
+  s_17d1351871b0d4::t_e3da04ac2d6891 14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "5a92cb867ccb6b0f1230eed9da8797d388fe75c7",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_17d1351871b0d4": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "256db9a8-a1c6-4877-8d2e-fbac541de3b9",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
