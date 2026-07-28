@@ -69,15 +69,14 @@ func (l *LaunchdManager) Install() error {
 		return err
 	}
 
-	// Ensure the app bundle exists so Activity Monitor shows "Daemon Hound"
-	// with the proper icon instead of just the raw binary name.
-	bundlePath, err := ensureAppBundle(exePath)
-	if err != nil {
-		// Non-fatal: fall back to the raw binary path.
-		fmt.Fprintf(os.Stderr, "Warning: could not create app bundle: %v\n", err)
-	} else if bundlePath != "" {
-		exePath = bundlePath
-	}
+	// NOTE: We intentionally do NOT use the app bundle for the background
+	// daemon. Launching through an .app bundle triggers macOS TCC privacy
+	// prompts (Desktop, Documents, Downloads, etc.) because the system
+	// treats app-bundled processes as interactive applications instead
+	// of background services. The raw binary avoids this behavior.
+	//
+	// The app bundle is still available for interactive use (web UI) via
+	// `make install-macos` or by running `open ~/Applications/DaemonHound.app`.
 
 	// Create the plist content
 	plistContent, err := l.generatePlist(exePath)
@@ -171,11 +170,6 @@ func (l *LaunchdManager) generatePlist(exePath string) (string, error) {
 	
 	<key>ProcessType</key>
 	<string>Background</string>
-	
-	<key>AssociatedBundleIdentifiers</key>
-	<array>
-		<string>` + appBundleID + `</string>
-	</array>
 	
 	<key>AbandonProcessGroup</key>
 	<true/>

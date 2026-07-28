@@ -176,6 +176,11 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	// Install daemon service for background syncing
 	sm := daemon.NewServiceManager()
+
+	// Remove any stale app bundle from a previous install that could trigger
+	// macOS TCC privacy prompts (Desktop, Documents, Downloads access).
+	_ = daemon.RemoveAppBundle()
+
 	if err := sm.Install(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to install daemon service: %v\n", err)
 		fmt.Fprintf(os.Stderr, "You can manually start syncing with: dhd sync\n")
