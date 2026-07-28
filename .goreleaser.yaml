@@ -60,20 +60,20 @@ signs:
     artifacts: checksum
     cmd: gpg
     args:
-      - "--batch"
-      - "--yes"
-      - "--pinentry-mode"
-      - "loopback"
-      - "--passphrase"
+      - --batch
+      - --yes
+      - --pinentry-mode
+      - loopback
+      - --passphrase
       - "{{ .Env.GPG_PASSPHRASE }}"
-      - "--armor"
-      - "--local-user"
+      - --armor
+      - --local-user
       - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
-    signature: "${artifact}.asc"
+      - --output
+      - ${signature}
+      - --detach-sign
+      - ${artifact}
+    signature: ${artifact}.asc
     output: true
 
 snapshot:
@@ -99,7 +99,8 @@ brews:
     directory: Formula
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
-    license: "AGPL-3.0" |
+    license: "AGPL-3.0"
+    test: |
       system "#{bin}/dhd", "--version"
     install: |
       bin.install "dhd"
@@ -118,7 +119,9 @@ scoops:
     directory: bucket
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
-    license: AGPL-3.0 ["git"]
+    license: "AGPL-3.0"
+    depends:
+      - git
     persist:
       - "data"
     shortcuts:
