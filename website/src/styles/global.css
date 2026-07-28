@@ -99,6 +99,8 @@ p + p { margin-top: 0.8rem; }
 .footer-right { display:flex; align-items:center; gap:1.5rem; }
 .footer-right a { font-size:0.82rem; color:var(--text-tertiary); }
 .footer-right a:hover { color:var(--text-primary); }
+.footer-sponsor { color: #ffdd57 !important; font-weight: 500; }
+.footer-sponsor:hover { color: #ffe680 !important; }
 
 /* Home */
 .page-home { padding-top:var(--nav-h); }

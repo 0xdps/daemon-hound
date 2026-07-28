@@ -99,8 +99,7 @@ brews:
     directory: Formula
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
-    license: "MIT"
-    test: |
+    license: "AGPL-3.0" |
       system "#{bin}/dhd", "--version"
     install: |
       bin.install "dhd"
@@ -119,8 +118,7 @@ scoops:
     directory: bucket
     homepage: "https://github.com/0xdps/daemon-hound"
     description: "Opinionated local config and secret management for developers"
-    license: MIT
-    depends: ["git"]
+    license: AGPL-3.0 ["git"]
     persist:
       - "data"
     shortcuts:
@@ -133,7 +131,7 @@ nfpms:
     homepage: "https://github.com/0xdps/daemon-hound"
     maintainer: "0xdps <0xdps@users.noreply.github.com>"
     description: "Opinionated local config and secret management for developers"
-    license: "MIT"
+    license: "AGPL-3.0"
     formats:
       - deb
       - rpm
