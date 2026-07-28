@@ -1,6 +1,14 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+const slideshowImages = Array.from({ length: 6 }, (_, i) => `/images/${i + 1}.png`);
 ---
+
+<!-- Preload slideshow images so the modal opens instantly -->
+<head>
+  {slideshowImages.map((image) => (
+    <link rel="preload" as="image" href={image} />
+  ))}
+</head>
 
 <BaseLayout
   title="Local-First Secret & Config Management"
@@ -111,7 +119,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         <button class="slideshow-nav slideshow-prev" id="slideshowPrev" aria-label="Previous">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <img id="slideshowImage" src="/1.png" alt="How DaemonHound works" class="slideshow-img" />
+        <img id="slideshowImage" src="/images/1.png" alt="How DaemonHound works" class="slideshow-img" />
         <button class="slideshow-nav slideshow-next" id="slideshowNext" aria-label="Next">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
