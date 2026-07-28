@@ -1,0 +1,56 @@
+internal/web/templates/layout.html
+  s_47784beab1fb8a::t_e223a6306714df 417-451
+  h_95aea6b4aa8772 247,253,654
+  s_47784beab1fb8a::t_7010cd137f29e2 456-485
+  s_47784beab1fb8a::t_d87be11b67d9c2 148-167,170-175
+  s_47784beab1fb8a::t_0cba0e7368bb0d 181,183,189,191-193,196,198,200,203-207
+  s_47784beab1fb8a::t_1e8abb0fed5899 57,59-72,75-85
+  s_47784beab1fb8a::t_ad91beacac73ed 390-406
+  s_47784beab1fb8a::t_c219161f92bdce 239-240,243-246,248-252,254-266
+  s_47784beab1fb8a::t_c5ba4c96438953 212-213,219,221,224-236
+  s_47784beab1fb8a::t_276e1a66a4aef9 267
+internal/web/templates/help.html
+  s_47784beab1fb8a::t_fe0a1b7b15665d 9-12
+  s_47784beab1fb8a::t_693594d80e3f27 47-50
+internal/web/templates/files/view.html
+  s_47784beab1fb8a::t_1073678a705c57 53
+internal/web/templates/files/list.html
+  s_47784beab1fb8a::t_fe204c7431c494 12,31-32
+  s_47784beab1fb8a::t_63ae3458f26247 78-81
+  s_47784beab1fb8a::t_05844b670b1304 72,76-77
+  s_47784beab1fb8a::t_2ddfbfb61e6c5c 8,10
+  s_47784beab1fb8a::t_0be900f4750612 13,28
+internal/web/templates/conflicts/list.html
+  s_47784beab1fb8a::t_ee4568337d6914 16-22,26
+internal/web/templates/settings.html
+  s_47784beab1fb8a::t_74b35a8e518fd6 41,44-70
+  s_47784beab1fb8a::t_d9f87065e7202d 8,10-15,19
+internal/web/templates/secrets/view.html
+  s_47784beab1fb8a::t_d026875f3c2df7 59-60
+  s_47784beab1fb8a::t_de1b33d120c5b2 98-99
+internal/web/templates/secrets/list.html
+  s_47784beab1fb8a::t_1a596275207f98 8,10-11,35-36,102,106-107
+  s_47784beab1fb8a::t_c64a6e1bd49630 12,27-32
+  s_47784beab1fb8a::t_b5d80211ba208f 108-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "09195af2f8407141f671e92725a720828579a016",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "anthropic/claude-sonnet-4"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
