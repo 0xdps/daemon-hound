@@ -1,0 +1,145 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+
+const sidebarGroups = [
+  { title: 'Getting Started', links: [
+    { href: '/docs/getting-started/', label: 'Installation' },
+    { href: '/docs/getting-started/quickstart/', label: 'Quickstart' },
+  ]},
+  { title: 'Commands', links: [{ href: '/docs/commands/', label: 'Overview' }]},
+  { title: 'Concepts', links: [{ href: '/docs/concepts/', label: 'Namespaces & Vault' }]},
+  { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
+  { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
+  { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine' }]},
+  { title: 'Philosophy', links: [{ href: '/docs/philosophy/', label: 'Why DaemonHound', active: true }]},
+];
+---
+
+<DocsLayout
+  title="Philosophy"
+  description="Why DaemonHound exists, why it's opinionated, and what it is not."
+  sidebarGroups={sidebarGroups}
+  prevLink={{ href: '/docs/merge/', label: 'Merge & Conflicts' }}
+>
+  <h1>Philosophy</h1>
+
+  <p>
+    DaemonHound is not another dotfile manager. It is a deliberate answer to a problem
+    every developer faces: <strong>your development environment should be reproducible,
+    portable, and versioned — just like your code.</strong>
+  </p>
+
+  <h2>Why DaemonHound exists</h2>
+
+  <p>Developers accumulate configuration everywhere:</p>
+
+  <ul>
+    <li><code>.env</code> files across dozens of repositories</li>
+    <li>SSH keys and Git configuration</li>
+    <li>Shell configuration and aliases</li>
+    <li>API tokens and service credentials</li>
+    <li>Local tool configuration files</li>
+    <li>Docker credentials and Kubernetes configs</li>
+    <li>IDE settings and editor preferences</li>
+  </ul>
+
+  <p>
+    Eventually you buy a new laptop, reinstall your OS, or switch between work and
+    personal machines — and spend hours, sometimes days, trying to recreate your
+    environment. The files are scattered. Some are secrets, some are configs, some
+    are machine-specific. Nothing ties them together.
+  </p>
+
+  <p>
+    DaemonHound exists because <strong>developers shouldn't think about moving
+    configuration between machines.</strong> They should simply declare what matters,
+    and DaemonHound should ensure it exists everywhere it belongs.
+  </p>
+
+  <h2>Why it is opinionated</h2>
+
+  <p>
+    The goal isn't to support every workflow. It's to define <strong>one good
+    workflow</strong> and optimize heavily around it. Those opinions are not
+    arbitrary — they eliminate dozens of configuration choices and make the
+    tool predictable.
+  </p>
+
+  <ul>
+    <li><strong>Local-first.</strong> Your secrets never leave your machine unless you choose to sync them.</li>
+    <li><strong>Git as the synchronization backend.</strong> You already know Git. It gives you version history, diffs, and a remote for free.</li>
+    <li><strong>Encryption by default.</strong> No opt-in. No checkbox. Everything sensitive is encrypted at rest with age.</li>
+    <li><strong>Namespace-based organization.</strong> Derived from Git remotes — no manual configuration, no fragile path strings.</li>
+    <li><strong>CLI-first.</strong> A single binary. No daemon required. No web dashboard required. The daemon and web UI are optional layers.</li>
+    <li><strong>No hosted SaaS.</strong> Your vault is your own private Git repo. No accounts. No subscriptions. No third-party servers.</li>
+    <li><strong>Explicit synchronization.</strong> Files are tracked because you intentionally declared them — not because the tool scanned your machine. No surprises.</li>
+  </ul>
+
+  <p>
+    A lot of developer tools become complex because they try to support every possible
+    workflow. If someone wants complete flexibility, they can already combine Git, GPG,
+    Syncthing, shell scripts, and a password manager. DaemonHound's value proposition is
+    that it removes all of that assembly work and replaces it with a coherent,
+    well-defined workflow.
+  </p>
+
+  <h2>Not a dotfile manager</h2>
+
+  <p>
+    Dotfile managers (like <code>chezmoi</code>, <code>yadm</code>, or <code>stow</code>)
+    are generic: they version files in a repo and symlink or copy them into place. They
+    don't understand what the files <em>are</em>.
+  </p>
+
+  <p>DaemonHound understands <strong>developer assets</strong>. It knows the difference between:</p>
+
+  <ul>
+    <li><strong>Secrets</strong> — API keys, tokens, credentials. Encrypted, versioned, rotatable.</li>
+    <li><strong>Shared configuration</strong> — <code>.env.local</code>, <code>.gitconfig</code>. Synced across machines.</li>
+    <li><strong>Machine-specific files</strong> — shell configs, macOS preferences. Backed up per-machine, never merged.</li>
+    <li><strong>Generated files</strong> — build artifacts. Ignored entirely.</li>
+  </ul>
+
+  <p>
+    That semantic understanding is what makes DaemonHound valuable. It doesn't just move
+    files — it treats different categories of files differently, with the right
+    encryption, sync behavior, and lifecycle for each.
+  </p>
+
+  <h2>What it is <em>not</em></h2>
+
+  <p>DaemonHound isn't trying to replace:</p>
+
+  <ul>
+    <li>1Password, Bitwarden, or other password managers</li>
+    <li>Dropbox, iCloud Drive, or Syncthing</li>
+    <li>Ansible, Chef, or configuration management tools</li>
+    <li>Kubernetes Secrets, Vault, or Doppler</li>
+  </ul>
+
+  <p>
+    Those are generic synchronization or secret storage tools. DaemonHound is specific
+    to the <strong>developer machine</strong> — the constellation of repos, configs,
+    and secrets that make up your working environment.
+  </p>
+
+  <h2>Optimizing for developer experience</h2>
+
+  <p>
+    Being opinionated lets DaemonHound build features that would otherwise require
+    extensive configuration:
+  </p>
+
+  <ul>
+    <li><strong>Zero-configuration onboarding.</strong> <code>dhd init</code> and you're ready. No config files to write.</li>
+    <li><strong>Predictable vault layout.</strong> Every DaemonHound vault has the same structure. You can inspect it with <code>git</code>.</li>
+    <li><strong>Automatic encryption.</strong> You never choose an encryption scheme. age is always used, always on.</li>
+    <li><strong>Standardized namespaces.</strong> Derived from your Git remote. No naming conventions to invent.</li>
+    <li><strong>Deterministic sync.</strong> You know exactly what will happen when you run <code>dhd sync</code>.</li>
+  </ul>
+
+  <p>
+    In other words, DaemonHound optimizes for <strong>developer experience over
+    configurability</strong>. Every opinion removes a decision you don't need to make.
+  </p>
+</DocsLayout>

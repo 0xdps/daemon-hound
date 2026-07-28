@@ -12,6 +12,7 @@ const sidebarGroups = [
   { title: 'Daemon', links: [{ href: '/docs/daemon/', label: 'Setup & Management' }]},
   { title: 'Secrets', links: [{ href: '/docs/secrets/', label: 'Managing Secrets' }]},
   { title: 'Merge & Conflicts', links: [{ href: '/docs/merge/', label: 'Smart Merge Engine', active: true }]},
+  { title: 'Philosophy', links: [{ href: '/docs/philosophy/', label: 'Why DaemonHound' }]},
 ];
 ---
 
@@ -20,6 +21,7 @@ const sidebarGroups = [
   description="Smart merge engine — semantic conflict resolution for .env, JSON, CSV, and TOML files."
   sidebarGroups={sidebarGroups}
   prevLink={{ href: '/docs/secrets/', label: 'Secrets' }}
+  nextLink={{ href: '/docs/philosophy/', label: 'Philosophy' }}
 >
   <h1>Smart Merge Engine</h1>
   <p>When multiple machines push changes, Git may produce merge conflicts. DaemonHound understands file <em>content</em> — not just raw text.</p>
