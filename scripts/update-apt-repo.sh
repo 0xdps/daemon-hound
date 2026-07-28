@@ -214,7 +214,7 @@ if [ -n "$GPG_KEY" ]; then
     # Import the key into a temporary keyring
     GNUPGHOME=$(mktemp -d)
     export GNUPGHOME
-    echo "$GPG_KEY" | gpg --batch --import --no-tty
+    echo "$GPG_KEY" | gpg --batch --import --no-tty --pinentry-mode loopback
     GPG_KEY_ID=$(gpg --list-secret-keys --with-colons 2>/dev/null | grep '^sec:' | cut -d: -f5 | head -1)
 
     if [ -z "$GPG_KEY_ID" ]; then
@@ -226,16 +226,16 @@ if [ -n "$GPG_KEY" ]; then
     echo "  Signing individual .deb packages..."
     for deb_path in "${OUT_DIR}/${APT_DIR}/pool/${COMPONENT}/"*.deb; do
         [ -f "$deb_path" ] || continue
-        gpg --batch --yes --no-tty --armor \
+        gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
             --detach-sign --output "${deb_path}.sig" "$deb_path"
     done
 
     # Sign the Release file (detached signature)
-    gpg --batch --yes --no-tty --armor \
+    gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
         --detach-sign --output "${RELEASE_FILE}.gpg" "$RELEASE_FILE"
 
     # Generate InRelease (clearsigned inline — what modern APT checks first)
-    gpg --batch --yes --no-tty --armor \
+    gpg --batch --yes --no-tty --pinentry-mode loopback --armor \
         --clearsign --output "${OUT_DIR}/${APT_DIR}/dists/${DIST}/InRelease" "$RELEASE_FILE"
 
     echo "  Signed by GPG key: ${GPG_KEY_ID}"
@@ -244,7 +244,7 @@ if [ -n "$GPG_KEY" ]; then
     echo "  - InRelease (clearsigned)"
 
     # Export public key for users to install
-    gpg --batch --yes --no-tty --armor --export "$GPG_KEY_ID" \
+    gpg --batch --yes --no-tty --pinentry-mode loopback --armor --export "$GPG_KEY_ID" \
         > "${OUT_DIR}/${APT_DIR}/daemon-hound-archive-keyring.gpg"
 
     # Clean up temporary keyring (don't leave secrets on the runner)
