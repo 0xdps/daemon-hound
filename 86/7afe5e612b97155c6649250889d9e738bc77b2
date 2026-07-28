@@ -1,0 +1,25 @@
+Makefile
+  s_47784beab1fb8a::t_cfdb1033daa5e6 18,22
+  s_47784beab1fb8a::t_50609c081616da 21
+macos/Info.plist
+  s_47784beab1fb8a::t_bbc498306bbbb9 1-36
+scripts/build-macos-release.sh
+  s_47784beab1fb8a::t_50609c081616da 56
+  s_47784beab1fb8a::t_de5cb82a49f697 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "867afe5e612b97155c6649250889d9e738bc77b2",
+  "prompts": {},
+  "sessions": {
+    "s_47784beab1fb8a": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "2a5fa69c-41b3-43f3-82a1-9696bdc8c71f",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
