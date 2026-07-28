@@ -1,6 +1,6 @@
 #!/bin/sh
 # DaemonHound installer script
-# Usage: curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+# Usage: curl -fsSL https://daemonhound.dev/install.sh | sh
 
 set -e
 

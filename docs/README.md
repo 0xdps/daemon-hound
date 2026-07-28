@@ -140,7 +140,7 @@ make tag TAG=v1.1.0
 # ✓ Updates Homebrew/Scoop (if GH_PAT set)
 
 # Users can then install from the release channels in ../INSTALL.md
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+curl -fsSL https://daemonhound.dev/install.sh | sh
 brew install daemon-hound
 scoop install daemon-hound
 docker pull ghcr.io/0xdps/daemon-hound:latest

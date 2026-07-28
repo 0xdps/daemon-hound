@@ -32,7 +32,7 @@ BD00 8457 A5BB 8821 5C87  FB8F 1C32 F11A DB0D 7EF8
 This is the quickest path on most Linux machines. It detects your OS and CPU architecture, downloads the latest GitHub Release archive, and installs `dhd` to `/usr/local/bin` by default.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+curl -fsSL https://daemonhound.dev/install.sh | sh
 dhd version
 ```
 
@@ -40,7 +40,7 @@ Install to a user-writable directory instead:
 
 ```bash
 mkdir -p ~/.local/bin
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | INSTALL_DIR=$HOME/.local/bin sh
+curl -fsSL https://daemonhound.dev/install.sh | INSTALL_DIR=$HOME/.local/bin sh
 dhd version
 ```
 
@@ -133,7 +133,7 @@ dhd version
 ### Install Script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+curl -fsSL https://daemonhound.dev/install.sh | sh
 dhd version
 ```
 

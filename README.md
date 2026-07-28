@@ -38,7 +38,7 @@ Most existing tools are either too complex (Vault, Doppler), require a SaaS subs
 Install the latest release with the install script:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/0xdps/daemon-hound/trunk/install.sh | sh
+curl -fsSL https://daemonhound.dev/install.sh | sh
 dhd version
 ```
 
