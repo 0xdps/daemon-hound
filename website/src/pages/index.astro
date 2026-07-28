@@ -3,10 +3,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 const slideshowImages = Array.from({ length: 6 }, (_, i) => `/images/${i + 1}.png`);
 ---
 
-<!-- Preload slideshow images so the modal opens instantly -->
+<!-- Prefetch slideshow images for instant modal open -->
 <head>
   {slideshowImages.map((image) => (
-    <link rel="preload" as="image" href={image} />
+    <link rel="prefetch" as="image" href={image} />
   ))}
 </head>
 
