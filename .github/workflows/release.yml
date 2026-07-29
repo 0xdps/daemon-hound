@@ -111,7 +111,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: macos-*
-          path: dist
+          path: macos-artifacts
           merge-multiple: true
 
       - name: Login to GitHub Container Registry
@@ -141,13 +141,37 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           TAG="${GITHUB_REF_NAME}"
 
-          # Compute SHA256s locally from dist/ (artifacts are already here)
+          # Debug: show what's in each directory
+          echo "=== Contents of dist/ (GoReleaser outputs) ==="
+          ls -la dist/ || true
+          echo "=== Contents of macos-artifacts/ (DMGs) ==="
+          ls -la macos-artifacts/ || true
+          echo "=== DMG files ==="
+          find macos-artifacts -name "*.dmg" -type f 2>/dev/null || true
+
+          # Find DMG files in macos-artifacts (download-artifact may place them in subdirectories)
+          X86_DMG=$(find macos-artifacts -name "daemon-hound_${VERSION}_macOS_x86_64.dmg" -type f | head -1)
+          ARM_DMG=$(find macos-artifacts -name "daemon-hound_${VERSION}_macOS_arm64.dmg" -type f | head -1)
+
+          if [[ -z "$X86_DMG" || -z "$ARM_DMG" ]]; then
+            echo "ERROR: Could not find DMG files in macos-artifacts/"
+            echo "Searched for:"
+            echo "  daemon-hound_${VERSION}_macOS_x86_64.dmg"
+            echo "  daemon-hound_${VERSION}_macOS_arm64.dmg"
+            exit 1
+          fi
+
+          # Compute SHA256s locally
           DARWIN_X86_TGZ_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_Darwin_x86_64.tar.gz" | awk '{print $1}')
           DARWIN_ARM_TGZ_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_Darwin_arm64.tar.gz" | awk '{print $1}')
           LINUX_X86_TGZ_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_Linux_x86_64.tar.gz" | awk '{print $1}')
           LINUX_ARM_TGZ_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_Linux_arm64.tar.gz" | awk '{print $1}')
-          DARWIN_X86_DMG_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_macOS_x86_64.dmg" | awk '{print $1}')
-          DARWIN_ARM_DMG_SHA=$(shasum -a 256 "dist/daemon-hound_${VERSION}_macOS_arm64.dmg" | awk '{print $1}')
+          DARWIN_X86_DMG_SHA=$(shasum -a 256 "$X86_DMG" | awk '{print $1}')
+          DARWIN_ARM_DMG_SHA=$(shasum -a 256 "$ARM_DMG" | awk '{print $1}')
+
+          echo "SHA256s computed successfully"
+          echo "x86_64 DMG: $DARWIN_X86_DMG_SHA"
+          echo "arm64 DMG:  $DARWIN_ARM_DMG_SHA"
 
           # Generate the formula
           RELEASE_URL="https://github.com/0xdps/daemon-hound/releases/download/${TAG}"
