@@ -1,0 +1,24 @@
+scripts/generate-homebrew-formula.sh
+  s_cbc643aee56405::t_2d6422ec11f211 1-142
+.goreleaser.yaml
+  s_cbc643aee56405::t_694191e9ca7136 112-116
+  s_cbc643aee56405::t_c831baff0f15ca 205-207
+.github/workflows/release.yml
+  s_cbc643aee56405::t_477e41a282bb29 135-162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "8d90e73df3370d8fcfdb290a16e66e5a3e573dc3",
+  "prompts": {},
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
