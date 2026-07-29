@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+      DaemonHound is a background file-sync daemon. These entitlements are
+      required for the Go runtime to function correctly under the Hardened
+      Runtime. They do NOT grant sandbox capabilities or trigger TCC prompts.
+    -->
+
+    <!-- Go runtime: goroutine scheduler uses writable+executable memory -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+
+    <!-- Go runtime: dynamic code generation for goroutine stacks -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+
+    <!-- Go binaries are statically linked; no external dylibs to validate -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>

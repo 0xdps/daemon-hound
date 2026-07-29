@@ -60,7 +60,10 @@ chmod +x "$APP_DIR/Contents/MacOS/dhd"
 "$PLIST_BUDDY" -c "Set :CFBundleShortVersionString $VERSION" "$APP_DIR/Contents/Info.plist"
 "$PLIST_BUDDY" -c "Set :CFBundleVersion $VERSION" "$APP_DIR/Contents/Info.plist"
 
-codesign --force --deep --options runtime --timestamp --keychain "$KEYCHAIN_PATH" --sign "$APPLE_DEVELOPER_IDENTITY" "$APP_DIR"
+# Sign the app bundle with Hardened Runtime + entitlements
+codesign --force --deep --options runtime --timestamp \
+    --entitlements "$ROOT_DIR/macos/DaemonHound.entitlements" \
+    --keychain "$KEYCHAIN_PATH" --sign "$APPLE_DEVELOPER_IDENTITY" "$APP_DIR"
 codesign --verify --deep --strict --verbose=2 "$APP_DIR"
 
 cp -R "$APP_DIR" "$STAGE_DIR/"

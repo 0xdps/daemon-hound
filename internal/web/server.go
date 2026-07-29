@@ -78,7 +78,7 @@ func (s *Server) ListenAndServe(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("no free port: %w", err)
 	}
 	s.port = ln.Addr().(*net.TCPAddr).Port
-	url := fmt.Sprintf("http://localhost:%d", s.port)
+	url := fmt.Sprintf("http://127.0.0.1:%d", s.port)
 
 	srv := &http.Server{Handler: s.mux}
 	go func() {
@@ -490,7 +490,7 @@ var templateFuncs = template.FuncMap{
 
 func findFreePort(from, to int) (net.Listener, error) {
 	for p := from; p <= to; p++ {
-		ln, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", p))
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
 		if err == nil {
 			return ln, nil
 		}
