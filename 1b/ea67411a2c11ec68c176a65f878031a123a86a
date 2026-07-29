@@ -1,0 +1,16 @@
+website/public/main.js
+  h_95aea6b4aa8772 32
+website/src/layouts/BaseLayout.astro
+  h_95aea6b4aa8772 36-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "1bea67411a2c11ec68c176a65f878031a123a86a",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
