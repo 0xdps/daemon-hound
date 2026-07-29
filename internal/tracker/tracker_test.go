@@ -156,6 +156,7 @@ func TestTrackerRestore(t *testing.T) {
 
 func TestTrackerRestoreGlobal(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
 	identity, err := storage.GenerateIdentity()
 	if err != nil {
 		t.Fatalf("GenerateIdentity failed: %v", err)
@@ -171,11 +172,11 @@ func TestTrackerRestoreGlobal(t *testing.T) {
 	// Store a global file
 	file := models.TrackedFile{
 		Namespace: "global",
-		RelPath:   ".zshrc",
+		RelPath:   ".my__config",
 		Mode:      models.ModeBackup,
 		MachineID: "test-machine",
 	}
-	plaintext := []byte("alias ll='ls -la'")
+	plaintext := []byte("setting=value")
 	if _, err := vault.StoreFile(file, plaintext); err != nil {
 		t.Fatalf("StoreFile failed: %v", err)
 	}
@@ -279,13 +280,14 @@ func TestTrackerStatusNew(t *testing.T) {
 
 func TestTrackerResolveKeyGlobal(t *testing.T) {
 	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
 	identity, _ := storage.GenerateIdentity()
 	vault := storage.NewVault(tmpDir, identity)
 	cfg := &mockConfig{machineID: "m", bindings: map[string]string{}}
 	tr := NewTracker(vault, cfg)
 
 	home, _ := os.UserHomeDir()
-	testFile := filepath.Join(home, ".zshrc")
+	testFile := filepath.Join(home, ".myconfig")
 
 	ns, rel, err := tr.ResolveKey(testFile)
 	if err != nil {
@@ -294,7 +296,7 @@ func TestTrackerResolveKeyGlobal(t *testing.T) {
 	if ns != "global" {
 		t.Errorf("namespace = %q, want global", ns)
 	}
-	if rel != ".zshrc" {
-		t.Errorf("relPath = %q, want .zshrc", rel)
+	if rel != ".myconfig" {
+		t.Errorf("relPath = %q, want .myconfig", rel)
 	}
 }
