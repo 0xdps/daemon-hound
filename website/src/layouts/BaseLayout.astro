@@ -28,7 +28,9 @@ const { title, description, activeNav } = Astro.props;
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <ClientRouter />
-  <script defer src="https://assets.0xlabs.space/anately.js" data-website-id="0d650c46-ae93-4c72-b9bf-35a039bd9eed" data-host-url="https://analytics.0xlabs.space"></script>
+  {import.meta.env.PROD && (
+    <script defer src="https://assets.0xlabs.space/anately.js" data-website-id="0d650c46-ae93-4c72-b9bf-35a039bd9eed" data-host-url="https://analytics.0xlabs.space"></script>
+  )}
 </head>
 <body>
   <nav class="nav" data-astro-transition-persist="nav">
