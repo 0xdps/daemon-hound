@@ -1,0 +1,41 @@
+website/src/pages/docs/getting-started/index.astro
+  s_cbc643aee56405::t_e6fc01a046d1b5 44-49
+docs/INSTALLATION_GUIDE.md
+  s_cbc643aee56405::t_1493beed6733bb 70-81,88-89,91,101,110
+install.sh
+  s_cbc643aee56405::t_e3838a95a6bba6 37-49
+.github/workflows/release.yml
+  s_cbc643aee56405::t_9378b0618e58ba 243-252,261-262,281-304,308,310,312,318-319
+README.md
+  s_cbc643aee56405::t_256ccdc613223d 45
+website/src/pages/index.astro
+  s_cbc643aee56405::t_731eb1fed1614a 62-63
+scripts/generate-homebrew-formula.sh
+  s_cbc643aee56405::t_5b9605900a54e4 131-142,151-152
+internal/daemon/service.go
+  s_cbc643aee56405::t_ac4ae8e8eeb790 88-91,96-113
+INSTALL.md
+  s_cbc643aee56405::t_bf84ecf4e0b9de 125-141,151
+  s_cbc643aee56405::t_bfc15c52ebef6d 152
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "70732562c17e685e618574659942868ad3b2c7df",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
