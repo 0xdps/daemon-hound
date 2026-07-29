@@ -1,0 +1,25 @@
+website/public/main.js
+  s_c43f01914c34d8::t_eb04dbba22552e 49-80
+  s_c43f01914c34d8::t_788cf724f69e33 106-112
+website/src/styles/global.css
+  s_c43f01914c34d8::t_f5472c81475f73 116-143
+website/src/pages/index.astro
+  s_c43f01914c34d8::t_b66eb10fa032a4 44-87
+  s_c43f01914c34d8::t_7293009d5e58c0 89-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "fbac768f29d742ca88110b59daa7ed3f7c51068f",
+  "prompts": {},
+  "sessions": {
+    "s_c43f01914c34d8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "90c523e5-29bf-4ed6-a23a-f93ac6ddcb48",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
