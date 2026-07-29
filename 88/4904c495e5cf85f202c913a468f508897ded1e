@@ -1,0 +1,26 @@
+internal/tracker/tracker_test.go
+  h_95aea6b4aa8772 175
+  s_cbc643aee56405::t_e49e323b9048f3 179,290,299-300
+  s_cbc643aee56405::t_ac89ddb9c24ed7 159,283
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "884904c495e5cf85f202c913a468f508897ded1e",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
