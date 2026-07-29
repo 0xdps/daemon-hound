@@ -1,0 +1,21 @@
+.github/workflows/release.yml
+  s_cbc643aee56405::t_da433940201ecc 144-245
+scripts/generate-homebrew-formula.sh
+  s_cbc643aee56405::t_e96ab057424f2c 26,29-44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "53d6291b76014c8a3fae54086465fd9180a6c2d3",
+  "prompts": {},
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
