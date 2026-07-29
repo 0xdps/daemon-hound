@@ -87,8 +87,9 @@ func GetDaemonPath() (string, error) {
 // bundle, or an empty string if the bundle is not installed.
 // It checks the following locations in order:
 //  1. ~/Applications/DaemonHound.app (user-installed DMG or manual)
-//  2. /opt/homebrew/opt/daemon-hound/DaemonHound.app (Homebrew on Apple Silicon)
-//  3. /usr/local/opt/daemon-hound/DaemonHound.app (Homebrew on Intel)
+//  2. /Applications/DaemonHound.app (Homebrew Cask or system-wide install)
+//  3. /opt/homebrew/opt/daemon-hound/DaemonHound.app (Homebrew Formula on Apple Silicon)
+//  4. /usr/local/opt/daemon-hound/DaemonHound.app (Homebrew Formula on Intel)
 func GetAppBundlePath() string {
 	if runtime.GOOS != "darwin" {
 		return ""
@@ -101,10 +102,13 @@ func GetAppBundlePath() string {
 		candidates = append(candidates, filepath.Join(home, "Applications", "DaemonHound.app", "Contents", "MacOS", "dhd"))
 	}
 
-	// 2. Homebrew on Apple Silicon
+	// 2. System Applications folder (Homebrew Cask, DMG drag-install)
+	candidates = append(candidates, "/Applications/DaemonHound.app/Contents/MacOS/dhd")
+
+	// 3. Homebrew Formula on Apple Silicon
 	candidates = append(candidates, "/opt/homebrew/opt/daemon-hound/DaemonHound.app/Contents/MacOS/dhd")
 
-	// 3. Homebrew on Intel
+	// 4. Homebrew Formula on Intel
 	candidates = append(candidates, "/usr/local/opt/daemon-hound/DaemonHound.app/Contents/MacOS/dhd")
 
 	for _, bundleExe := range candidates {
