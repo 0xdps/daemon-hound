@@ -1,0 +1,24 @@
+website/src/layouts/BaseLayout.astro
+  s_c43f01914c34d8::t_8786cd5675f1c1 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "e01abee5c7c712bbd95e6394eed47c579ffa6445",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_c43f01914c34d8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "90c523e5-29bf-4ed6-a23a-f93ac6ddcb48",
+        "model": "deepseek/deepseek-v4-pro"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
