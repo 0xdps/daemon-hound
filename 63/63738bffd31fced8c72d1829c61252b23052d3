@@ -1,0 +1,25 @@
+internal/daemon/service.go
+  s_cbc643aee56405::t_0424ffba6b265b 90-92
+  s_cbc643aee56405::t_544b5cf9ee2a8b 105-108,111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "6363738bffd31fced8c72d1829c61252b23052d3",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
