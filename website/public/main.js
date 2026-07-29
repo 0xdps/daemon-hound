@@ -46,6 +46,38 @@ function initSlideshow() {
   });
 }
 
+function initInstallTabs() {
+  const tabs = document.querySelectorAll('.install-tab');
+  const panels = document.querySelectorAll('.install-panel');
+  if (!tabs.length || !panels.length) return;
+
+  function activate(os) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.os === os));
+    panels.forEach(p => p.classList.toggle('active', p.dataset.os === os));
+  }
+
+  // Detect OS from navigator.userAgentData (modern) or userAgent (fallback)
+  let detected = 'linux'; // default
+
+  if (navigator.userAgentData?.platform) {
+    const p = navigator.userAgentData.platform.toLowerCase();
+    if (p.includes('mac')) detected = 'macos';
+    else if (p.includes('win')) detected = 'windows';
+    else detected = 'linux';
+  } else {
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('mac')) detected = 'macos';
+    else if (ua.includes('win')) detected = 'windows';
+    else detected = 'linux';
+  }
+
+  activate(detected);
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => activate(tab.dataset.os));
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
 
   const toggle = document.querySelector('.mobile-toggle');
@@ -71,6 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSlideshow();
 
-  // Re-init slideshow after Astro SPA navigations
-  document.addEventListener('astro:after-swap', initSlideshow);
+  // Re-init after Astro SPA navigations
+  document.addEventListener('astro:after-swap', () => {
+    initSlideshow();
+    initInstallTabs();
+  });
+
+  initInstallTabs();
 });

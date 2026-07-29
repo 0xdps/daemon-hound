@@ -41,13 +41,54 @@ const slideshowImages = Array.from({ length: 6 }, (_, i) => `/images/${i + 1}.pn
             See how it works
           </button>
         </div>
-        <div class="hero-install" style="border-radius:var(--radius-lg);">
-          <span class="install-cmd">curl -fsSL https://daemonhound.dev/install.sh | sh</span>
-          <button style="flex-shrink:0;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 1.2rem;background:var(--accent);color:#000;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);" data-copy="curl -fsSL https://daemonhound.dev/install.sh | sh">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-            Copy
-          </button>
+        <div class="hero-install-widget">
+          <div class="install-tabs">
+            <button class="install-tab" data-os="macos" aria-label="macOS">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.56C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.29-.02 2.5.87 3.29.87.78 0 2.25-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              macOS
+            </button>
+            <button class="install-tab" data-os="linux" aria-label="Linux">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.23-.494 3.011-.91 4.286-.283.834-.662 1.527-.493 1.72.231.265 1.014-.505 1.487-.82.396-.26 1.67-.417 1.958-.347.396.096.66.59.528 1.005-.132.406-.396.534-.528.928-.132.402-.255 1.009-.189 1.22.066.22.44.061.88-.076.44-.135.946-.04 1.026.1.08.128-.163.515-.26.875-.1.36.025.775.306.93.277.156.723.036 1.03-.05.307-.086.77-.082.943 0 .18.074.2.361.006.643-.194.275-.423.602-.366.868.057.272.557.486.988.438.433-.05 1.014-.65 1.38-1.05.355-.43.778-.258.897.02.123.295-.048.847-.29 1.22-.24.37-.203.674.08.674.284 0 .842-.385 1.112-.73.272-.347.61-.316.803-.114.194.204.053.643-.283.958-.338.316-.89.695-1.04.89-.144.19-.046.304.248.304.293 0 .594-.18.975-.514.383-.337.697-.364.85-.228.15.136.009.495-.322.82s-.952.7-1.15.88c-.195.18-.272.389.33.22.598-.168 1.3-.547 1.78-.797.334-.174.368.027.157.255-.293.315-1.11 1.208-2.146 2.462-.408.494-1.01 1.14-.95 2.07.06.85-1.83 2.28-2.6 2.28H9.06c-.14 0-.282-.048-.282-.048s-.115.046-.115.07-.528.024-.528-.024c-.37-.047-.618-.375-.618-.61V18.88c-.34-.118-.627-.284-.762-.462-.14-.182.02-.508.214-.73.195-.22.513-.383.668-.536.155-.143.284-.357.217-.453-.07-.107-.518-.072-.84.058-.324.13-.845.178-1.08.036-.234-.13-.073-.454.11-.682.184-.228.49-.39.63-.488.14-.098.167-.28.047-.354-.12-.075-.44-.025-.73.11-.287.136-.735.13-.753-.035-.018-.156.22-.445.516-.68.3-.234.533-.486.54-.66.007-.176-.106-.228-.275-.15-.166.08-.644.327-.902.247-.256-.08-.33-.404-.136-.66.19-.254.608-.45.867-.55.258-.1.438-.28.33-.427-.216-.306-1.686-.46-2.867.59-1.045.93-1.75 2.3-1.75 3.12 0 .95.19 1.32.5 1.58.09.08.27.13.4.13.173 0 .283-.162.526-.66.32-.654.704-1.067.893-1.067s.26.18.26.413c0 .26-.275.832-.498 1.215-.222.384-.327.657-.173.735.15.075.56.006.924-.158.36-.165.698-.416.75-.558.05-.14.18-.33.29-.418.19-.148.24.043.14.403-.155.558-.698 1.267-.95 1.54-.254.268-.235.468.04.54.275.075.813-.15 1.184-.47l.01-.006c.372-.32.83-.693 1.02-.847.192-.153.215-.09.118.186-.097.278-.57.846-1.048 1.267z"/></svg>
+              Linux
+            </button>
+            <button class="install-tab" data-os="windows" aria-label="Windows">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M0 3.449L9.75 2.1v9.45H0V3.449zm0 16.902L9.75 21.9v-9.45H0v9.45zM10.8 2.05L24 0v11.45H10.8V2.05zm0 20.1L24 24V12.55H10.8V22.15z"/></svg>
+              Windows
+            </button>
+          </div>
+          <div class="install-panels">
+            <div class="install-panel active" data-os="macos">
+              <div class="hero-install">
+                <span class="install-cmd">brew install 0xdps/tap/daemon-hound</span>
+                <button style="flex-shrink:0;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 1.2rem;background:var(--accent);color:#000;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);" data-copy="brew install 0xdps/tap/daemon-hound">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div class="install-panel" data-os="linux">
+              <div class="hero-install">
+                <span class="install-cmd">curl -fsSL https://daemonhound.dev/apt-repo.sh | sudo bash && sudo apt install daemon-hound</span>
+                <button style="flex-shrink:0;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 1.2rem;background:var(--accent);color:#000;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);" data-copy="curl -fsSL https://daemonhound.dev/apt-repo.sh | sudo bash && sudo apt install daemon-hound">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div class="install-panel" data-os="windows">
+              <div class="hero-install">
+                <span class="install-cmd">scoop bucket add 0xdps https://github.com/0xdps/scoop-bucket && scoop install daemon-hound</span>
+                <button style="flex-shrink:0;display:flex;align-items:center;gap:0.35rem;padding:0.65rem 1.2rem;background:var(--accent);color:#000;border:none;font-weight:600;font-size:0.82rem;cursor:pointer;font-family:var(--font-sans);" data-copy="scoop bucket add 0xdps https://github.com/0xdps/scoop-bucket && scoop install daemon-hound">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+        <p style="text-align:center;font-size:0.8rem;color:var(--text-tertiary);margin-top:0.75rem;">
+          Or <a href="/docs/getting-started/">view all install options</a>
+        </p>
       </div>
     </section>
 

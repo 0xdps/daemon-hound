@@ -113,6 +113,34 @@ p + p { margin-top: 0.8rem; }
 .hero-actions { display:flex; align-items:center; justify-content:center; gap:0.85rem; margin-bottom:3rem; flex-wrap:wrap; }
 .hero-install { max-width:540px; margin:0 auto; background:var(--bg-code); border:1px solid var(--border); border-radius:var(--radius-lg); display:flex; align-items:center; overflow:hidden; }
 .install-cmd { flex:1; padding:0.8rem 1.2rem; font-size:0.84rem; font-family:var(--font-mono); color:var(--text-primary); overflow-x:auto; white-space:nowrap; }
+
+/* OS tabs in hero install widget */
+.hero-install-widget { max-width:540px; margin:0 auto; }
+
+.install-tabs {
+  display: flex; justify-content: center; gap: 0;
+  margin-bottom: 0; background: var(--bg-code);
+  border: 1px solid var(--border); border-bottom: none;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow: hidden;
+}
+
+.install-tab {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 0.4rem; padding: 0.5rem 0.6rem; background: none; border: none;
+  color: var(--text-tertiary); font-size: 0.78rem; font-weight: 500;
+  font-family: var(--font-sans); cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.install-tab:hover { color: var(--text-secondary); }
+.install-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.install-tab svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+.install-panels { border-radius: 0 0 var(--radius-lg) var(--radius-lg); overflow: hidden; }
+.install-panel { display: none; }
+.install-panel.active { display: block; }
+.install-panel .hero-install { border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
 .features-strip { padding:4rem 0; background:var(--bg-raised); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
 .features-strip-inner { max-width:var(--max-w); margin:0 auto; padding:0 1.5rem; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:2.5rem; }
 .fs-item h4 { font-size:0.95rem; margin-bottom:0.35rem; }
