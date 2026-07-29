@@ -25,7 +25,7 @@ Reports will be acknowledged as quickly as possible. Please allow reasonable tim
 ## Security Philosophy
 
 - **Encryption by default** — all tracked files and secrets are encrypted at rest using [age](https://age-encryption.org/)
-- **User-controlled keys** — the age identity key lives at `~/.dh/identity.age` and never leaves your machine
+- **User-controlled keys** — the age identity key lives at `~/.daemon-hound/identity.age` and never leaves your machine
 - **Minimal hosted attack surface** — no hosted service, dashboard, telemetry, or SaaS control plane
 - **User-scoped daemon** — the optional background sync daemon runs as the current user and only syncs with your configured Git vault remote
 - **Secrets stay local** — DaemonHound does not exfiltrate data to any third party
@@ -33,7 +33,7 @@ Reports will be acknowledged as quickly as possible. Please allow reasonable tim
 
 ## Key Material
 
-The age identity key (`~/.dh/identity.age`) is the root of all encryption. It is:
+The age identity key (`~/.daemon-hound/identity.age`) is the root of all encryption. It is:
 
 - Generated once at `dhd init`
 - Never stored in the vault
@@ -51,6 +51,6 @@ To set up another machine against the same vault, export the identity from an ex
 - Linux: systemd user service
 - Windows: Task Scheduler task
 
-The daemon watches tracked file locations and the local vault clone, polls the configured Git remote, and writes logs under `~/.dh/`. It does not run with elevated privileges and does not contact any network service other than the Git remote configured by the user.
+The daemon watches tracked file locations and the local vault clone, polls the configured Git remote, and writes logs under `~/.daemon-hound/`. It does not run with elevated privileges and does not contact any network service other than the Git remote configured by the user.
 
 Use `dhd daemon status`, `dhd daemon logs`, and `dhd daemon errors` to inspect daemon state. Use `dhd cleanup` to stop/uninstall the daemon and remove local DaemonHound data from a machine.

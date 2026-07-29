@@ -8,7 +8,7 @@ This release completes the daemon infrastructure and adds automated background s
 
 #### 1. **Global Identity Salt** ✅
 - Salt format: `base64(16-byte-prefix)@base64(16-byte-postfix)` = 32 bytes total
-- Stored plaintext in `~/.dh/config.toml` (not secret, enables multi-machine consistency)
+- Stored plaintext in `~/.daemon-hound/config.toml` (not secret, enables multi-machine consistency)
 - Generated at `dhd init` time
 - All machines using same vault can decrypt identity with same password
 - Enables seamless password sharing across teams
@@ -24,7 +24,7 @@ This release completes the daemon infrastructure and adds automated background s
   - **Windows**: Task Scheduler task "DaemonHound"
 
 #### 3. **Background File Watching & Polling** ✅
-- **File Watching**: fsnotify monitors `~/.dh/vault` for local changes
+- **File Watching**: fsnotify monitors `~/.daemon-hound/vault` for local changes
   - Ignores `.git` directory and dotfiles
   - 2-second debounce to batch changes
   - Triggers sync on modification
@@ -41,8 +41,8 @@ This release completes the daemon infrastructure and adds automated background s
 - Logs conflicted files for audit trail
 
 #### 5. **Log Rotation & Cleanup** ✅
-- **Daemon logs** at `~/.dh/daemon.log`
-- **Error logs** at `~/.dh/daemon.error.log`
+- **Daemon logs** at `~/.daemon-hound/daemon.log`
+- **Error logs** at `~/.daemon-hound/daemon.error.log`
 - **Log rotation**: Checks hourly
   - Rotates files exceeding 10MB (daemon) or 5MB (errors)
   - Rotated files: `daemon.YYYY-MM-DD-HH-MM-SS.log`
@@ -56,7 +56,7 @@ dhd cleanup              # Prompts for confirmation
 dhd cleanup --force      # Skips confirmation
 
 # Removes:
-# - ~/.dh/ directory (entire vault)
+# - ~/.daemon-hound/ directory (entire vault)
 # - Keychain entry for password
 # - Daemon service registration
 ```
@@ -112,8 +112,8 @@ Update local state
 Key features:
 - RunAtLoad: true (auto-start on boot)
 - KeepAlive: true (auto-restart on crash)
-- StandardOutPath: ~/.dh/daemon.log
-- StandardErrorPath: ~/.dh/daemon.error.log
+- StandardOutPath: ~/.daemon-hound/daemon.log
+- StandardErrorPath: ~/.daemon-hound/daemon.error.log
 ```
 
 #### Linux (systemd)
@@ -163,7 +163,7 @@ log_retention_days = 30         # Keep logs for N days
 
 ### Vault Structure
 ```
-~/.dh/
+~/.daemon-hound/
 ├── config.toml              # Plaintext config (includes global salt)
 ├── identity.age             # Encrypted identity (AES-256-GCM)
 ├── vault/                   # Git repository (encrypted state)
@@ -195,7 +195,7 @@ Machine C: password "secret" + salt "XYZ@UVW" = key_C → cannot decrypt state_A
 **On System Boot:**
 1. OS service manager starts daemon
 2. Daemon creates log files (if not exist)
-3. Daemon sets up file watcher on `~/.dh/vault`
+3. Daemon sets up file watcher on `~/.daemon-hound/vault`
 4. Daemon performs initial sync
 5. Daemon enters main loop (watch + poll)
 
@@ -227,7 +227,7 @@ Machine C: password "secret" + salt "XYZ@UVW" = key_C → cannot decrypt state_A
 
 **daemon.error.log** (for watcher errors):
 ```
-[watcher] 2026-06-14 10:35:20 Failed to watch /home/user/.dh/vault: permission denied
+[watcher] 2026-06-14 10:35:20 Failed to watch /home/user/.daemon-hound/vault: permission denied
 ```
 
 ---

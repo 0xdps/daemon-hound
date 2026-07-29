@@ -38,7 +38,7 @@ var cloneCmd = &cobra.Command{
 	Long: `Clone a DaemonHound vault repository for read-only or ad-hoc access.
 
 Unlike 'dhd init', this does NOT:
-  • Create a machine ID or ~/.dh/config.toml
+  • Create a machine ID or ~/.daemon-hound/config.toml
   • Install a background daemon
   • Configure Git merge drivers or hooks
   • Store passwords in the system keychain

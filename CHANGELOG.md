@@ -74,7 +74,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 - Daemon runs with same user permissions as CLI (no escalation)
-- Log files stored in `~/.dh/` (user-private, mode 0700)
+- Log files stored in `~/.daemon-hound/` (user-private, mode 0700)
 - HMAC-signed session tokens for web UI (per-process random key, 12-hour TTL)
 
 ### Performance
@@ -94,7 +94,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `dhd cleanup` — completely remove DaemonHound from the local machine
-  - Removes `~/.dh/` directory (vault, config, identity, audit log, lock file)
+  - Removes `~/.daemon-hound/` directory (vault, config, identity, audit log, lock file)
   - Removes master password from OS keychain
   - `--force` flag to skip confirmation prompt
   - Does NOT affect remote vault repository (safe to re-initialize later)
@@ -193,8 +193,8 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `dhd version` — print version string
 - Shell completions via `dhd completion [bash|zsh|fish|powershell]` (built-in via cobra)
 - **Security enhancements:**
-  - File locking: PID-based lock at `~/.dh/sync.lock` prevents concurrent mutations
-  - Audit log: append-only log at `~/.dh/audit.log` records all mutating commands
+  - File locking: PID-based lock at `~/.daemon-hound/sync.lock` prevents concurrent mutations
+  - Audit log: append-only log at `~/.daemon-hound/audit.log` records all mutating commands
   - Encrypted vault state: `state.toml.age` encrypted at rest (migrates from legacy `state.toml`)
 - **UX improvements:**
   - Colour output: ANSI colour for status, sync actions, and doctor output (respects `NO_COLOR`)
@@ -220,7 +220,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## Release History
 
 Previous releases (v0.1.0, v0.1.1) have been removed in preparation for a proper v1.0.0 release with the complete feature set documented above.
-- `dhd init` persists the vault remote URL in `~/.dh/config.toml`
+- `dhd init` persists the vault remote URL in `~/.daemon-hound/config.toml`
 - `dhd sync` continues to push local dirty files even when the remote pull fails (offline mode); commits locally and sets a pending-push flag instead of aborting
 - `dhd sync` retries a pending push on the next successful `dhd sync`
 - `dhd secret list` shows mapping count per secret when listing all secrets

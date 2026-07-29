@@ -76,7 +76,7 @@ dhd daemon resume           # Resume after halt`} />
   <ul>
     <li>Runs as <strong>current user</strong> — no elevation</li>
     <li>Only contacts your configured Git remote</li>
-    <li>Logs at <code>~/.dh/</code> (<code>0700</code>)</li>
+    <li>Logs at <code>~/.daemon-hound/</code> (<code>0700</code>)</li>
     <li>No telemetry, no third-party connections</li>
   </ul>
 
@@ -86,5 +86,5 @@ dhd daemon resume           # Resume after halt`} />
 
   <h2>Removal</h2>
   <CodeBlock code="dhd cleanup --force" />
-  <p>Stops and uninstalls the daemon, removes <code>~/.dh/</code>, clears keychain. Does <em>not</em> affect the remote vault.</p>
+  <p>Stops and uninstalls the daemon, removes <code>~/.daemon-hound/</code>, clears keychain. Does <em>not</em> affect the remote vault.</p>
 </DocsLayout>

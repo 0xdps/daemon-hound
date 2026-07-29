@@ -115,10 +115,10 @@ docker pull ghcr.io/0xdps/daemon-hound:latest
 docker pull ghcr.io/0xdps/daemon-hound:v0.1.0
 
 # Run
-docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest dhd --help
+docker run --rm -v ~/.daemon-hound:/home/dhuser/.daemon-hound -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest dhd --help
 
 # With shell alias
-alias dhd='docker run --rm -v ~/.dh:/home/dhuser/.dh -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest'
+alias dhd='docker run --rm -v ~/.daemon-hound:/home/dhuser/.daemon-hound -v $(pwd):/work ghcr.io/0xdps/daemon-hound:latest'
 dhd status
 ```
 
@@ -382,8 +382,8 @@ export PATH="$HOME/.local/bin:$PATH"
 ### "wrong password" when decrypting identity
 
 The identity file was encrypted with a different password. If you've forgotten the password:
-1. Delete `~/.dh/identity.age`
-2. Delete `~/.dh/config.toml`
+1. Delete `~/.daemon-hound/identity.age`
+2. Delete `~/.daemon-hound/config.toml`
 3. Run `dhd init` again
 4. Re-clone your vault
 
@@ -394,11 +394,11 @@ The identity file was encrypted with a different password. If you've forgotten t
 The Docker image runs as a non-root user (`dhuser`). Ensure file permissions:
 
 ```bash
-# Fix ownership of .dh directory
-sudo chown -R $(id -u):$(id -g) ~/.dh
+# Fix ownership of .daemon-hound directory
+sudo chown -R $(id -u):$(id -g) ~/.daemon-hound
 
 # Or run with current user
-docker run --rm -u $(id -u):$(id -g) -v ~/.dh:/home/dhuser/.dh ...
+docker run --rm -u $(id -u):$(id -g) -v ~/.daemon-hound:/home/dhuser/.daemon-hound ...
 ```
 
 ### Homebrew: "Formula not found"

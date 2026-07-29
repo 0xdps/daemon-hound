@@ -73,15 +73,15 @@ scoop install daemon-hound`} lang="Scoop" />
 
   <p>This command:</p>
   <ol>
-    <li>Generates a stable <strong>machine UUID</strong> stored in <code>~/.dh/config.toml</code></li>
+    <li>Generates a stable <strong>machine UUID</strong> stored in <code>~/.daemon-hound/config.toml</code></li>
     <li>Creates an <strong>age identity key</strong> — encrypted with your master password</li>
-    <li>Clones (or creates) your vault repo at <code>~/.dh/vault/</code></li>
+    <li>Clones (or creates) your vault repo at <code>~/.daemon-hound/vault/</code></li>
     <li>Saves your master password in the OS keychain</li>
     <li>Installs the background sync daemon</li>
   </ol>
 
   <Callout type="warning">
-    <strong>Back up your identity.</strong> The file <code>~/.dh/identity.age</code> is <em>never</em> stored in the vault. Without it, your encrypted data <strong>cannot be recovered</strong>.
+    <strong>Back up your identity.</strong> The file <code>~/.daemon-hound/identity.age</code> is <em>never</em> stored in the vault. Without it, your encrypted data <strong>cannot be recovered</strong>.
   </Callout>
 
   <h2>Setting up a second machine</h2>

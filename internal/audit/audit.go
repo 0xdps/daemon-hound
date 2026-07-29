@@ -24,10 +24,10 @@ import (
 
 func logPath() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".dh", "audit.log")
+	return filepath.Join(home, ".daemon-hound", "audit.log")
 }
 
-// Log appends a timestamped entry to ~/.dh/audit.log.
+// Log appends a timestamped entry to ~/.daemon-hound/audit.log.
 // Errors are silently ignored — logging must never break a command.
 func Log(action, detail string) {
 	f, err := os.OpenFile(logPath(), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)

@@ -41,7 +41,7 @@ This command:
 1. Generates a stable machine UUID
 2. Generates an age identity key (encrypted with your master password)
 3. Clones (or initializes) the vault repository
-4. Stores configuration in ~/.dh/
+4. Stores configuration in ~/.daemon-hound/
 
 When joining an existing vault on a new machine, use --age-key with the key
 printed by 'dhd export-identity' on your original machine.`,

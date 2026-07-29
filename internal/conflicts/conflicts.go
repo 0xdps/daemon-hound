@@ -40,14 +40,14 @@ type Store struct {
 	storePath string
 }
 
-// NewStore creates a conflict store at ~/.dh/conflicts.json
+// NewStore creates a conflict store at ~/.daemon-hound/conflicts.json
 func NewStore() (*Store, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	storePath := filepath.Join(home, ".dh", "conflicts.json")
+	storePath := filepath.Join(home, ".daemon-hound", "conflicts.json")
 	return &Store{storePath: storePath}, nil
 }
 

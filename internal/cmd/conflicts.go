@@ -222,7 +222,7 @@ var conflictsClearCmd = &cobra.Command{
 		}
 
 		// Clear conflicts file
-		if err := os.Remove(os.ExpandEnv("$HOME/.dh/conflicts.json")); err != nil && !os.IsNotExist(err) {
+		if err := os.Remove(os.ExpandEnv("$HOME/.daemon-hound/conflicts.json")); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to clear conflicts: %w", err)
 		}
 

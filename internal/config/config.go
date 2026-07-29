@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	AppDirName     = ".dh"
+	AppDirName     = ".daemon-hound"
 	ConfigFileName = "config.toml"
 	IdentityFile   = "identity.age"
 )
@@ -197,7 +197,7 @@ func trackedFileKey(namespace, relPath string) string {
 	return namespace + ":" + relPath
 }
 
-// AppDir returns the absolute path to ~/.dh.
+// AppDir returns the absolute path to ~/.daemon-hound.
 func AppDir() string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, AppDirName)

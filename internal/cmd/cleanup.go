@@ -41,7 +41,7 @@ var cleanupCmd = &cobra.Command{
 This command:
   1. Stops and uninstalls the background sync daemon
   2. Removes the master password from the OS keychain
-  3. Removes all local data under ~/.dh
+  3. Removes all local data under ~/.daemon-hound
      • vault/        — local vault clone
      • config.toml   — machine configuration
      • identity.age  — encrypted identity key
@@ -66,7 +66,7 @@ To re-initialize on this machine later, run:
 
 func init() {
 	cleanupCmd.Flags().BoolVar(&cleanupForce, "force", false, "Skip confirmation prompt")
-	cleanupCmd.Flags().BoolVar(&cleanupKeepVault, "keep-vault", false, "Preserve the local vault clone (~/.dh/vault/)")
+	cleanupCmd.Flags().BoolVar(&cleanupKeepVault, "keep-vault", false, "Preserve the local vault clone (~/.daemon-hound/vault/)")
 	rootCmd.AddCommand(cleanupCmd)
 }
 

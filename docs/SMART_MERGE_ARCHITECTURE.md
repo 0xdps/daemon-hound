@@ -160,7 +160,7 @@ Daemon continues sync without user intervention
 ┌─────────────────────────────────────────────────────────────┐
 │ Conflict Store (internal/conflicts/conflicts.go)            │
 │                                                             │
-│  File: ~/.dh/conflicts.json                                 │
+│  File: ~/.daemon-hound/conflicts.json                                 │
 │  Methods:                                                   │
 │  - Add(conflict) → persist to disk                          │
 │  - List() → all conflicts                                   │
@@ -752,7 +752,7 @@ If identity cannot be loaded:
 
 ### 5. Conflict Store Format
 
-File: `~/.dh/conflicts.json`
+File: `~/.daemon-hound/conflicts.json`
 
 ```json
 [

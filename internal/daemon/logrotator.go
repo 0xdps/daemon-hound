@@ -34,7 +34,7 @@ type LogRotator struct {
 
 // NewLogRotator creates a log rotator with the given limits.
 func NewLogRotator(maxLogSizeMB, maxErrorLogSizeMB, retentionDays int) *LogRotator {
-	dhPath := filepath.Join(os.Getenv("HOME"), ".dh")
+	dhPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound")
 	return &LogRotator{
 		logPath:         filepath.Join(dhPath, "daemon.log"),
 		errorLogPath:    filepath.Join(dhPath, "daemon.error.log"),
@@ -95,7 +95,7 @@ func (lr *LogRotator) rotateFile(logPath string) error {
 
 // cleanupOldLogs removes rotated logs older than retention period.
 func (lr *LogRotator) cleanupOldLogs() error {
-	dhPath := filepath.Join(os.Getenv("HOME"), ".dh")
+	dhPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound")
 
 	entries, err := os.ReadDir(dhPath)
 	if err != nil {

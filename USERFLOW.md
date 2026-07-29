@@ -15,14 +15,14 @@ dhd init --remote git@github.com:you/my-vault.git
 ```
 
 DaemonHound will:
-1. Generate a stable machine UUID → stored in `~/.dh/config.toml`
-2. Generate an age identity key → encrypted with your password → `~/.dh/identity.age`
-3. Clone (or create) the vault repo locally at `~/.dh/vault/`
+1. Generate a stable machine UUID → stored in `~/.daemon-hound/config.toml`
+2. Generate an age identity key → encrypted with your password → `~/.daemon-hound/identity.age`
+3. Clone (or create) the vault repo locally at `~/.daemon-hound/vault/`
 4. Save the vault remote URL so `--force` re-init can pre-fill it
 5. Store the master password in the OS keychain when available
 6. Install the background sync daemon on supported platforms
 
-> ⚠️ Back up `~/.dh/identity.age` immediately. Without it, encrypted vault data cannot be recovered.
+> ⚠️ Back up `~/.daemon-hound/identity.age` immediately. Without it, encrypted vault data cannot be recovered.
 
 ### Re-initializing an existing machine
 
@@ -53,7 +53,7 @@ DaemonHound:
 4. Stores it in the vault under `sync/github.com/you/pingpong-api/.env.local.age`
 5. Records the local binding: namespace → absolute root path
 6. Commits and pushes the vault immediately
-7. Writes an audit log entry to `~/.dh/audit.log`
+7. Writes an audit log entry to `~/.daemon-hound/audit.log`
 
 Re-running `dhd track` on an already-tracked file is safe — it reports "already tracked" and exits.
 
@@ -78,7 +78,7 @@ After deleting local project folders, remove every missing tracked file from thi
 dhd untrack --missing
 ```
 
-Local-only untracking records an ignore in `~/.dh/config.toml`; it does not delete encrypted vault contents or shared tracking metadata.
+Local-only untracking records an ignore in `~/.daemon-hound/config.toml`; it does not delete encrypted vault contents or shared tracking metadata.
 
 ---
 
@@ -150,7 +150,7 @@ dhd init --remote git@github.com:you/my-vault.git --age-key AGE-SECRET-KEY-...
 # Enter and confirm the master password for this machine's encrypted identity file
 ```
 
-The master password protects `~/.dh/identity.age` locally. The shared age identity is what allows multiple machines to decrypt the same vault contents.
+The master password protects `~/.daemon-hound/identity.age` locally. The shared age identity is what allows multiple machines to decrypt the same vault contents.
 
 ### Step 2a — Sync a single project
 
@@ -184,7 +184,7 @@ dhd discover ~/work --output json   # machine-readable output
 
 ## Flow 5b: Lightweight Vault Access (Clone and Read)
 
-You need to access vault contents on a machine without full DaemonHound initialization — no `~/.dh/` directory, no daemon, no tracked file bindings. This is useful for CI pipelines, temporary environments, or quick secret retrieval.
+You need to access vault contents on a machine without full DaemonHound initialization — no `~/.daemon-hound/` directory, no daemon, no tracked file bindings. This is useful for CI pipelines, temporary environments, or quick secret retrieval.
 
 ### Clone the vault (empty, index-only)
 
@@ -231,7 +231,7 @@ dhd read secret:openai-key@v2
 
 | Aspect | `dhd init` + `dhd sync` | `dhd clone` + `dhd read` |
 |--------|--------------------------|--------------------------|
-| Config directory | Creates `~/.dh/` | None |
+| Config directory | Creates `~/.daemon-hound/` | None |
 | Daemon | Installed and running | None |
 | File bindings | Restores files to project directories | Prints to stdout |
 | Machine identity | Generates machine UUID | No machine UUID |
@@ -402,7 +402,7 @@ The export directory contains:
 When retiring a machine:
 
 1. Run `dhd sync` to ensure all local changes are pushed
-2. Run `dhd cleanup` to stop/uninstall the daemon, remove the cached keychain password, and delete local data under `~/.dh/`
+2. Run `dhd cleanup` to stop/uninstall the daemon, remove the cached keychain password, and delete local data under `~/.daemon-hound/`
 3. Backup mode files for that machine UUID remain in the vault but will no longer be updated
 
 ```bash
@@ -466,7 +466,7 @@ dhd conflicts clear
 
 ## Audit Log
 
-Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/rename/unref`, `discover`, `export`) is recorded in `~/.dh/audit.log`:
+Every mutating command (`track`, `untrack`, `sync`, `secret set/ref/delete/rename/unref`, `discover`, `export`) is recorded in `~/.daemon-hound/audit.log`:
 
 ```
 2026-06-14T12:00:00Z  track        github.com/you/pingpong-api:.env.local

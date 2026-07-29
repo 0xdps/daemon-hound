@@ -194,7 +194,7 @@ var daemonLogsCmd = &cobra.Command{
 		follow, _ := cmd.Flags().GetBool("follow")
 		lines, _ := cmd.Flags().GetInt("lines")
 
-		logPath := filepath.Join(os.Getenv("HOME"), ".dh", "daemon.log")
+		logPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound", "daemon.log")
 
 		// Check if log file exists
 		if _, err := os.Stat(logPath); err != nil {
@@ -355,7 +355,7 @@ var daemonErrorLogsCmd = &cobra.Command{
 	Short: "View daemon error logs",
 	Long:  `Display daemon error logs.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		errLogPath := filepath.Join(os.Getenv("HOME"), ".dh", "daemon.error.log")
+		errLogPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound", "daemon.error.log")
 
 		// Check if log file exists
 		if _, err := os.Stat(errLogPath); err != nil {

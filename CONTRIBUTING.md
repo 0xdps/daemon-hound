@@ -47,8 +47,8 @@ chore: bump dependencies
 
 - **Namespace** — logical project identifier derived from the `origin` Git remote (e.g. `github.com/dps/pingpong-api`)
 - **Vault** — the user's private Git repository where encrypted files are stored
-- **Machine identity** — a stable UUID generated at `dhd init`, stored in `~/.dh/config.toml`
-- **Age identity key** — the encryption key at `~/.dh/identity.age`, never committed to the vault
+- **Machine identity** — a stable UUID generated at `dhd init`, stored in `~/.daemon-hound/config.toml`
+- **Age identity key** — the encryption key at `~/.daemon-hound/identity.age`, never committed to the vault
 
 ## Feature Requests
 

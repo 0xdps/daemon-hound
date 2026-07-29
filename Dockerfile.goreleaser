@@ -10,7 +10,7 @@ RUN chmod +x /usr/local/bin/dhd
 RUN adduser -D -s /bin/sh dhuser
 
 # Set up volumes for config and working directory
-VOLUME ["/home/dhuser/.dh", "/work"]
+VOLUME ["/home/dhuser/.daemon-hound", "/work"]
 WORKDIR /work
 
 USER dhuser

@@ -19,7 +19,7 @@ This guide walks through testing all daemon features on macOS, Linux, and Window
 dhd cleanup --force 2>/dev/null || true
 
 # Verify cleanup worked
-ls -la ~/.dh 2>/dev/null && echo "FAIL: .dh directory still exists" || echo "PASS: .dh cleaned up"
+ls -la ~/.daemon-hound 2>/dev/null && echo "FAIL: .daemon-hound directory still exists" || echo "PASS: .daemon-hound cleaned up"
 ```
 
 ### 1.2 Initialize Vault with Daemon Auto-Installation
@@ -97,7 +97,7 @@ dhd daemon status
 #   Syncing every 30 seconds
 
 # View daemon logs
-Get-Content $env:USERPROFILE\.dh\daemon.log -Tail 20 -Wait
+Get-Content $env:USERPROFILE\.daemon-hound\daemon.log -Tail 20 -Wait
 ```
 
 ---
@@ -138,7 +138,7 @@ dhd daemon logs | tail -20
 # - "Pushed to remote"
 
 # Verify the change was pushed
-cd ~/.dh/vault
+cd ~/.daemon-hound/vault
 git log --oneline -5
 
 # Expected: Should see "[daemon] Sync local changes" commit
@@ -150,7 +150,7 @@ On a **different machine** (or simulate by pushing to remote):
 
 ```bash
 # Simulate remote change by manually modifying vault
-cd ~/.dh/vault
+cd ~/.daemon-hound/vault
 git pull origin trunk
 echo "UPDATED=true" >> state.toml.age.dec  # or whatever tracked file is decrypted
 
@@ -226,15 +226,15 @@ done
 sleep 35
 
 # Check log file sizes
-ls -lh ~/.dh/daemon*.log
+ls -lh ~/.daemon-hound/daemon*.log
 
 # Expected: Log files should exist with reasonable size
 
 # Check for rotated logs (if logs grew enough to rotate)
-ls -lh ~/.dh/daemon*.*.log 2>/dev/null || echo "No rotated logs yet (normal if tests are quick)"
+ls -lh ~/.daemon-hound/daemon*.*.log 2>/dev/null || echo "No rotated logs yet (normal if tests are quick)"
 
 # Check log retention logic
-du -sh ~/.dh/  # Total size should be reasonable
+du -sh ~/.daemon-hound/  # Total size should be reasonable
 
 echo "PASS: Log rotation working"
 ```
@@ -243,7 +243,7 @@ echo "PASS: Log rotation working"
 
 ```bash
 # Create old rotated logs manually (older than retention days)
-cd ~/.dh
+cd ~/.daemon-hound
 touch -d "40 days ago" daemon.2026-05-05-10-00-00.log
 
 # Wait for log rotation check (happens hourly, but let's simulate by running daemon briefly)
@@ -364,7 +364,7 @@ dhd status  # Should show vault info
 dhd cleanup --force
 
 # Verify cleanup
-ls ~/.dh 2>/dev/null && echo "FAIL: Some files remain" || echo "PASS: All cleaned"
+ls ~/.daemon-hound 2>/dev/null && echo "FAIL: Some files remain" || echo "PASS: All cleaned"
 
 # Verify keychain entry removed (varies by OS)
 # macOS: security find-generic-password -s "daemon-hound" | grep -q "found 0" && echo "PASS: Keychain cleaned"
@@ -429,7 +429,7 @@ dhd daemon restart
 
 ```bash
 # Check log file path
-ls -la ~/.dh/daemon*.log
+ls -la ~/.daemon-hound/daemon*.log
 
 # Check if daemon is actually running
 dhd daemon status
@@ -464,7 +464,7 @@ dhd status
 dhd daemon logs | grep -i conflict
 
 # Check git state
-cd ~/.dh/vault
+cd ~/.daemon-hound/vault
 git status
 
 # If stuck in merge, manually resolve

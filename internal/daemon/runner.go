@@ -336,13 +336,13 @@ func (r *Runner) recordConflict(store *conflicts.Store, storeErr error, filePath
 
 // Helper to get log path
 func getLogPath() (string, error) {
-	dhPath := filepath.Join(os.Getenv("HOME"), ".dh")
+	dhPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound")
 	return filepath.Join(dhPath, "daemon.log"), nil
 }
 
 // Helper to get error log path
 func getErrorLogPath() (string, error) {
-	dhPath := filepath.Join(os.Getenv("HOME"), ".dh")
+	dhPath := filepath.Join(os.Getenv("HOME"), ".daemon-hound")
 	return filepath.Join(dhPath, "daemon.error.log"), nil
 }
 

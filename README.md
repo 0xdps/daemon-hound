@@ -270,9 +270,9 @@ DaemonHound
     +-- Git Backend           User-owned private Git repository
 ```
 
-**Machine identity** is a stable UUID generated at `dhd init` and stored in `~/.dh/config.toml`. Hostnames are not used — they change across renames and corporate MDM. The UUID does not.
+**Machine identity** is a stable UUID generated at `dhd init` and stored in `~/.daemon-hound/config.toml`. Hostnames are not used — they change across renames and corporate MDM. The UUID does not.
 
-**The age identity key** (`~/.dh/identity.age`) is never stored in the vault. It is the one file you must back up manually. Without it, your encrypted files cannot be recovered.
+**The age identity key** (`~/.daemon-hound/identity.age`) is never stored in the vault. It is the one file you must back up manually. Without it, your encrypted files cannot be recovered.
 
 ---
 

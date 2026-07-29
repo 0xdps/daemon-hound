@@ -27,5 +27,5 @@ macos-artifacts/
 *.key
 
 # DaemonHound vault (never commit the actual vault)
-.dh/
+.daemon-hound/
 /dhd

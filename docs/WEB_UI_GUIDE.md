@@ -157,7 +157,7 @@ dhd ui
 
 ### Password Validation
 
-The web UI does not store a separate password hash. Instead, it validates your password by **attempting to decrypt the identity file** (`~/.dh/identity.age`) using the provided password. This is the same password you use for CLI operations.
+The web UI does not store a separate password hash. Instead, it validates your password by **attempting to decrypt the identity file** (`~/.daemon-hound/identity.age`) using the provided password. This is the same password you use for CLI operations.
 
 ### Session Management
 

@@ -44,7 +44,7 @@ Every user-facing `dhd` subcommand lives here:
 | `git.go` | (internal) | Git operation helpers for CLI |
 
 ### `internal/config/` — Configuration Layer
-- `config.go` — Reads/writes `~/.dh/config.toml`. Manages machine identity, vault remote, namespace→directory bindings, daemon settings.
+- `config.go` — Reads/writes `~/.daemon-hound/config.toml`. Manages machine identity, vault remote, namespace→directory bindings, daemon settings.
 - `config_test.go` — Tests for config.
 
 ### `internal/models/` — Data Types
@@ -74,7 +74,7 @@ Every user-facing `dhd` subcommand lives here:
 - `secret.go` — `SecretDriver` — merges secret files.
 
 ### `internal/conflicts/` — Conflict Management
-- `conflicts.go` — `Conflict` model & `Store` (persists to `~/.dh/conflicts.json`).
+- `conflicts.go` — `Conflict` model & `Store` (persists to `~/.daemon-hound/conflicts.json`).
 - `tui.go` — Terminal UI for resolving conflicts interactively (bubbletea-based).
 
 ### `internal/daemon/` — Background Daemon
@@ -102,7 +102,7 @@ Every user-facing `dhd` subcommand lives here:
 - `keychain.go` — Stores/retrieves the master password in the OS keychain (macOS Keychain, Linux Secret Service, Windows Credential Manager).
 
 ### `internal/lock/` — Process Locking
-- `lock.go` — PID-based file lock (`~/.dh/sync.lock`) to prevent concurrent `dhd sync` runs.
+- `lock.go` — PID-based file lock (`~/.daemon-hound/sync.lock`) to prevent concurrent `dhd sync` runs.
 
 ### `internal/utils/` — Utilities
 - `crypto.go` — AES-GCM + scrypt for identity key derivation. Encrypts the age identity at rest.
@@ -174,19 +174,19 @@ flowchart TD
 
 ### Daemon Flow
 
-1. `daemon.Runner` starts and loads configuration from `~/.dh/config.toml`
+1. `daemon.Runner` starts and loads configuration from `~/.daemon-hound/config.toml`
 2. Sets up `fsnotify` watchers on all tracked files (resolved via bindings)
 3. Starts a periodic git remote poll timer
 4. On file change: debounces, then triggers auto-sync
 5. On git poll: checks for remote changes, pulls, and merges
-6. Conflicts are recorded in `~/.dh/conflicts.json` for user resolution
+6. Conflicts are recorded in `~/.daemon-hound/conflicts.json` for user resolution
 7. Logs are rotated via `LogRotator`
 
 ### Encryption Flow
 
 1. User provides a master password (stored in OS keychain via `internal/keychain/`)
 2. Master password + identity salt → scrypt → AES-GCM key
-3. AES-GCM key decrypts `~/.dh/identity.age` → age X25519 identity
+3. AES-GCM key decrypts `~/.daemon-hound/identity.age` → age X25519 identity
 4. age identity encrypts/decrypts all vault files (`*.age`)
 5. Each tracked file gets SHA-256 checksum for change detection
 
@@ -196,10 +196,10 @@ flowchart TD
 
 | Path | Purpose |
 |---|---|
-| `~/.dh/config.toml` | Machine config (machine ID, vault remote, bindings, daemon settings) |
-| `~/.dh/identity.age` | Encrypted age identity (protected by master password → keychain) |
-| `~/.dh/sync.lock` | PID lock file |
-| `~/.dh/conflicts.json` | Pending conflict records |
+| `~/.daemon-hound/config.toml` | Machine config (machine ID, vault remote, bindings, daemon settings) |
+| `~/.daemon-hound/identity.age` | Encrypted age identity (protected by master password → keychain) |
+| `~/.daemon-hound/sync.lock` | PID lock file |
+| `~/.daemon-hound/conflicts.json` | Pending conflict records |
 | `vault/state.toml.age` | Encrypted index of all tracked files & secrets |
 | `vault/<namespace>/<file>.age` | Encrypted tracked files |
 
