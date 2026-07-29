@@ -203,7 +203,7 @@ release:
   prerelease: auto
   name_template: "{{ .ProjectName }} {{ .Tag }}"
   extra_files:
-    - glob: ./dist/*.dmg
+    - glob: ./macos-artifacts/*.dmg
       name_template: "{{ .ArtifactName }}"
   header: |
     ## Installation
