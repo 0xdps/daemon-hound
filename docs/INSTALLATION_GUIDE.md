@@ -67,17 +67,28 @@ Development                Distribution                        Installation
 
 ### macOS
 
-#### **Method 1: Homebrew (Recommended)**
+#### **Method 1: Homebrew Cask (Recommended)**
+```bash
+brew tap 0xdps/packages
+brew install --cask daemon-hound
+# Starts with: dhd daemon
+```
+✅ Signed & notarized app bundle in `~/Applications`  
+✅ Auto-updates via `brew upgrade --cask daemon-hound`  
+✅ Binary `dhd` in PATH  
+✅ App shows properly in Activity Monitor
+
+#### **Method 2: Homebrew Formula**
 ```bash
 brew tap 0xdps/packages
 brew install daemon-hound
 # Starts with: dhd daemon
 ```
 ✅ Auto-updates via Homebrew  
-✅ App shows properly in Activity Monitor  
-✅ Binary in PATH
+✅ Binary in PATH  
+⚠️ App bundle installed to Homebrew prefix (symlinked to ~/Applications)
 
-#### **Method 2: DMG Installer**
+#### **Method 3: DMG Installer**
 ```bash
 # Download daemon-hound_1.1.0_macOS_x86_64.dmg from releases
 # Double-click → drag app to Applications folder
@@ -87,7 +98,7 @@ brew install daemon-hound
 ✅ App icon visible in Applications  
 ✅ Desktop integration
 
-#### **Method 3: Direct Binary Download**
+#### **Method 4: Direct Binary Download**
 ```bash
 # Download daemon-hound_1.1.0_macOS_x86_64.tar.gz
 tar xzf daemon-hound_1.1.0_macOS_x86_64.tar.gz
@@ -96,7 +107,7 @@ tar xzf daemon-hound_1.1.0_macOS_x86_64.tar.gz
 ⚠️ No auto-updates  
 ✅ Simple, no dependencies
 
-#### **Method 4: Build Locally**
+#### **Method 5: Build Locally**
 ```bash
 git clone https://github.com/0xdps/daemon-hound
 cd daemon-hound

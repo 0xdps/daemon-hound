@@ -34,6 +34,19 @@ case "$ARCH" in
         ;;
 esac
 
+# ─── macOS: prefer Homebrew Cask for signed app bundle ───
+if [ "$OS" = "Darwin" ] && command -v brew >/dev/null 2>&1; then
+    echo "Homebrew detected. Installing DaemonHound via Cask (recommended)..."
+    brew tap 0xdps/packages 2>/dev/null || true
+    brew install --cask daemon-hound
+    echo ""
+    echo "✓ DaemonHound installed successfully via Homebrew Cask!"
+    dhd --version 2>/dev/null || dhd --help | head -n 1
+    echo ""
+    echo "Run 'dhd init' to get started."
+    exit 0
+fi
+
 # Windows uses .zip, everything else uses .tar.gz
 if [ "$OS" = "Windows" ]; then
     EXT="zip"

@@ -42,7 +42,7 @@ curl -fsSL https://daemonhound.dev/install.sh | sh
 dhd version
 ```
 
-Linux package users can use `dhd` directly or `daemon-hound` as an alias. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
+On macOS with Homebrew, the script automatically installs via Cask for the signed app bundle. Linux package users can use `dhd` directly or `daemon-hound` as an alias. See [INSTALL.md](INSTALL.md) for Linux packages, Homebrew, Scoop, direct downloads, update steps, and daemon service notes.
 
 Official macOS release DMGs are signed with Developer ID and notarized during CI releases.
 

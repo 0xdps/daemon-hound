@@ -240,6 +240,16 @@ jobs:
               end
             end
 
+            def post_install
+              if OS.mac?
+                app_bundle = opt_prefix/"DaemonHound.app"
+                applications_dir = Pathname.new("~/Applications").expand_path
+                if app_bundle.exist? && applications_dir.exist?
+                  ln_sf app_bundle, applications_dir/"DaemonHound.app"
+                end
+              end
+            end
+
             def caveats
               if OS.mac?
                 <<~EOS
@@ -248,8 +258,8 @@ jobs:
                   The signed app bundle is located at:
                     #{opt_prefix}/DaemonHound.app
 
-                  You can also find it in your Applications folder by running:
-                    ln -sf #{opt_prefix}/DaemonHound.app ~/Applications/DaemonHound.app
+                  A symlink has been created in your Applications folder:
+                    ~/Applications/DaemonHound.app
 
                   The CLI binary \`dhd\` is symlinked to the signed bundle's executable.
                 EOS
@@ -268,19 +278,45 @@ jobs:
           end
           FORMULA
 
+          # Generate the Cask
+          cat > /tmp/daemon-hound.rb <<CASK
+          cask "daemon-hound" do
+            arch arm: "arm64", intel: "x86_64"
+
+            version "${VERSION}"
+            sha256 arm:   "${DARWIN_ARM_DMG_SHA}",
+                   intel: "${DARWIN_X86_DMG_SHA}"
+
+            url "https://github.com/0xdps/daemon-hound/releases/download/${TAG}/daemon-hound_#{version}_macOS_#{arch}.dmg"
+            name "DaemonHound"
+            desc "Opinionated local config and secret management for developers"
+            homepage "https://github.com/0xdps/daemon-hound"
+
+            app "DaemonHound.app"
+            binary "#{appdir}/DaemonHound.app/Contents/MacOS/dhd", target: "dhd"
+
+            zap trash: [
+              "~/Library/Application Support/DaemonHound",
+              "~/Library/Logs/DaemonHound",
+            ]
+          end
+          CASK
+
           # Clone the homebrew-packages repo
           git clone --depth 1 "https://x-access-token:${GH_PAT}@github.com/0xdps/homebrew-packages.git" /tmp/homebrew-packages
 
-          # Copy the generated formula
+          # Copy the generated formula and cask
           mkdir -p /tmp/homebrew-packages/Formula
+          mkdir -p /tmp/homebrew-packages/Casks
           cp /tmp/daemon-hound.rb /tmp/homebrew-packages/Formula/daemon-hound.rb
+          cp /tmp/daemon-hound.rb /tmp/homebrew-packages/Casks/daemon-hound.rb
 
           # Commit and push
           cd /tmp/homebrew-packages
           git config user.name "goreleaserbot"
           git config user.email "bot@goreleaser.com"
-          git add Formula/daemon-hound.rb
-          git diff --cached --quiet || git commit -m "Brew formula update for daemon-hound version ${TAG}"
+          git add Formula/daemon-hound.rb Casks/daemon-hound.rb
+          git diff --cached --quiet || git commit -m "Brew formula and cask update for daemon-hound version ${TAG}"
           git push origin trunk
 
       - name: Install APT repo dependencies

@@ -122,7 +122,23 @@ For ARM64 Linux, use `daemon-hound_${VERSION}_Linux_arm64.tar.gz`.
 
 ## macOS
 
-### Homebrew
+### Homebrew Cask (Recommended)
+
+Installs the signed and notarized app bundle directly into `~/Applications`:
+
+```bash
+brew tap 0xdps/packages
+brew install --cask daemon-hound
+dhd version
+```
+
+✅ Signed & notarized app bundle in `~/Applications`  
+✅ Auto-updates via `brew upgrade --cask daemon-hound`  
+✅ Binary `dhd` available in PATH
+
+### Homebrew Formula
+
+For the CLI-only installation (no app bundle):
 
 ```bash
 brew tap 0xdps/packages
@@ -131,6 +147,8 @@ dhd version
 ```
 
 ### Install Script
+
+The install script automatically detects Homebrew and uses the Cask when available:
 
 ```bash
 curl -fsSL https://daemonhound.dev/install.sh | sh

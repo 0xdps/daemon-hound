@@ -85,14 +85,32 @@ func GetDaemonPath() (string, error) {
 
 // GetAppBundlePath returns the path to the dhd executable inside the macOS app
 // bundle, or an empty string if the bundle is not installed.
+// It checks the following locations in order:
+//  1. ~/Applications/DaemonHound.app (user-installed DMG or manual)
+//  2. /opt/homebrew/opt/daemon-hound/DaemonHound.app (Homebrew on Apple Silicon)
+//  3. /usr/local/opt/daemon-hound/DaemonHound.app (Homebrew on Intel)
 func GetAppBundlePath() string {
 	if runtime.GOOS != "darwin" {
 		return ""
 	}
-	home, _ := os.UserHomeDir()
-	bundleExe := filepath.Join(home, "Applications", "DaemonHound.app", "Contents", "MacOS", "dhd")
-	if _, err := os.Stat(bundleExe); err == nil {
-		return bundleExe
+
+	candidates := []string{}
+
+	// 1. User Applications folder
+	if home, err := os.UserHomeDir(); err == nil {
+		candidates = append(candidates, filepath.Join(home, "Applications", "DaemonHound.app", "Contents", "MacOS", "dhd"))
+	}
+
+	// 2. Homebrew on Apple Silicon
+	candidates = append(candidates, "/opt/homebrew/opt/daemon-hound/DaemonHound.app/Contents/MacOS/dhd")
+
+	// 3. Homebrew on Intel
+	candidates = append(candidates, "/usr/local/opt/daemon-hound/DaemonHound.app/Contents/MacOS/dhd")
+
+	for _, bundleExe := range candidates {
+		if _, err := os.Stat(bundleExe); err == nil {
+			return bundleExe
+		}
 	}
 	return ""
 }

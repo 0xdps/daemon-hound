@@ -128,6 +128,18 @@ class DaemonHound < Formula
     end
   end
 
+  def post_install
+    if OS.mac?
+      # Auto-create symlink in ~/Applications so the signed bundle is
+      # discoverable by dhd daemon install and shows up in Launchpad.
+      app_bundle = opt_prefix/"DaemonHound.app"
+      applications_dir = Pathname.new("~/Applications").expand_path
+      if app_bundle.exist? && applications_dir.exist?
+        ln_sf app_bundle, applications_dir/"DaemonHound.app"
+      end
+    end
+  end
+
   def caveats
     if OS.mac?
       <<~EOS
@@ -136,8 +148,8 @@ class DaemonHound < Formula
         The signed app bundle is located at:
           #{opt_prefix}/DaemonHound.app
 
-        You can also find it in your Applications folder by running:
-          ln -sf #{opt_prefix}/DaemonHound.app ~/Applications/DaemonHound.app
+        A symlink has been created in your Applications folder:
+          ~/Applications/DaemonHound.app
 
         The CLI binary \`dhd\` is symlinked to the signed bundle's executable.
       EOS

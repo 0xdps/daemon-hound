@@ -41,7 +41,12 @@ const sidebarGroups = [
   <h2>Installation</h2>
 
   <h3>macOS</h3>
-  <CodeBlock code="brew install 0xdps/tap/daemon-hound" lang="Homebrew" />
+  <p><strong>Recommended:</strong> Install via Homebrew Cask for the signed & notarized app bundle.</p>
+  <CodeBlock code={`brew tap 0xdps/packages
+brew install --cask daemon-hound`} lang="Homebrew Cask" />
+  <p>For the CLI-only formula (no app bundle):</p>
+  <CodeBlock code={`brew tap 0xdps/packages
+brew install daemon-hound`} lang="Homebrew Formula" />
   <p>macOS releases are signed with a Developer ID and notarized. You can also use the install script or download the DMG from <a href="https://github.com/0xdps/daemon-hound/releases" target="_blank" rel="noopener">GitHub Releases</a>.</p>
 
   <h3>Linux</h3>
