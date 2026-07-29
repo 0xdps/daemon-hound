@@ -1,0 +1,66 @@
+internal/config/config.go
+  h_95aea6b4aa8772 29,200
+internal/cmd/conflicts.go
+  h_95aea6b4aa8772 225
+.gitignore
+  h_95aea6b4aa8772 30
+internal/audit/audit.go
+  h_95aea6b4aa8772 27,30
+CHANGELOG.md
+  h_95aea6b4aa8772 77,97,196-197,223
+README.md
+  h_95aea6b4aa8772 273,275
+RELEASE.md
+  h_95aea6b4aa8772 118,121,385-386,397-398,401
+CONTRIBUTING.md
+  h_95aea6b4aa8772 50-51
+docs/SMART_MERGE_ARCHITECTURE.md
+  h_95aea6b4aa8772 163,755
+USERFLOW.md
+  h_95aea6b4aa8772 18-20,25,56,81,153,187,234,405,469
+website/src/pages/docs/concepts.astro
+  h_95aea6b4aa8772 74
+Dockerfile.goreleaser
+  h_95aea6b4aa8772 13
+docs/WEB_UI_GUIDE.md
+  h_95aea6b4aa8772 160
+internal/cmd/init.go
+  h_95aea6b4aa8772 44
+internal/cmd/cleanup.go
+  h_95aea6b4aa8772 44,69
+internal/daemon/runner.go
+  h_95aea6b4aa8772 339,345
+internal/cmd/clone.go
+  h_95aea6b4aa8772 41
+Dockerfile
+  h_95aea6b4aa8772 42
+internal/daemon/logrotator.go
+  h_95aea6b4aa8772 37,98
+SECURITY.md
+  h_95aea6b4aa8772 28,36,54
+website/src/pages/docs/getting-started/index.astro
+  h_95aea6b4aa8772 76,78,84
+website/src/pages/docs/daemon.astro
+  h_95aea6b4aa8772 79,89
+docs/E2E_TESTING_GUIDE.md
+  h_95aea6b4aa8772 22,100,141,153,229,234,237,246,367,432,467
+internal/cmd/daemon.go
+  h_95aea6b4aa8772 197,358
+docs/PROJECT_GUIDE.md
+  h_95aea6b4aa8772 47,77,105,177,182,189,199-202
+docs/FEATURES_V1_1_0.md
+  h_95aea6b4aa8772 11,27,44-45,59,115-116,166,198,230
+internal/conflicts/conflicts.go
+  h_95aea6b4aa8772 43,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "a4608213e87409459bef5215b3d31234888827a2",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
