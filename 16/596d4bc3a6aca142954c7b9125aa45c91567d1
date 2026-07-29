@@ -1,0 +1,21 @@
+.github/workflows/release.yml
+  s_cbc643aee56405::t_13f2ebb780c82c 146,149,151,155-156,158-163,169-174
+  s_cbc643aee56405::t_ccec32eb197f2b 144-145,147-148,150,152-154,157,164
+  s_cbc643aee56405::t_f678d2907a85aa 114
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.16",
+  "base_commit_sha": "16596d4bc3a6aca142954c7b9125aa45c91567d1",
+  "prompts": {},
+  "sessions": {
+    "s_cbc643aee56405": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "f9b4705c-bf1d-4a76-acba-a0cbffcbb815",
+        "model": "moonshotai/kimi-k2.6"
+      },
+      "human_author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
