@@ -132,7 +132,34 @@ jobs:
           GH_PAT: ${{ secrets.GH_PAT }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
- 
+
+      - name: Generate and push Homebrew formula
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
+
+          # Generate the formula with DMG SHA256s
+          chmod +x scripts/generate-homebrew-formula.sh
+          ./scripts/generate-homebrew-formula.sh "$VERSION" "$TAG" > /tmp/daemon-hound.rb
+
+          # Clone the homebrew-packages repo
+          git clone --depth 1 "https://x-access-token:${GH_PAT}@github.com/0xdps/homebrew-packages.git" /tmp/homebrew-packages
+
+          # Copy the generated formula
+          mkdir -p /tmp/homebrew-packages/Formula
+          cp /tmp/daemon-hound.rb /tmp/homebrew-packages/Formula/daemon-hound.rb
+
+          # Commit and push
+          cd /tmp/homebrew-packages
+          git config user.name "goreleaserbot"
+          git config user.email "bot@goreleaser.com"
+          git add Formula/daemon-hound.rb
+          git diff --cached --quiet || git commit -m "Brew formula update for daemon-hound version ${TAG}"
+          git push origin trunk
+
       - name: Install APT repo dependencies
         run: |
           sudo apt-get update
