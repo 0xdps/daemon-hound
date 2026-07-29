@@ -17,6 +17,9 @@ Thumbs.db
 *.o
 *.a
 
+# CI artifacts
+macos-artifacts/
+
 # Environment and secrets
 .env
 .env.*
