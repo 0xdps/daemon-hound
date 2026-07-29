@@ -23,10 +23,25 @@ fi
 REPO="0xdps/daemon-hound"
 RELEASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
 
-# Helper: compute SHA256 of a remote file
+# Helper: compute SHA256 of a remote file with retries
 remote_sha256() {
     local url="$1"
-    curl -fsSL "$url" | shasum -a 256 | awk '{print $1}'
+    local max_retries=10
+    local retry_delay=3
+    local attempt=1
+
+    while [[ $attempt -le $max_retries ]]; do
+        if sha=$(curl -fsSL "$url" 2>/dev/null | shasum -a 256 | awk '{print $1}'); then
+            echo "$sha"
+            return 0
+        fi
+        echo "Retry $attempt/$max_retries: $url" >&2
+        sleep $retry_delay
+        attempt=$((attempt + 1))
+    done
+
+    echo "Failed to fetch $url after $max_retries attempts" >&2
+    return 1
 }
 
 echo "Fetching SHA256s for release ${TAG}..." >&2
