@@ -29,6 +29,7 @@ function initSlideshow() {
   function goTo(i) { current = i; update(); }
 
   document.addEventListener('click', (e) => {
+    if (e.target.closest('#nav-logo')) { e.preventDefault(); open(); return; }
     if (e.target.closest('#showSlideshow')) { open(); return; }
     if (e.target.closest('#slideshowClose')) { close(); return; }
     if (e.target.closest('#slideshowPrev')) { prev(); return; }

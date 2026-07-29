@@ -33,10 +33,17 @@ const { title, description, activeNav } = Astro.props;
 <body>
   <nav class="nav" data-astro-transition-persist="nav">
     <div class="nav-inner">
-      <a href="/" class="nav-logo">
-        <img src="/images/logo-trans.png" alt="DaemonHound" width="26" height="26" />
-        DaemonHound
-      </a>
+    <div class="nav-logo">
+      <img
+        id="nav-logo"
+        src="/images/logo-trans.png"
+        alt="DaemonHound"
+        width="26"
+        height="26"
+        style="cursor: pointer;"
+      />
+      <a href="/">DaemonHound</a>
+    </div>
       <div class="nav-links">
         <a href="/docs/getting-started/" class:list={[activeNav === 'docs' && 'active']}>Docs</a>
         <a href="/docs/commands/" class:list={[activeNav === 'commands' && 'active']}>Commands</a>
