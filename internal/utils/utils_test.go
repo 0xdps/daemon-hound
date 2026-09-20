@@ -192,3 +192,89 @@ func TestFindGitRoot(t *testing.T) {
 		t.Errorf("FindGitRoot = %q, want %q", root, tmpDir)
 	}
 }
+
+func writeGitRepo(t *testing.T, root, origin string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Join(root, ".git"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	cfg := "[remote \"origin\"]\n\turl = " + origin + "\n"
+	if err := os.WriteFile(filepath.Join(root, ".git", "config"), []byte(cfg), 0644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestShouldSkipScanDir(t *testing.T) {
+	if !ShouldSkipScanDir("node_modules") {
+		t.Error("expected node_modules to be skipped")
+	}
+	if !ShouldSkipScanDir("Library") {
+		t.Error("expected Library to be skipped")
+	}
+	if !ShouldSkipScanDir(".git") {
+		t.Error("expected .git to be skipped")
+	}
+	if ShouldSkipScanDir("src") {
+		t.Error("did not expect src to be skipped")
+	}
+	if ShouldSkipScanDir(".dotfiles") {
+		t.Error("did not expect .dotfiles to be skipped")
+	}
+}
+
+func TestFindGitRepos(t *testing.T) {
+	root := t.TempDir()
+	writeGitRepo(t, filepath.Join(root, "a"), "https://github.com/ex/a.git")
+	writeGitRepo(t, filepath.Join(root, "group", "b"), "https://github.com/ex/b.git")
+	writeGitRepo(t, filepath.Join(root, "group", "deep", "c"), "https://github.com/ex/c.git")
+	writeGitRepo(t, filepath.Join(root, "group", "node_modules", "pkg"), "https://github.com/ex/pkg.git")
+	writeGitRepo(t, filepath.Join(root, ".dotfiles"), "https://github.com/ex/dotfiles.git")
+
+	// Symlink cycle must not hang the walk.
+	cycle := filepath.Join(root, "cycle")
+	if err := os.MkdirAll(cycle, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(root, filepath.Join(cycle, "back")); err != nil {
+		t.Fatal(err)
+	}
+
+	progressCalls := 0
+	repos, err := FindGitRepos(root, 2, func(ScanProgress) { progressCalls++ })
+	if err != nil {
+		t.Fatalf("FindGitRepos: %v", err)
+	}
+	if progressCalls == 0 {
+		t.Fatal("expected progress callback to run")
+	}
+
+	found := map[string]string{}
+	for _, r := range repos {
+		found[r.Namespace] = r.Root
+	}
+	if _, ok := found["github.com/ex/a"]; !ok {
+		t.Error("missing repo a")
+	}
+	if _, ok := found["github.com/ex/b"]; !ok {
+		t.Error("missing repo b")
+	}
+	if _, ok := found["github.com/ex/c"]; !ok {
+		t.Error("missing repo c at depth 2")
+	}
+	if _, ok := found["github.com/ex/pkg"]; ok {
+		t.Error("should skip git repos under node_modules")
+	}
+	if _, ok := found["github.com/ex/dotfiles"]; !ok {
+		t.Error("missing hidden .dotfiles repo")
+	}
+
+	shallow, err := FindGitRepos(root, 0, nil)
+	if err != nil {
+		t.Fatalf("FindGitRepos depth 0: %v", err)
+	}
+	for _, r := range shallow {
+		if r.Namespace == "github.com/ex/b" || r.Namespace == "github.com/ex/c" {
+			t.Errorf("depth 0 should not include %s", r.Namespace)
+		}
+	}
+}

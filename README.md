@@ -167,13 +167,15 @@ Example output:
 
 ```
 Scanning ~/projects (depth 4)...
+  scanned 128 dirs, found 12 repos  group/api
+  scanned complete — 12 git repo(s) found
+
+Syncing vault for 2 bound namespace(s)...
 
 github.com/dps/pingpong-api   2 tracked files  ✓ synced
 github.com/dps/portfolio      1 tracked file   ✓ synced
 github.com/dps/side-project   not in vault     – skipped
 github.com/dps/old-repo       not in vault     – skipped
-
-2 namespaces restored, 2 skipped
 ```
 
 This is the recommended command when setting up a new machine — run `dhd init` once, then `dhd discover ~/projects` to restore everything in one step instead of `cd`-ing into each repo.

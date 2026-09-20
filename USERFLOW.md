@@ -169,13 +169,15 @@ No need to run `dhd track` again. The namespace is already registered from Machi
 
 ```bash
 dhd discover ~/work
-# Scanning ~/work...
+# Scanning ~/work (depth 4)...
+#   scanned 128 dirs, found 12 repos  group/api
+#   scanned complete — 12 git repo(s) found
+#
+# Syncing vault for 2 bound namespace(s)...
 #
 # github.com/you/pingpong-api   2 tracked files  ✓ synced
 # github.com/you/portfolio      1 tracked file   ✓ synced
 # github.com/you/side-project   not in vault     – skipped
-#
-# 2 namespaces restored, 1 skipped
 
 dhd discover ~/work --output json   # machine-readable output
 ```

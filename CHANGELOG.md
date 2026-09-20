@@ -208,6 +208,7 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `updateFileWithSecret` no longer constructs its own `config.Config`; receives it as a parameter
 - `dhd logout` gracefully handles "already logged out" instead of returning an error
 - `dhd discover` now shows correct vault file counts instead of sync-result counts
+- `dhd discover` no longer hangs on large trees (home, `node_modules`, `Library`, symlink cycles); prints live scan progress and syncs the vault once after binding
 - `dhd status` was discarding config; now checks `PendingPush` and shows mode annotations
 - `StatusNew` is now returned by `tracker.Status()` when the stored checksum is empty
 

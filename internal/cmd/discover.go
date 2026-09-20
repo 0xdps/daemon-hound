@@ -20,6 +20,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/0xdps/daemon-hound/internal/audit"
 	"github.com/0xdps/daemon-hound/internal/config"
@@ -28,6 +30,7 @@ import (
 	"github.com/0xdps/daemon-hound/internal/sync"
 	"github.com/0xdps/daemon-hound/internal/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var discoverDepth int
@@ -79,105 +82,90 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 		knownNS[f.Namespace] = true
 	}
 
-	fmt.Printf("Scanning %s (depth %d)...\n\n", scanPath, discoverDepth)
+	showProgress := discoverOutput != "json" && term.IsTerminal(int(os.Stderr.Fd()))
+	if discoverOutput != "json" {
+		fmt.Fprintf(os.Stderr, "Scanning %s (depth %d)...\n", scanPath, discoverDepth)
+	}
 
-	var found []struct {
+	lastProgress := time.Time{}
+	repos, err := utils.FindGitRepos(scanPath, discoverDepth, func(p utils.ScanProgress) {
+		if !showProgress {
+			return
+		}
+		now := time.Now()
+		if now.Sub(lastProgress) < 80*time.Millisecond && p.DirsVisited%50 != 0 {
+			return
+		}
+		lastProgress = now
+		rel := p.Current
+		if r, err := filepath.Rel(scanPath, p.Current); err == nil {
+			rel = r
+		}
+		fmt.Fprintf(os.Stderr, "\r  scanned %d dirs, found %d repos  %s\033[K", p.DirsVisited, p.ReposFound, truncatePath(rel, 60))
+	})
+	if err != nil {
+		return err
+	}
+	if showProgress {
+		fmt.Fprintf(os.Stderr, "\r  scanned complete — %d git repo(s) found\033[K\n\n", len(repos))
+	} else if discoverOutput != "json" {
+		fmt.Fprintf(os.Stderr, "Found %d git repo(s).\n\n", len(repos))
+	}
+
+	type discoverEntry struct {
 		ns     string
 		root   string
 		status string
 	}
+	var found []discoverEntry
+	bound := 0
 
-	err = filepath.WalkDir(scanPath, func(path string, d os.DirEntry, err error) error {
-		if err != nil {
-			return nil // skip errors
+	for _, repo := range repos {
+		if !knownNS[repo.Namespace] {
+			found = append(found, discoverEntry{repo.Namespace, repo.Root, "not in vault"})
+			continue
 		}
-		if !d.IsDir() {
-			return nil
+		if err := cfg.SetBinding(repo.Namespace, repo.Root); err != nil {
+			found = append(found, discoverEntry{repo.Namespace, repo.Root, "binding error"})
+			continue
 		}
-		if d.Name() == ".git" {
-			return nil
-		}
-
-		// Check depth
-		rel, _ := filepath.Rel(scanPath, path)
-		depth := 0
-		for _, c := range rel {
-			if c == filepath.Separator {
-				depth++
-			}
-		}
-		if depth > discoverDepth {
-			return filepath.SkipDir
-		}
-
-		// Check if this is a git repo
-		gitDir := filepath.Join(path, ".git")
-		if info, err := os.Stat(gitDir); err != nil || !info.IsDir() {
-			return nil
-		}
-
-		origin, err := utils.GetGitOrigin(path)
-		if err != nil {
-			return nil
-		}
-		ns, err := utils.DeriveNamespace(origin)
-		if err != nil {
-			return nil
-		}
-
-		if !knownNS[ns] {
-			found = append(found, struct {
-				ns     string
-				root   string
-				status string
-			}{ns, path, "not in vault"})
-			return filepath.SkipDir
-		}
-
-		// Record binding and sync
-		if err := cfg.SetBinding(ns, path); err != nil {
-			found = append(found, struct {
-				ns     string
-				root   string
-				status string
-			}{ns, path, "binding error"})
-			return filepath.SkipDir
-		}
-
-		// Count tracked files for this namespace from vault state
+		bound++
 		fileCount := 0
 		for _, f := range state.Files {
-			if f.Namespace == ns {
+			if f.Namespace == repo.Namespace {
 				fileCount++
 			}
 		}
+		noun := "file"
+		if fileCount != 1 {
+			noun = "files"
+		}
+		found = append(found, discoverEntry{
+			ns:     repo.Namespace,
+			root:   repo.Root,
+			status: fmt.Sprintf("%d tracked %s", fileCount, noun),
+		})
+	}
 
+	if bound > 0 {
+		if showProgress {
+			fmt.Fprintf(os.Stderr, "Syncing vault for %d bound namespace(s)...\n", bound)
+		}
 		gitClient := git.NewClient(config.VaultPath())
 		syncer := sync.NewSyncer(vault, tr, gitClient, cfg)
-		var syncErr error
-		_, syncErr = syncer.Sync()
-		if syncErr != nil {
-			found = append(found, struct {
-				ns     string
-				root   string
-				status string
-			}{ns, path, "sync error: " + syncErr.Error()})
-		} else {
-			noun := "file"
-			if fileCount != 1 {
-				noun = "files"
+		if _, syncErr := syncer.Sync(); syncErr != nil {
+			for i, f := range found {
+				if f.status != "not in vault" && f.status != "binding error" {
+					found[i].status = "sync error: " + syncErr.Error()
+				}
 			}
-			found = append(found, struct {
-				ns     string
-				root   string
-				status string
-			}{ns, path, fmt.Sprintf("%d tracked %s  ✓ synced", fileCount, noun)})
+		} else {
+			for i, f := range found {
+				if f.status != "not in vault" && f.status != "binding error" {
+					found[i].status = f.status + "  ✓ synced"
+				}
+			}
 		}
-
-		return filepath.SkipDir
-	})
-	if err != nil {
-		return err
 	}
 
 	if discoverOutput == "json" {
@@ -211,4 +199,12 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 	}
 	audit.Log("discover", fmt.Sprintf("path=%s synced=%d", scanPath, synced))
 	return nil
+}
+
+func truncatePath(p string, max int) string {
+	p = strings.ReplaceAll(p, "\n", " ")
+	if max < 4 || len(p) <= max {
+		return p
+	}
+	return "…" + p[len(p)-(max-1):]
 }

@@ -29,6 +29,158 @@ import (
 	"golang.org/x/term"
 )
 
+// GitRepo is a Git working tree found by FindGitRepos.
+type GitRepo struct {
+	Root      string
+	Namespace string
+}
+
+// ScanProgress reports live status while FindGitRepos walks a tree.
+type ScanProgress struct {
+	DirsVisited int
+	ReposFound  int
+	Current     string
+}
+
+// skipScanDirs are high-fanout or non-project directories that must not be
+// descended into during repo discovery. The scan root itself is never skipped.
+var skipScanDirs = map[string]struct{}{
+	".git":             {},
+	"node_modules":     {},
+	"vendor":           {},
+	"target":           {},
+	"coverage":         {},
+	"Pods":             {},
+	"Carthage":         {},
+	"bower_components": {},
+	"__pycache__":      {},
+	".venv":            {},
+	"venv":             {},
+	".tox":             {},
+	".mypy_cache":      {},
+	".pytest_cache":    {},
+	".next":            {},
+	".nuxt":            {},
+	".output":          {},
+	".turbo":           {},
+	".parcel-cache":    {},
+	"Library":          {},
+	"Applications":     {},
+	"Movies":           {},
+	"Music":            {},
+	"Pictures":         {},
+	"Caches":           {},
+	"DerivedData":      {},
+	".Trash":           {},
+	".cache":           {},
+	".config":          {},
+	".local":           {},
+	".npm":             {},
+	".yarn":            {},
+	".pnpm-store":      {},
+	".cargo":           {},
+	".rustup":          {},
+	".pyenv":           {},
+	".nvm":             {},
+	".sdkman":          {},
+	".docker":          {},
+	".gradle":          {},
+	".m2":              {},
+}
+
+// ShouldSkipScanDir reports whether a directory name should be skipped while
+// looking for Git repositories. The scan root is never passed here.
+func ShouldSkipScanDir(name string) bool {
+	if name == "" || name == "." || name == ".." {
+		return false
+	}
+	_, ok := skipScanDirs[name]
+	return ok
+}
+
+// IsGitRepo reports whether path is a Git working tree (.git dir or file).
+func IsGitRepo(path string) bool {
+	info, err := os.Lstat(filepath.Join(path, ".git"))
+	if err != nil {
+		return false
+	}
+	return info.IsDir() || info.Mode().IsRegular()
+}
+
+// FindGitRepos walks root for Git repositories up to maxDepth (same meaning as
+// `dhd discover --depth`: number of path separators below root). It only reads
+// directories, does not follow symlinks, and skips dependency/cache trees.
+// progress may be nil.
+func FindGitRepos(root string, maxDepth int, progress func(ScanProgress)) ([]GitRepo, error) {
+	root, err := filepath.Abs(root)
+	if err != nil {
+		return nil, err
+	}
+	info, err := os.Stat(root)
+	if err != nil {
+		return nil, err
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("not a directory: %s", root)
+	}
+
+	var repos []GitRepo
+	visited := 0
+
+	var walk func(dir string) error
+	walk = func(dir string) error {
+		visited++
+		if progress != nil {
+			progress(ScanProgress{DirsVisited: visited, ReposFound: len(repos), Current: dir})
+		}
+
+		rel, err := filepath.Rel(root, dir)
+		if err != nil {
+			return nil
+		}
+		depth := 0
+		if rel != "." {
+			depth = strings.Count(rel, string(filepath.Separator))
+		}
+		if depth > maxDepth {
+			return nil
+		}
+
+		if IsGitRepo(dir) {
+			origin, err := GetGitOrigin(dir)
+			if err == nil {
+				if ns, err := DeriveNamespace(origin); err == nil {
+					repos = append(repos, GitRepo{Root: dir, Namespace: ns})
+				}
+			}
+			return nil
+		}
+
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			return nil
+		}
+		for _, e := range entries {
+			if !e.IsDir() || e.Type()&os.ModeSymlink != 0 {
+				continue
+			}
+			child := filepath.Join(dir, e.Name())
+			if ShouldSkipScanDir(e.Name()) {
+				continue
+			}
+			if err := walk(child); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if err := walk(root); err != nil {
+		return nil, err
+	}
+	return repos, nil
+}
+
 // DeriveNamespace extracts a namespace from a Git remote URL.
 // Supported formats:
 //
