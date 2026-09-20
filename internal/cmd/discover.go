@@ -76,10 +76,11 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load vault state: %w", err)
 	}
 
-	// Build set of known namespaces
 	knownNS := make(map[string]bool)
+	fileCounts := make(map[string]int)
 	for _, f := range state.Files {
 		knownNS[f.Namespace] = true
+		fileCounts[f.Namespace]++
 	}
 
 	showProgress := discoverOutput != "json" && term.IsTerminal(int(os.Stderr.Fd()))
@@ -130,12 +131,7 @@ func runDiscover(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		bound++
-		fileCount := 0
-		for _, f := range state.Files {
-			if f.Namespace == repo.Namespace {
-				fileCount++
-			}
-		}
+		fileCount := fileCounts[repo.Namespace]
 		noun := "file"
 		if fileCount != 1 {
 			noun = "files"

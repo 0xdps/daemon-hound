@@ -209,6 +209,8 @@ DaemonHound uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `dhd logout` gracefully handles "already logged out" instead of returning an error
 - `dhd discover` now shows correct vault file counts instead of sync-result counts
 - `dhd discover` no longer hangs on large trees (home, `node_modules`, `Library`, symlink cycles); prints live scan progress and syncs the vault once after binding
+- Unbound namespace lookup (`status`/`sync`/daemon) no longer walks every file under `$HOME`; uses the skippable scanner and caches the result for the process
+- Vault `git clone`/`pull`/`push` and `dhd doctor` remote checks time out instead of hanging on a stalled network
 - `dhd status` was discarding config; now checks `PendingPush` and shows mode annotations
 - `StatusNew` is now returned by `tracker.Status()` when the stored checksum is empty
 

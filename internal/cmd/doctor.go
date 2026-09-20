@@ -16,11 +16,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/0xdps/daemon-hound/internal/config"
 	"github.com/0xdps/daemon-hound/internal/git"
@@ -261,9 +263,17 @@ func runDoctor(cmd *cobra.Command, args []string) error {
 	}
 
 	// 13. Remote connectivity
-	lsRemote := exec.Command("git", "-C", config.VaultPath(), "ls-remote", "--exit-code", "origin")
-	if err := lsRemote.Run(); err != nil {
-		fmt.Println(output.Warn("Cannot reach vault remote (offline or misconfigured?)"))
+	lsCtx, lsCancel := context.WithTimeout(context.Background(), 15*time.Second)
+	lsRemote := exec.CommandContext(lsCtx, "git", "-C", config.VaultPath(), "ls-remote", "--exit-code", "origin")
+	lsErr := lsRemote.Run()
+	timedOut := lsCtx.Err() == context.DeadlineExceeded
+	lsCancel()
+	if lsErr != nil {
+		if timedOut {
+			fmt.Println(output.Warn("Vault remote check timed out after 15s"))
+		} else {
+			fmt.Println(output.Warn("Cannot reach vault remote (offline or misconfigured?)"))
+		}
 	} else {
 		fmt.Println(output.OK("Vault remote reachable"))
 	}

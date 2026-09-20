@@ -16,12 +16,27 @@
 package git
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
+
+const networkTimeout = 45 * time.Second
+
+func runGitNetwork(args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), networkTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "git", args...)
+	out, err := cmd.CombinedOutput()
+	if ctx.Err() == context.DeadlineExceeded {
+		return out, fmt.Errorf("git %s timed out after %s", strings.Join(args, " "), networkTimeout)
+	}
+	return out, err
+}
 
 // Client wraps git operations for the vault repository.
 type Client struct {
@@ -38,8 +53,8 @@ func Clone(remoteURL, vaultPath string) error {
 	if err := os.MkdirAll(filepath.Dir(vaultPath), 0755); err != nil {
 		return fmt.Errorf("failed to create vault parent directory: %w", err)
 	}
-	cmd := exec.Command("git", "clone", remoteURL, vaultPath)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := runGitNetwork("clone", remoteURL, vaultPath)
+	if err != nil {
 		return fmt.Errorf("git clone failed: %w\n%s", err, string(out))
 	}
 	return nil
@@ -59,8 +74,8 @@ func CloneSparse(remoteURL, vaultPath string, paths []string) error {
 
 	// Clone with blob:none + no-checkout — only git metadata downloads.
 	// No file content is fetched yet.
-	cmd := exec.Command("git", "clone", "--filter=blob:none", "--no-checkout", remoteURL, vaultPath)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := runGitNetwork("clone", "--filter=blob:none", "--no-checkout", remoteURL, vaultPath)
+	if err != nil {
 		return fmt.Errorf("git sparse clone failed: %w\n%s", err, string(out))
 	}
 
@@ -85,8 +100,8 @@ func CloneSparse(remoteURL, vaultPath string, paths []string) error {
 //
 // The file path must be relative to the repository root.
 func (c *Client) PullFile(filePath string) error {
-	cmd := exec.Command("git", "-C", c.vaultPath, "checkout", "HEAD", "--", filePath)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	out, err := runGitNetwork("-C", c.vaultPath, "checkout", "HEAD", "--", filePath)
+	if err != nil {
 		return fmt.Errorf("git checkout %s failed: %w\n%s", filePath, err, string(out))
 	}
 	return nil
@@ -118,8 +133,7 @@ func (c *Client) AddRemote(remoteURL string) error {
 func (c *Client) Pull() error {
 	// --no-rebase explicitly selects merge strategy so the caller never needs
 	// pull.rebase configured globally in the user's git config.
-	cmd := exec.Command("git", "-C", c.vaultPath, "pull", "--no-rebase")
-	out, err := cmd.CombinedOutput()
+	out, err := runGitNetwork("-C", c.vaultPath, "pull", "--no-rebase")
 	if err != nil {
 		s := string(out)
 		if strings.Contains(s, "Already up to date") || strings.Contains(s, "up-to-date") {
@@ -135,8 +149,7 @@ func (c *Client) Pull() error {
 
 // Push pushes local commits to the remote.
 func (c *Client) Push() error {
-	cmd := exec.Command("git", "-C", c.vaultPath, "push", "origin", "HEAD")
-	out, err := cmd.CombinedOutput()
+	out, err := runGitNetwork("-C", c.vaultPath, "push", "origin", "HEAD")
 	if err != nil {
 		return fmt.Errorf("git push failed: %w\n%s", err, string(out))
 	}

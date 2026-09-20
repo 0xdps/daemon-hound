@@ -200,6 +200,7 @@ func TestTrackerRestoreGlobal(t *testing.T) {
 func TestTrackerStatusFallsBackToRepoDiscovery(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
+	utils.ResetRepoIndexForTest()
 
 	repoRoot := filepath.Join(tmpHome, "personal", "0xdps", "pinboard-gpt-extension")
 	if err := os.MkdirAll(filepath.Join(repoRoot, ".git"), 0755); err != nil {

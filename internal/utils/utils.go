@@ -25,8 +25,21 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"golang.org/x/term"
+)
+
+// DefaultScanDepth is used when locating a repo for an unbound namespace.
+// Matches a typical ~/src/github.com/owner/repo layout.
+const DefaultScanDepth = 6
+
+var (
+	repoIndexMu   sync.Mutex
+	repoIndex     map[string]string
+	repoIndexHome string
+	repoIndexAt   time.Time
 )
 
 // GitRepo is a Git working tree found by FindGitRepos.
@@ -179,6 +192,54 @@ func FindGitRepos(root string, maxDepth int, progress func(ScanProgress)) ([]Git
 		return nil, err
 	}
 	return repos, nil
+}
+
+// FindRepoRootForNamespace locates a local Git working tree whose origin
+// matches namespace. The first scan of $HOME is cached for the process so
+// status/sync/daemon do not re-walk the tree for every unbound namespace.
+func FindRepoRootForNamespace(namespace string) (string, error) {
+	if namespace == "" || namespace == "global" {
+		return "", fmt.Errorf("no repo root found for namespace %s", namespace)
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	repoIndexMu.Lock()
+	defer repoIndexMu.Unlock()
+
+	if repoIndex == nil || repoIndexHome != home || time.Since(repoIndexAt) > 5*time.Minute {
+		repos, err := FindGitRepos(home, DefaultScanDepth, nil)
+		if err != nil {
+			return "", err
+		}
+		index := make(map[string]string, len(repos))
+		for _, r := range repos {
+			if _, ok := index[r.Namespace]; !ok {
+				index[r.Namespace] = r.Root
+			}
+		}
+		repoIndex = index
+		repoIndexHome = home
+		repoIndexAt = time.Now()
+	}
+
+	root, ok := repoIndex[namespace]
+	if !ok {
+		return "", fmt.Errorf("no repo root found for namespace %s", namespace)
+	}
+	return root, nil
+}
+
+// ResetRepoIndexForTest clears the process-wide repo scan cache.
+func ResetRepoIndexForTest() {
+	repoIndexMu.Lock()
+	defer repoIndexMu.Unlock()
+	repoIndex = nil
+	repoIndexHome = ""
+	repoIndexAt = time.Time{}
 }
 
 // DeriveNamespace extracts a namespace from a Git remote URL.

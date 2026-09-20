@@ -278,3 +278,33 @@ func TestFindGitRepos(t *testing.T) {
 		}
 	}
 }
+
+func TestFindRepoRootForNamespace(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	ResetRepoIndexForTest()
+
+	writeGitRepo(t, filepath.Join(home, "src", "ex", "a"), "https://github.com/ex/a.git")
+	writeGitRepo(t, filepath.Join(home, "src", "ex", "b"), "https://github.com/ex/b.git")
+
+	root, err := FindRepoRootForNamespace("github.com/ex/a")
+	if err != nil {
+		t.Fatalf("FindRepoRootForNamespace: %v", err)
+	}
+	if filepath.Base(root) != "a" {
+		t.Errorf("got root %q", root)
+	}
+
+	rootB, err := FindRepoRootForNamespace("github.com/ex/b")
+	if err != nil {
+		t.Fatalf("cached lookup for b: %v", err)
+	}
+	if filepath.Base(rootB) != "b" {
+		t.Errorf("got root %q", rootB)
+	}
+
+	if _, err := FindRepoRootForNamespace("github.com/ex/missing"); err == nil {
+		t.Fatal("expected missing namespace to fail")
+	}
+}
