@@ -1,0 +1,18 @@
+internal/web/templates/secrets/view.html
+  h_95aea6b4aa8772 31,77,80,82
+internal/web/templates/layout.html
+  h_95aea6b4aa8772 82,290
+internal/web/templates/files/view.html
+  h_95aea6b4aa8772 53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b53029bc857698b9a762d29303441ecc4e04cf57",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
