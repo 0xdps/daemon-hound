@@ -1,0 +1,14 @@
+install.sh
+  h_95aea6b4aa8772 57-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2d9c253ad9c2361647203ff07befe0874d5426ea",
+  "prompts": {},
+  "humans": {
+    "h_95aea6b4aa8772": {
+      "author": "Devendra Pratap <dps.manit@gmail.com>"
+    }
+  }
+}
